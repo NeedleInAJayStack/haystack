@@ -5,13 +5,14 @@ import "testing"
 func TestDict_toZinc(t *testing.T) {
 	dict := Dict{
 		items: map[string]Val{
-			"area":        &Number{val: 5.5},
-			"currentTime": &Time{hour: 23, min: 7, sec: 10},
-			"id":          &Ref{val: "null"},
+			"dis":  &Str{val: "Building"},
+			"site": &Marker{},
+			"area": &Number{val: 35000.0, unit: "ft²"},
 		},
 	}
 	dictZinc := dict.toZinc()
-	if dictZinc != "{area:5.5,currentTime:23:07:10,id:@null}" {
+	// Might fail if order is not guaranteed
+	if dictZinc != "{dis:\"Building\" site area:35000ft²}" {
 		t.Error(dictZinc)
 	}
 }

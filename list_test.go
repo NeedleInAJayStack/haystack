@@ -11,7 +11,7 @@ func TestList_toZinc(t *testing.T) {
 		},
 	}
 	listZinc := list.toZinc()
-	if listZinc != "[5.5,23:07:10,@null]" {
+	if listZinc != "[5.5, 23:07:10, @null]" {
 		t.Error(listZinc)
 	}
 }

@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestDict_toZinc(t *testing.T) {
 	dict := Dict{
@@ -11,8 +14,13 @@ func TestDict_toZinc(t *testing.T) {
 		},
 	}
 	dictZinc := dict.toZinc()
-	// Might fail if order is not guaranteed
-	if dictZinc != "{dis:\"Building\" site area:35000ft²}" {
+	if !strings.Contains(dictZinc, "dis:\"Building\"") {
+		t.Error(dictZinc)
+	}
+	if !strings.Contains(dictZinc, "site") {
+		t.Error(dictZinc)
+	}
+	if !strings.Contains(dictZinc, "area:35000ft²") {
 		t.Error(dictZinc)
 	}
 }

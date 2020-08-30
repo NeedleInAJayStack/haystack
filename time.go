@@ -9,7 +9,7 @@ type Time struct {
 	ms   int // Default value is 0
 }
 
-// Convert object to zinc. Format is hh:mm:ss.mmm
+// Format is hh:mm:ss.mmm
 func (time *Time) toZinc() string {
 	return time.encode()
 }

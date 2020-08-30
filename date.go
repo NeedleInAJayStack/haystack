@@ -8,7 +8,7 @@ type Date struct {
 	day   int
 }
 
-// Convert object to zinc. Format is YYYY-MM-DD
+// Format is YYYY-MM-DD
 func (date *Date) toZinc() string {
 	return date.encode()
 }

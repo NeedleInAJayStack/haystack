@@ -1,11 +1,10 @@
 package haystack
 
-// A number is composed of a val and unit
 type Uri struct {
 	val string
 }
 
-/** Encode using double quotes and back slash escapes */
+// Format is `<val>`
 func (uri *Uri) toZinc() string {
 	result := "`"
 

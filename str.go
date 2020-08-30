@@ -2,12 +2,11 @@ package haystack
 
 import "fmt"
 
-// A number is composed of a val and unit
 type Str struct {
 	val string
 }
 
-/** Encode using double quotes and back slash escapes */
+// Encode using double quotes and back slash escapes
 func (str *Str) toZinc() string {
 	result := "\""
 

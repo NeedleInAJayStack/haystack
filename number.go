@@ -13,7 +13,7 @@ type Number struct {
 
 // Convert a number to its zinc representation
 func (number *Number) toZinc() string {
-	return "n:" + number.encode(false)
+	return number.encode(false)
 }
 
 // Encode a number to a string format

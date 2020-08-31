@@ -1,5 +1,7 @@
 package haystack
 
+import "strings"
+
 type Dict struct {
 	items map[string]Val
 }
@@ -10,32 +12,31 @@ func (dict *Dict) isEmpty() bool {
 
 // Format is {name1:val1 name2:val2 ...}. Markers don't require a :val.
 func (dict *Dict) toZinc() string {
-	result := dict.encode(true)
-	return result
+	var buf strings.Builder
+	dict.encodeTo(&buf, true)
+	return buf.String()
 }
 
-func (dict *Dict) encode(brackets bool) string {
-	result := ""
+func (dict *Dict) encodeTo(buf *strings.Builder, brackets bool) {
 	if brackets {
-		result = result + "{"
+		buf.WriteString("{")
 	}
 	firstVal := true
 	for name, val := range dict.items {
 		if firstVal {
 			firstVal = false
 		} else {
-			result = result + " "
+			buf.WriteString(" ")
 		}
 
+		buf.WriteString(name)
+
 		_, isMarker := val.(*Marker)
-		if isMarker {
-			result = result + name
-		} else {
-			result = result + name + ":" + val.toZinc()
+		if !isMarker {
+			buf.WriteString(":" + val.toZinc())
 		}
 	}
 	if brackets {
-		result = result + "}"
+		buf.WriteString("}")
 	}
-	return result
 }

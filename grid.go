@@ -1,36 +1,37 @@
 package haystack
 
+import "strings"
+
 type Col struct {
 	index int
 	name  string
 	meta  Dict
 }
 
+// Format as <name> <meta>
+func (col *Col) encodeTo(buf *strings.Builder) {
+	buf.WriteString(col.name + " ")
+	col.meta.encodeTo(buf, false)
+}
+
 type Row struct {
 	vals []Val
+}
+
+// Format as <val1>, <val2>, ...
+func (row *Row) encodeTo(buf *strings.Builder) {
+	for idx, val := range row.vals {
+		if idx != 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString(val.toZinc())
+	}
 }
 
 type Grid struct {
 	meta Dict
 	cols []Col
 	rows []Row
-}
-
-// Format as <name> <meta>
-func (col *Col) encode() string {
-	return col.name + " " + col.meta.encode(false)
-}
-
-// Format as <val1>, <val2>, ...
-func (row *Row) encode() string {
-	result := ""
-	for idx, val := range row.vals {
-		if idx != 0 {
-			result = result + ", "
-		}
-		result = result + val.toZinc()
-	}
-	return result
 }
 
 // Format as:
@@ -40,23 +41,25 @@ func (row *Row) encode() string {
 //     <row2>
 //     ...
 func (grid *Grid) toZinc() string {
-	result := "ver:\"3.0\""
+	buf := strings.Builder{}
+	buf.WriteString("ver:\"3.0\"")
 	if !grid.meta.isEmpty() {
-		result = result + " " + grid.meta.encode(false)
+		buf.WriteString(" ")
+		grid.meta.encodeTo(&buf, false)
 	}
-	result = result + "\n"
+	buf.WriteString("\n")
 	for colIdx, col := range grid.cols {
 		if colIdx != 0 {
-			result = result + ", "
+			buf.WriteString(", ")
 		}
-		result = result + col.encode()
+		col.encodeTo(&buf)
 	}
-	result = result + "\n"
+	buf.WriteString("\n")
 	for rowIdx, row := range grid.rows {
 		if rowIdx != 0 {
-			result = result + "\n"
+			buf.WriteString("\n")
 		}
-		result = result + row.encode()
+		row.encodeTo(&buf)
 	}
-	return result
+	return buf.String()
 }

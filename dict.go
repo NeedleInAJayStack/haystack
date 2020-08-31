@@ -10,13 +10,13 @@ func (dict *Dict) isEmpty() bool {
 	return len(dict.items) == 0
 }
 
-// Format is {name1:val1 name2:val2 ...}. Markers don't require a :val.
 func (dict *Dict) toZinc() string {
 	var buf strings.Builder
 	dict.encodeTo(&buf, true)
 	return buf.String()
 }
 
+// Format is {name1:val1 name2:val2 ...}. Markers don't require a :val.
 func (dict *Dict) encodeTo(buf *strings.Builder, brackets bool) {
 	if brackets {
 		buf.WriteString("{")

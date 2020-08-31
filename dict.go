@@ -4,9 +4,21 @@ type Dict struct {
 	items map[string]Val
 }
 
+func (dict *Dict) isEmpty() bool {
+	return len(dict.items) == 0
+}
+
 // Format is {name1:val1 name2:val2 ...}. Markers don't require a :val.
 func (dict *Dict) toZinc() string {
-	result := "{"
+	result := dict.encode(true)
+	return result
+}
+
+func (dict *Dict) encode(brackets bool) string {
+	result := ""
+	if brackets {
+		result = result + "{"
+	}
 	firstVal := true
 	for name, val := range dict.items {
 		if firstVal {
@@ -22,6 +34,8 @@ func (dict *Dict) toZinc() string {
 			result = result + name + ":" + val.toZinc()
 		}
 	}
-	result = result + "}"
+	if brackets {
+		result = result + "}"
+	}
 	return result
 }

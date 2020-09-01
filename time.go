@@ -1,12 +1,69 @@
 package haystack
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 type Time struct {
 	hour int
 	min  int
 	sec  int
-	ms   int // Default value is 0
+	ms   int // Optional
+}
+
+func timeDef() Time {
+	return Time{
+		hour: 0,
+		min:  0,
+		sec:  0,
+		ms:   0,
+	}
+}
+
+// Format is hh:mm:ss or hh:mm:ss.mmm
+func timeFromZinc(str string) (Time, error) {
+	parts := strings.Split(str, ":")
+
+	hour, hourErr := strconv.Atoi(parts[0])
+	if hourErr != nil {
+		return timeDef(), hourErr
+	}
+	min, minErr := strconv.Atoi(parts[1])
+	if minErr != nil {
+		return timeDef(), minErr
+	}
+
+	sec := 0
+	ms := 0
+	if strings.Contains(parts[2], ".") { // Split ms out if included
+		secParts := strings.Split(parts[2], ".")
+
+		secVal, secErr := strconv.Atoi(secParts[0])
+		if secErr != nil {
+			return timeDef(), secErr
+		}
+		sec = secVal
+		msVal, msErr := strconv.Atoi(secParts[1])
+		if msErr != nil {
+			return timeDef(), msErr
+		}
+		ms = msVal
+	} else {
+		secVal, secErr := strconv.Atoi(parts[2])
+		if secErr != nil {
+			return timeDef(), secErr
+		}
+		sec = secVal
+	}
+
+	return Time{
+		hour: hour,
+		min:  min,
+		sec:  sec,
+		ms:   ms,
+	}, nil
 }
 
 // Format is hh:mm:ss.mmm
@@ -39,4 +96,11 @@ func (time *Time) encode() string {
 		result = result + fmt.Sprintf("%d", time.ms)
 	}
 	return result
+}
+
+func (time1 *Time) equals(time2 *Time) bool {
+	return time1.hour == time2.hour &&
+		time1.min == time2.min &&
+		time1.sec == time2.sec &&
+		time1.ms == time2.ms
 }

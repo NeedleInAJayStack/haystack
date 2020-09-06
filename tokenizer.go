@@ -10,8 +10,8 @@ import (
 // Stream based tokenizer for Haystack formats such as Zinc and Filters
 type Tokenizer struct {
 	in   strings.Reader
-	cur  rune
-	peek rune
+	cur  rune // -1 indicates end-of-stream
+	peek rune // -1 indicates end-of-stream
 	val  Val
 }
 
@@ -21,7 +21,10 @@ func (tokenizer *Tokenizer) consume() error {
 	var err error
 	tokenizer.cur = tokenizer.peek
 	tokenizer.peek, _, err = tokenizer.in.ReadRune()
-	// TODO adjust error to handle eof
+	if err != nil { // If end-of-stream, indicate with val of -1
+		tokenizer.cur = -1
+		tokenizer.peek = -1
+	}
 	return err
 }
 
@@ -56,6 +59,114 @@ func (tokenizer *Tokenizer) ref() Token {
 	return tokenRef()
 }
 
+func (tokenizer *Tokenizer) str() (Token, error) {
+	tokenizer.consumeRune('"')
+	buf := strings.Builder{}
+	for true {
+		if tokenizer.cur == -1 {
+			return tokenEof(), errors.New("Unexpected end of str")
+		} else if tokenizer.cur == '"' {
+			tokenizer.consumeRune('"')
+			break
+		} else if tokenizer.cur == '\\' {
+			esc, escErr := tokenizer.escape()
+			if escErr != nil {
+				return tokenStr(), escErr
+			}
+			buf.WriteRune(esc)
+			// continue
+		}
+	}
+	tokenizer.val = &Str{val: buf.String()}
+	return tokenStr(), nil
+}
+
+func (tokenizer *Tokenizer) uri() (Token, error) {
+	tokenizer.consumeRune('`')
+	buf := strings.Builder{}
+	for true {
+		if tokenizer.cur == '`' {
+			tokenizer.consumeRune('`')
+			break
+		} else if tokenizer.cur == -1 {
+			return tokenEof(), errors.New("Unexpected end of uri: eof")
+		} else if tokenizer.cur == '\n' {
+			return tokenUri(), errors.New("Unexpected end of uri: newline")
+		} else if tokenizer.cur == '\\' {
+			if isUriEscapeIgnore(tokenizer.peek) {
+				buf.WriteRune(tokenizer.cur)
+				tokenizer.consume()
+				buf.WriteRune(tokenizer.cur)
+				tokenizer.consume()
+				break
+			} else {
+				char, err := tokenizer.escape()
+				if err != nil {
+					return tokenUri(), err
+				}
+				buf.WriteRune(char)
+			}
+		} else {
+			buf.WriteRune(tokenizer.cur)
+			tokenizer.consume()
+		}
+	}
+
+	tokenizer.val = &Uri{val: buf.String()}
+	return tokenUri(), nil
+}
+
+func (tokenizer *Tokenizer) escape() (rune, error) {
+	tokenizer.consumeRune('\\')
+	var result rune
+	var err error
+	if tokenizer.cur == 'b' {
+		result = '\b'
+	} else if tokenizer.cur == 'f' {
+		result = '\f'
+	} else if tokenizer.cur == 'n' {
+		result = '\n'
+	} else if tokenizer.cur == 'r' {
+		result = '\r'
+	} else if tokenizer.cur == 't' {
+		result = '\t'
+	} else if tokenizer.cur == '"' {
+		result = '"'
+	} else if tokenizer.cur == '$' {
+		result = '$'
+	} else if tokenizer.cur == '\'' {
+		result = '\''
+	} else if tokenizer.cur == '`' {
+		result = '`'
+	} else if tokenizer.cur == '\\' {
+		result = '\\'
+	} else if tokenizer.cur == 'u' { // check for \uxxxx
+		buf := strings.Builder{}
+		tokenizer.consumeRune('u')
+		buf.WriteRune(tokenizer.cur) // Get the next 4 characters
+		tokenizer.consume()
+		buf.WriteRune(tokenizer.cur)
+		tokenizer.consume()
+		buf.WriteRune(tokenizer.cur)
+		tokenizer.consume()
+		buf.WriteRune(tokenizer.cur)
+		// Wait to consume until we return
+
+		codeResult, codeErr := strconv.ParseInt(buf.String(), 0, 32) // ParseFloat accepts hex format
+		if codeErr != nil {
+			err = codeErr
+		} else {
+			result = int32(codeResult)
+		}
+	}
+
+	if result == 0 && err == nil {
+		err = errors.New("Invalid escape sequence: " + string(tokenizer.cur))
+	}
+	tokenizer.consume()
+	return result, err
+}
+
 func (tokenizer *Tokenizer) digits() (Token, error) {
 	if tokenizer.cur == '0' && tokenizer.peek == 'x' { // hex number (no unit allowed)
 		tokenizer.consumeRune('0')
@@ -67,7 +178,7 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 			}
 			tokenizer.consume()
 		}
-		float, err := strconv.ParseFloat(buf.String(), 64)
+		float, err := strconv.ParseFloat(buf.String(), 64) // ParseFloat accepts hex format
 		tokenizer.val = &Number{val: float}
 		return tokenNumber(), err
 	} else { // consume all things that might be part of this number token
@@ -126,9 +237,7 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 			// return tokenizer.dateTime(buf.String())
 			return tokenDateTime(), nil
 		} else {
-			// TODO Implement
-			// return tokenizer.number(buf.String(), unitIndex)
-			return tokenNumber(), nil
+			return tokenizer.number(buf.String(), unitIndex)
 		}
 	}
 }
@@ -146,6 +255,28 @@ func (tokenizer *Tokenizer) time(str string, addSeconds bool) (Token, error) {
 	time, err := timeFromZinc(str)
 	tokenizer.val = &time
 	return tokenTime(), err
+}
+
+func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
+	if unitIndex == 0 {
+		number, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			return tokenNumber(), err
+		} else {
+			tokenizer.val = &Number{val: number}
+			return tokenNumber(), err
+		}
+	} else {
+		numberStr := str[0:unitIndex]
+		unit := str[unitIndex:len(str)]
+		number, err := strconv.ParseFloat(numberStr, 64)
+		if err != nil {
+			return tokenNumber(), err
+		} else {
+			tokenizer.val = &Number{val: number, unit: unit}
+			return tokenNumber(), err
+		}
+	}
 }
 
 // Rune detection methods. These add onto those in unicode
@@ -189,4 +320,18 @@ func isIdPart(char rune) bool {
 	} else {
 		return false
 	}
+}
+
+func isUriEscapeIgnore(char rune) bool {
+	return char == ':' ||
+		char == '/' ||
+		char == '?' ||
+		char == '#' ||
+		char == '[' ||
+		char == ']' ||
+		char == '@' ||
+		char == '\\' ||
+		char == '&' ||
+		char == '=' ||
+		char == ';'
 }

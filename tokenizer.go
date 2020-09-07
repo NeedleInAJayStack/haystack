@@ -242,6 +242,42 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 	}
 }
 
+// TODO implement dateTimeFromZinc
+// func (tokenizer *Tokenizer) dateTime(buf strings.Builder) (Token, error) {
+// 	// Format variable formats to: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+
+// 	// xxx timezone
+// 	if tokenizer.cur != ' ' || !unicode.IsUpper(tokenizer.peek) {
+// 		str := buf.String()
+// 		if str[len(str)-1] == 'Z' {
+// 			buf.WriteString(" UTC")
+// 		} else {
+// 			return tokenDateTime(), errors.New("Expecting timezone")
+// 		}
+// 	} else {
+// 		tokenizer.consume()
+// 		buf.WriteRune(' ')
+// 		for isIdPart(tokenizer.cur) {
+// 			buf.WriteRune(tokenizer.cur)
+// 			tokenizer.consume()
+// 		}
+
+// 		// handle GMT+xx or GMT-xx
+// 		if (tokenizer.cur == '+' || tokenizer.cur == '-') && strings.HasSuffix(buf.String(), "GMT") {
+// 			buf.WriteRune(tokenizer.cur)
+// 			tokenizer.consume()
+// 			for unicode.IsDigit(tokenizer.cur) {
+// 				buf.WriteRune(tokenizer.cur)
+// 				tokenizer.consume()
+// 			}
+// 		}
+// 	}
+
+// 	dateTime, err := dateTimeFromZinc(buf.String())
+// 	tokenizer.val = &dateTime
+// 	return tokenDateTime(), err
+// }
+
 func (tokenizer *Tokenizer) date(str string) (Token, error) {
 	date, err := dateFromZinc(str)
 	tokenizer.val = &date

@@ -2,7 +2,9 @@ package haystack
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"text/scanner"
 	"time"
 )
 
@@ -11,6 +13,86 @@ type DateTime struct {
 	time     Time
 	tz       string // IANA database city name
 	tzOffset int    // offset in seconds from UTC
+}
+
+// Parses date from "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+func dateTimeFromStr(str string) (DateTime, error) {
+	var input scanner.Scanner
+	input.Init(strings.NewReader(str))
+	curRune := input.Next()
+
+	dateStr := strings.Builder{}
+	for curRune != 'T' && curRune != scanner.EOF {
+		dateStr.WriteRune(curRune)
+		curRune = input.Next()
+	}
+	date, dateErr := dateFromStr(dateStr.String())
+	if dateErr != nil {
+		return dateTimeDef(), dateErr
+	}
+
+	curRune = input.Next() // Skip over 'T'
+
+	timeStr := strings.Builder{}
+	for curRune != '-' && curRune != '+' && curRune != 'Z' && curRune != scanner.EOF {
+		timeStr.WriteRune(curRune)
+		curRune = input.Next()
+	}
+	time, timeErr := timeFromStr(timeStr.String())
+	if timeErr != nil {
+		return dateTimeDef(), timeErr
+	}
+
+	tz := "UTC"
+	tzOffset := 0
+	if curRune == '-' || curRune == '+' { // In this case we have an offset specified
+		neg := curRune == '-'
+		curRune = input.Next() // Skip over '+' or '-'
+
+		hourStr := strings.Builder{}
+		for curRune != ':' && curRune != scanner.EOF {
+			hourStr.WriteRune(curRune)
+			curRune = input.Next()
+		}
+		hour, hourErr := strconv.Atoi(hourStr.String())
+		if hourErr != nil {
+			return dateTimeDef(), hourErr
+		}
+
+		curRune = input.Next() // Skip over ':'
+
+		minStr := strings.Builder{}
+		for curRune != ' ' && curRune != scanner.EOF {
+			minStr.WriteRune(curRune)
+			curRune = input.Next()
+		}
+		min, minErr := strconv.Atoi(minStr.String())
+		if minErr != nil {
+			return dateTimeDef(), minErr
+		}
+		tzOffset = hour*3600 + min*60
+
+		curRune = input.Next() // Skip over ' '
+
+		tzStr := strings.Builder{}
+		for curRune != scanner.EOF {
+			tzStr.WriteRune(curRune)
+			curRune = input.Next()
+		}
+		tz = tzStr.String()
+
+		if neg {
+			tzOffset = tzOffset * -1
+		}
+	}
+	// Otherwise it's UTC
+
+	return DateTime{
+		date:     date,
+		time:     time,
+		tz:       tz,
+		tzOffset: tzOffset,
+	}, nil
 }
 
 func dateTimeFromGo(goTime time.Time) DateTime {
@@ -38,6 +120,15 @@ func dateTimeFromGo(goTime time.Time) DateTime {
 		time:     hTime,
 		tz:       hTz,
 		tzOffset: hTzOffset,
+	}
+}
+
+func dateTimeDef() DateTime {
+	return DateTime{
+		date:     dateDef(),
+		time:     timeDef(),
+		tz:       "UTC",
+		tzOffset: 0,
 	}
 }
 

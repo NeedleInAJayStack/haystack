@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-// Stream based tokenizer for Haystack formats such as Zinc and Filters
+// Stream based tokenizer for Haystack formats such as Zinc, Trio, and Filters
 type Tokenizer struct {
 	in   strings.Reader
 	cur  rune // -1 indicates end-of-stream
@@ -15,28 +15,59 @@ type Tokenizer struct {
 	val  Val
 }
 
-// Consume methods
+func (tokenizer *Tokenizer) Next() (Token, error) {
+	// reset
+	tokenizer.val = nil
 
-func (tokenizer *Tokenizer) consume() error {
-	var err error
-	tokenizer.cur = tokenizer.peek
-	tokenizer.peek, _, err = tokenizer.in.ReadRune()
-	if err != nil { // If end-of-stream, indicate with val of -1
-		tokenizer.cur = -1
-		tokenizer.peek = -1
+	// skip non-meaningful whitespace and comments
+	//int startLine = line
+	for true {
+		// treat space, tab, non-breaking space as whitespace
+		if tokenizer.cur == ' ' || tokenizer.cur == '\t' || tokenizer.cur == 0xa0 {
+			tokenizer.consume()
+			continue
+		}
+
+		// comments
+		if tokenizer.cur == '/' {
+			if tokenizer.peek == '/' {
+				tokenizer.skipCommentsSingleLine()
+				continue
+			}
+			if tokenizer.peek == '*' {
+				tokenizer.skipCommentsMultiLine()
+				continue
+			}
+		}
+
+		break
 	}
-	return err
+
+	if tokenizer.cur == '\n' || tokenizer.cur == '\r' { // newlines
+		if tokenizer.cur == '\r' && tokenizer.peek == '\n' {
+			tokenizer.consumeRune('\r')
+		}
+		tokenizer.consume()
+		//++line
+		return tokenNl(), nil
+	} else if isIdStart(tokenizer.cur) { // handle various starting chars
+		return tokenizer.id(), nil
+	} else if tokenizer.cur == '"' {
+		return tokenizer.str()
+	} else if tokenizer.cur == '@' {
+		return tokenizer.ref(), nil
+	} else if unicode.IsDigit(tokenizer.cur) {
+		return tokenizer.digits()
+	} else if tokenizer.cur == '`' {
+		return tokenizer.uri()
+	} else if tokenizer.cur == '-' && unicode.IsDigit(tokenizer.peek) {
+		return tokenizer.digits()
+	} else {
+		return tokenizer.symbol()
+	}
 }
 
-func (tokenizer *Tokenizer) consumeRune(expected rune) error {
-	if tokenizer.cur != expected {
-		return errors.New("Expected " + string(expected))
-	}
-	tokenizer.consume()
-	return nil
-}
-
-// Token methods
+// Token production methods
 
 func (tokenizer *Tokenizer) id() Token {
 	buf := strings.Builder{}
@@ -242,44 +273,43 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 	}
 }
 
-// TODO implement dateTimeFromZinc
-// func (tokenizer *Tokenizer) dateTime(buf strings.Builder) (Token, error) {
-// 	// Format variable formats to: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+func (tokenizer *Tokenizer) dateTime(buf strings.Builder) (Token, error) {
+	// Format variable formats to: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 
-// 	// xxx timezone
-// 	if tokenizer.cur != ' ' || !unicode.IsUpper(tokenizer.peek) {
-// 		str := buf.String()
-// 		if str[len(str)-1] == 'Z' {
-// 			buf.WriteString(" UTC")
-// 		} else {
-// 			return tokenDateTime(), errors.New("Expecting timezone")
-// 		}
-// 	} else {
-// 		tokenizer.consume()
-// 		buf.WriteRune(' ')
-// 		for isIdPart(tokenizer.cur) {
-// 			buf.WriteRune(tokenizer.cur)
-// 			tokenizer.consume()
-// 		}
+	// xxx timezone
+	if tokenizer.cur != ' ' || !unicode.IsUpper(tokenizer.peek) {
+		str := buf.String()
+		if str[len(str)-1] == 'Z' {
+			buf.WriteString(" UTC")
+		} else {
+			return tokenDateTime(), errors.New("Expecting timezone")
+		}
+	} else {
+		tokenizer.consume()
+		buf.WriteRune(' ')
+		for isIdPart(tokenizer.cur) {
+			buf.WriteRune(tokenizer.cur)
+			tokenizer.consume()
+		}
 
-// 		// handle GMT+xx or GMT-xx
-// 		if (tokenizer.cur == '+' || tokenizer.cur == '-') && strings.HasSuffix(buf.String(), "GMT") {
-// 			buf.WriteRune(tokenizer.cur)
-// 			tokenizer.consume()
-// 			for unicode.IsDigit(tokenizer.cur) {
-// 				buf.WriteRune(tokenizer.cur)
-// 				tokenizer.consume()
-// 			}
-// 		}
-// 	}
+		// handle GMT+xx or GMT-xx
+		if (tokenizer.cur == '+' || tokenizer.cur == '-') && strings.HasSuffix(buf.String(), "GMT") {
+			buf.WriteRune(tokenizer.cur)
+			tokenizer.consume()
+			for unicode.IsDigit(tokenizer.cur) {
+				buf.WriteRune(tokenizer.cur)
+				tokenizer.consume()
+			}
+		}
+	}
 
-// 	dateTime, err := dateTimeFromZinc(buf.String())
-// 	tokenizer.val = &dateTime
-// 	return tokenDateTime(), err
-// }
+	dateTime, err := dateTimeFromStr(buf.String())
+	tokenizer.val = &dateTime
+	return tokenDateTime(), err
+}
 
 func (tokenizer *Tokenizer) date(str string) (Token, error) {
-	date, err := dateFromZinc(str)
+	date, err := dateFromStr(str)
 	tokenizer.val = &date
 	return tokenDate(), err
 }
@@ -288,7 +318,7 @@ func (tokenizer *Tokenizer) time(str string, addSeconds bool) (Token, error) {
 	if addSeconds {
 		str = str + ":00"
 	}
-	time, err := timeFromZinc(str)
+	time, err := timeFromStr(str)
 	tokenizer.val = &time
 	return tokenTime(), err
 }
@@ -313,6 +343,134 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
 			return tokenNumber(), err
 		}
 	}
+}
+
+func (tokenizer *Tokenizer) symbol() (Token, error) {
+	c := tokenizer.cur
+	tokenizer.consume()
+	if c == ',' {
+		return tokenComma(), nil
+	} else if c == '/' {
+		return tokenSlash(), nil
+	} else if c == ':' {
+		return tokenColon(), nil
+	} else if c == ';' {
+		return tokenSemiColon(), nil
+	} else if c == '[' {
+		return tokenLbracket(), nil
+	} else if c == ']' {
+		return tokenRbracket(), nil
+	} else if c == '{' {
+		return tokenLbrace(), nil
+	} else if c == '}' {
+		return tokenRbrace(), nil
+	} else if c == '(' {
+		return tokenLparen(), nil
+	} else if c == ')' {
+		return tokenRparen(), nil
+	} else if c == '<' {
+		if tokenizer.cur == '<' {
+			tokenizer.consumeRune('<')
+			return tokenLt2(), nil
+		} else if tokenizer.cur == '=' {
+			tokenizer.consumeRune('=')
+			return tokenLtEq(), nil
+		} else {
+			return tokenLt(), nil
+		}
+	} else if c == '>' {
+		if tokenizer.cur == '>' {
+			tokenizer.consumeRune('>')
+			return tokenGt2(), nil
+		} else if tokenizer.cur == '=' {
+			tokenizer.consumeRune('=')
+			return tokenGtEq(), nil
+		} else {
+			return tokenGt(), nil
+		}
+	} else if c == '-' {
+		if tokenizer.cur == '>' {
+			tokenizer.consumeRune('>')
+			return tokenArrow(), nil
+		} else {
+			return tokenMinus(), nil
+		}
+	} else if c == '=' {
+		if tokenizer.cur == '=' {
+			tokenizer.consumeRune('=')
+			return tokenEq(), nil
+		} else {
+			return tokenAssign(), nil
+		}
+	} else if c == '!' {
+		if tokenizer.cur == '=' {
+			tokenizer.consumeRune('=')
+			return tokenNotEq(), nil
+		} else {
+			return tokenBang(), nil
+		}
+	} else if c == -1 {
+		return tokenEof(), nil
+	} else {
+		return tokenEof(), errors.New("Unexpected symbol: '" + string(c) + "'") // Not sure what other than EOF to return
+	}
+}
+
+// Comments
+
+func (tokenizer *Tokenizer) skipCommentsSingleLine() {
+	tokenizer.consumeRune('/')
+	tokenizer.consumeRune('/')
+	for tokenizer.cur != '\n' && tokenizer.cur != -1 {
+		tokenizer.consume()
+	}
+}
+
+func (tokenizer *Tokenizer) skipCommentsMultiLine() {
+	tokenizer.consumeRune('/')
+	tokenizer.consumeRune('*')
+	depth := 1
+	for tokenizer.cur != -1 {
+		if tokenizer.cur == '*' && tokenizer.peek == '/' {
+			tokenizer.consumeRune('*')
+			tokenizer.consumeRune('/')
+			depth--
+			if depth <= 0 {
+				break
+			}
+		}
+		if tokenizer.cur == '/' && tokenizer.peek == '*' {
+			tokenizer.consumeRune('/')
+			tokenizer.consumeRune('*')
+			depth++
+			continue
+		}
+		// if tokenizer.cur == '\n' {
+		// 	++line
+		// }
+		tokenizer.consume()
+	}
+}
+
+// Consume methods
+
+func (tokenizer *Tokenizer) consume() error {
+	var err error
+	tokenizer.cur = tokenizer.peek
+	tokenizer.peek, _, err = tokenizer.in.ReadRune()
+	if err != nil { // If end-of-stream, indicate with val of -1
+		tokenizer.cur = -1
+		tokenizer.peek = -1
+	}
+	return err
+}
+
+func (tokenizer *Tokenizer) consumeRune(expected rune) error {
+	if tokenizer.cur != expected {
+		return errors.New("Expected " + string(expected))
+	}
+	tokenizer.consume()
+	return nil
 }
 
 // Rune detection methods. These add onto those in unicode

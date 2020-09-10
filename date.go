@@ -21,7 +21,7 @@ func dateDef() Date {
 }
 
 // Format is YYYY-MM-DD
-func dateFromZinc(str string) (Date, error) {
+func dateFromStr(str string) (Date, error) {
 	parts := strings.Split(str, "-")
 
 	year, yearErr := strconv.Atoi(parts[0])

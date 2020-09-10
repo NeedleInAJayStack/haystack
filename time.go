@@ -23,7 +23,7 @@ func timeDef() Time {
 }
 
 // Format is hh:mm:ss or hh:mm:ss.mmm
-func timeFromZinc(str string) (Time, error) {
+func timeFromStr(str string) (Time, error) {
 	parts := strings.Split(str, ":")
 
 	hour, hourErr := strconv.Atoi(parts[0])

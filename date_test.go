@@ -21,10 +21,10 @@ func TestDate_equals(t *testing.T) {
 	}
 }
 
-func TestDate_dateFromZinc(t *testing.T) {
+func TestDate_dateFromStr(t *testing.T) {
 	dateStr := "2020-08-17"
 	exp := Date{year: 2020, month: 8, day: 17}
-	date, err := dateFromZinc(dateStr)
+	date, err := dateFromStr(dateStr)
 	if err != nil {
 		t.Error(err)
 	}

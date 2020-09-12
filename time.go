@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -45,11 +46,21 @@ func timeFromStr(str string) (Time, error) {
 			return timeDef(), secErr
 		}
 		sec = secVal
-		msVal, msErr := strconv.Atoi(secParts[1])
+		msPart := secParts[1]
+		msVal, msErr := strconv.Atoi(msPart)
 		if msErr != nil {
 			return timeDef(), msErr
 		}
-		ms = msVal
+		// Support inputting up to 3 digit accuracy
+		if len(msPart) == 1 {
+			ms = msVal * 100
+		} else if len(msPart) == 2 {
+			ms = msVal * 10
+		} else if len(msPart) == 3 {
+			ms = msVal
+		} else {
+			return timeDef(), errors.New("ms section contained more than 3 digits")
+		}
 	} else {
 		secVal, secErr := strconv.Atoi(parts[2])
 		if secErr != nil {

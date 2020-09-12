@@ -5,7 +5,7 @@ type Uri struct {
 }
 
 // Format is `<val>`
-func (uri *Uri) toZinc() string {
+func (uri Uri) toZinc() string {
 	result := "`"
 
 	for i := 0; i < len(uri.val); i++ {

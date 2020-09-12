@@ -45,11 +45,11 @@ func dateFromStr(str string) (Date, error) {
 }
 
 // Format is YYYY-MM-DD
-func (date *Date) toZinc() string {
+func (date Date) toZinc() string {
 	return date.encode()
 }
 
-func (date *Date) encode() string {
+func (date Date) encode() string {
 	result := ""
 	result = result + fmt.Sprintf("%d", date.year) + "-"
 	if date.month < 10 {

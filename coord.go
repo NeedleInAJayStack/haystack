@@ -17,7 +17,7 @@ func NewCoord(lat float64, lng float64) *Coord {
 }
 
 // Represented as "C(lat,lng)"
-func (coord *Coord) toZinc() string {
+func (coord Coord) toZinc() string {
 	result := "C("
 	result = result + fmt.Sprintf("%g", coord.lat)
 	result = result + ","

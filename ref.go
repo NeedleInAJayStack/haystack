@@ -6,7 +6,7 @@ type Ref struct {
 }
 
 // Format is "@<id> [dis]"
-func (ref *Ref) toZinc() string {
+func (ref Ref) toZinc() string {
 	result := "@" + ref.val
 	if ref.dis != "" {
 		dis := Str{val: ref.dis}

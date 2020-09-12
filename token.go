@@ -21,10 +21,6 @@ func tokenLiteral(symbol string) Token {
 	}
 }
 
-func (token1 *Token) equals(token2 *Token) bool {
-	return token1.symbol == token2.symbol
-}
-
 // Instances
 
 // End of file
@@ -158,4 +154,10 @@ func tokenBang() Token {
 
 func tokenNl() Token {
 	return tokenSyntax("nl")
+}
+
+// Methods
+
+func (token1 Token) equals(token2 Token) bool {
+	return token1.symbol == token2.symbol
 }

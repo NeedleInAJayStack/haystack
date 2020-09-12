@@ -133,7 +133,7 @@ func dateTimeDef() DateTime {
 }
 
 // Format is YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz
-func (dateTime *DateTime) toZinc() string {
+func (dateTime DateTime) toZinc() string {
 	buf := strings.Builder{}
 	dateTime.encodeTo(&buf)
 	return buf.String()

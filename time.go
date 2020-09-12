@@ -67,11 +67,11 @@ func timeFromStr(str string) (Time, error) {
 }
 
 // Format is hh:mm:ss.mmm
-func (time *Time) toZinc() string {
+func (time Time) toZinc() string {
 	return time.encode()
 }
 
-func (time *Time) encode() string {
+func (time Time) encode() string {
 	result := ""
 	if time.hour < 10 {
 		result = result + "0"
@@ -98,7 +98,7 @@ func (time *Time) encode() string {
 	return result
 }
 
-func (time1 *Time) equals(time2 *Time) bool {
+func (time1 Time) equals(time2 *Time) bool {
 	return time1.hour == time2.hour &&
 		time1.min == time2.min &&
 		time1.sec == time2.sec &&

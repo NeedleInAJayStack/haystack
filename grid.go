@@ -34,7 +34,7 @@ type Grid struct {
 	rows []Row
 }
 
-func (grid *Grid) toZinc() string {
+func (grid Grid) toZinc() string {
 	buf := strings.Builder{}
 	grid.encodeTo(&buf, 0)
 	return buf.String()
@@ -48,7 +48,7 @@ func (grid *Grid) toZinc() string {
 //     ...
 //
 // indentSize is the number of spaces to add to each new-line.
-func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
+func (grid Grid) encodeTo(buf *strings.Builder, indentSize int) {
 	indentBuf := strings.Builder{}
 	for i := 0; i < indentSize; i++ {
 		indentBuf.WriteString(" ")

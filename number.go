@@ -10,11 +10,11 @@ type Number struct {
 	unit string // Optional
 }
 
-func (number *Number) toZinc() string {
+func (number Number) toZinc() string {
 	return number.encode(false)
 }
 
-func (number *Number) encode(spaceBeforeUnit bool) string {
+func (number Number) encode(spaceBeforeUnit bool) string {
 	if math.IsInf(number.val, 1) {
 		return "INF"
 	} else if math.IsInf(number.val, -1) {

@@ -7,7 +7,7 @@ type Str struct {
 }
 
 // Encode using double quotes and back slash escapes
-func (str *Str) toZinc() string {
+func (str Str) toZinc() string {
 	result := "\""
 
 	for i := 0; i < len(str.val); i++ {

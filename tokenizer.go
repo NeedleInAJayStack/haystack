@@ -112,8 +112,8 @@ func (tokenizer *Tokenizer) ref() Token {
 func (tokenizer *Tokenizer) str() (Token, error) {
 	tokenizer.consumeRune('"')
 	buf := strings.Builder{}
-	for true {
-		if tokenizer.cur == -1 {
+	for {
+		if tokenizer.cur == -1 { // EOF
 			return tokenEof(), errors.New("Unexpected end of str")
 		} else if tokenizer.cur == '"' {
 			tokenizer.consumeRune('"')
@@ -126,6 +126,8 @@ func (tokenizer *Tokenizer) str() (Token, error) {
 			buf.WriteRune(esc)
 			// continue
 		}
+		buf.WriteRune(tokenizer.cur)
+		tokenizer.consume()
 	}
 	tokenizer.val = &Str{val: buf.String()}
 	return tokenStr(), nil
@@ -190,7 +192,7 @@ func (tokenizer *Tokenizer) escape() (rune, error) {
 		result = '`'
 	} else if tokenizer.cur == '\\' {
 		result = '\\'
-	} else if tokenizer.cur == 'u' { // check for \uxxxx
+	} else if tokenizer.cur == 'u' { // check for \uxxxx (utf16 literal format)
 		buf := strings.Builder{}
 		tokenizer.consumeRune('u')
 		buf.WriteRune(tokenizer.cur) // Get the next 4 characters
@@ -200,9 +202,8 @@ func (tokenizer *Tokenizer) escape() (rune, error) {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 		buf.WriteRune(tokenizer.cur)
-		// Wait to consume until we return
 
-		codeResult, codeErr := strconv.ParseInt(buf.String(), 0, 32) // ParseFloat accepts hex format
+		codeResult, codeErr := strconv.ParseInt(buf.String(), 16, 0) // Force to base-16 for utf16 format
 		if codeErr != nil {
 			err = codeErr
 		} else {
@@ -218,18 +219,19 @@ func (tokenizer *Tokenizer) escape() (rune, error) {
 }
 
 func (tokenizer *Tokenizer) digits() (Token, error) {
-	if tokenizer.cur == '0' && tokenizer.peek == 'x' { // hex number (no unit allowed)
-		tokenizer.consumeRune('0')
-		tokenizer.consumeRune('x')
+	if tokenizer.cur == '0' && tokenizer.peek == 'x' { // hex integer (no unit allowed)
 		buf := strings.Builder{}
+		buf.WriteRune(tokenizer.cur)
+		tokenizer.consumeRune('0')
+		buf.WriteRune(tokenizer.cur)
+		tokenizer.consumeRune('x')
 		for isHex(tokenizer.cur) || tokenizer.cur == '_' {
-			if isHex(tokenizer.cur) {
-				buf.WriteRune(tokenizer.cur)
-			}
+			buf.WriteRune(tokenizer.cur)
 			tokenizer.consume()
 		}
-		float, err := strconv.ParseFloat(buf.String(), 64) // ParseFloat accepts hex format
-		tokenizer.val = &Number{val: float}
+		valInt, err := strconv.ParseInt(buf.String(), 0, 0) // ParseInt accepts hex format
+		valFloat := float64(valInt)
+		tokenizer.val = &Number{val: valFloat}
 		return tokenNumber(), err
 	} else { // consume all things that might be part of this number token
 		buf := strings.Builder{}
@@ -249,7 +251,7 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 					dashCount = dashCount + 1
 				} else if tokenizer.cur == ':' && unicode.IsDigit(tokenizer.peek) {
 					colonCount = colonCount + 1
-				} else if exponential || (colonCount >= 1 && tokenizer.cur == '+') {
+				} else if (exponential || colonCount >= 1) && tokenizer.cur == '+' {
 					// Just fall through
 				} else if tokenizer.cur == '.' {
 					if !unicode.IsDigit(tokenizer.peek) { // Break numbers at the following decimal
@@ -283,16 +285,14 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 		} else if dashCount == 0 && colonCount >= 1 {
 			return tokenizer.time(buf.String(), colonCount == 1)
 		} else if dashCount >= 2 {
-			// TODO Implement
-			// return tokenizer.dateTime(buf.String())
-			return tokenDateTime(), nil
+			return tokenizer.dateTime(&buf)
 		} else {
 			return tokenizer.number(buf.String(), unitIndex)
 		}
 	}
 }
 
-func (tokenizer *Tokenizer) dateTime(buf strings.Builder) (Token, error) {
+func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) (Token, error) {
 	// Format variable formats to: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 
 	// xxx timezone

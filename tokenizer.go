@@ -9,10 +9,24 @@ import (
 
 // Stream based tokenizer for Haystack formats such as Zinc, Trio, and Filters
 type Tokenizer struct {
-	in   strings.Reader
-	cur  rune // -1 indicates end-of-stream
-	peek rune // -1 indicates end-of-stream
-	val  Val
+	in    *strings.Reader
+	cur   rune // -1 indicates end-of-stream
+	peek  rune // -1 indicates end-of-stream
+	val   Val
+	token Token
+}
+
+func newTokenizer(in *strings.Reader) Tokenizer {
+	tokenizer := Tokenizer{
+		in:    in,
+		cur:   0,
+		peek:  0,
+		val:   &NA{},
+		token: tokenEof(),
+	}
+	tokenizer.consume()
+	tokenizer.consume()
+	return tokenizer
 }
 
 func (tokenizer *Tokenizer) Next() (Token, error) {
@@ -43,28 +57,33 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 		break
 	}
 
+	var err error
+	var newToken Token
 	if tokenizer.cur == '\n' || tokenizer.cur == '\r' { // newlines
 		if tokenizer.cur == '\r' && tokenizer.peek == '\n' {
 			tokenizer.consumeRune('\r')
 		}
 		tokenizer.consume()
 		//++line
-		return tokenNl(), nil
+		newToken = tokenNl()
 	} else if isIdStart(tokenizer.cur) { // handle various starting chars
-		return tokenizer.id(), nil
+		newToken = tokenizer.id()
 	} else if tokenizer.cur == '"' {
-		return tokenizer.str()
+		newToken, err = tokenizer.str()
 	} else if tokenizer.cur == '@' {
-		return tokenizer.ref(), nil
+		newToken = tokenizer.ref()
 	} else if unicode.IsDigit(tokenizer.cur) {
-		return tokenizer.digits()
+		newToken, err = tokenizer.digits()
 	} else if tokenizer.cur == '`' {
-		return tokenizer.uri()
+		newToken, err = tokenizer.uri()
 	} else if tokenizer.cur == '-' && unicode.IsDigit(tokenizer.peek) {
-		return tokenizer.digits()
+		newToken, err = tokenizer.digits()
 	} else {
-		return tokenizer.symbol()
+		newToken, err = tokenizer.symbol()
 	}
+
+	tokenizer.token = newToken
+	return tokenizer.token, err
 }
 
 // Token production methods
@@ -75,7 +94,7 @@ func (tokenizer *Tokenizer) id() Token {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
-	tokenizer.val = &Str{val: buf.String()}
+	tokenizer.val = &Id{val: buf.String()}
 	return tokenId()
 }
 
@@ -459,7 +478,6 @@ func (tokenizer *Tokenizer) consume() error {
 	tokenizer.cur = tokenizer.peek
 	tokenizer.peek, _, err = tokenizer.in.ReadRune()
 	if err != nil { // If end-of-stream, indicate with val of -1
-		tokenizer.cur = -1
 		tokenizer.peek = -1
 	}
 	return err

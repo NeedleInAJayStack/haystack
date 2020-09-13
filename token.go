@@ -23,6 +23,11 @@ func tokenLiteral(symbol string) Token {
 
 // Instances
 
+// Default token (meaning no token recognized)
+func tokenDef() Token {
+	return tokenSyntax("")
+}
+
 // End of file
 func tokenEof() Token {
 	return tokenSyntax("eof")

@@ -144,15 +144,32 @@ func TestTokenizer_testUri(t *testing.T) {
 	testTokenizer(t, "`_ \\n \\\\ \\`_`", []Token{tokenUri()}, []Val{Uri{val: "_ \n \\\\ `_"}})
 }
 func TestTokenizer_testWhitespace(t *testing.T) {
-	// testTokenizer(t, "a\n  b   \rc \r\nd\n\ne", []Token{tokenNl()}, Uri{val: "http://foo/"})
-	// verifyToks("a\n  b   \rc \r\nd\n\ne",
-	// new Object[] {
-	//   id, "a", HaystackToken.nl, null,
-	//   id, "b", HaystackToken.nl, null,
-	//   id, "c", HaystackToken.nl, null,
-	//   id, "d", HaystackToken.nl, null, HaystackToken.nl, null,
-	//   id, "e"
-	// });
+	testTokenizer(t, "a\n  b   \rc \r\nd\n\ne",
+		[]Token{
+			tokenId(),
+			tokenNl(),
+			tokenId(),
+			tokenNl(),
+			tokenId(),
+			tokenNl(),
+			tokenId(),
+			tokenNl(),
+			tokenNl(),
+			tokenId(),
+		},
+		[]Val{
+			Id{val: "a"},
+			Null{},
+			Id{val: "b"},
+			Null{},
+			Id{val: "c"},
+			Null{},
+			Id{val: "d"},
+			Null{},
+			Null{},
+			Id{val: "e"},
+		},
+	)
 }
 
 // Verifies that the tokenized result has the expected token type and value.

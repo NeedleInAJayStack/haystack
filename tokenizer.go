@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-// Stream based tokenizer for Haystack formats such as Zinc, Trio, and Filters
+// Tokenizer implements a stream approach for reading Haystack formats such as Zinc, Trio, and Filters
 type Tokenizer struct {
 	in    *strings.Reader
 	cur   rune // -1 indicates end-of-stream
@@ -16,22 +16,24 @@ type Tokenizer struct {
 	token Token
 }
 
-func newTokenizer(in *strings.Reader) Tokenizer {
+// NewTokenizer wraps an instream in a tokenizer object
+func NewTokenizer(in *strings.Reader) Tokenizer {
 	tokenizer := Tokenizer{
 		in:    in,
 		cur:   0,
 		peek:  0,
-		val:   &NA{},
-		token: tokenEof(),
+		val:   &Null{},
+		token: tokenDef(),
 	}
 	tokenizer.consume()
 	tokenizer.consume()
 	return tokenizer
 }
 
+// Next reads the next haystack token, storing the value in the Val, and Token fields
 func (tokenizer *Tokenizer) Next() (Token, error) {
 	// reset
-	tokenizer.val = nil
+	tokenizer.val = Null{}
 
 	// skip non-meaningful whitespace and comments
 	//int startLine = line
@@ -58,8 +60,10 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 	}
 
 	var err error
-	var newToken Token
-	if tokenizer.cur == '\n' || tokenizer.cur == '\r' { // newlines
+	newToken := tokenDef()
+	if tokenizer.cur == -1 {
+		newToken = tokenEof()
+	} else if tokenizer.cur == '\n' || tokenizer.cur == '\r' { // newlines
 		if tokenizer.cur == '\r' && tokenizer.peek == '\n' {
 			tokenizer.consumeRune('\r')
 		}
@@ -101,7 +105,7 @@ func (tokenizer *Tokenizer) id() Token {
 func (tokenizer *Tokenizer) ref() Token {
 	tokenizer.consumeRune('@')
 	buf := strings.Builder{}
-	for isIdPart(tokenizer.cur) {
+	for isRefPart(tokenizer.cur) {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
@@ -150,7 +154,6 @@ func (tokenizer *Tokenizer) uri() (Token, error) {
 				tokenizer.consume()
 				buf.WriteRune(tokenizer.cur)
 				tokenizer.consume()
-				break
 			} else {
 				char, err := tokenizer.escape()
 				if err != nil {
@@ -506,6 +509,16 @@ func isHex(char rune) bool {
 	if 'a' <= char && char <= 'f' {
 		return true
 	} else if unicode.IsDigit(char) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isRefPart(char rune) bool {
+	if isIdPart(char) {
+		return true
+	} else if char == '-' || char == ':' || char == '.' || char == '~' {
 		return true
 	} else {
 		return false

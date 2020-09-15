@@ -7,27 +7,27 @@ import (
 	"unicode"
 )
 
+const EOF = -1
+
 // Tokenizer implements a stream approach for reading Haystack formats such as Zinc, Trio, and Filters
 type Tokenizer struct {
 	in    *strings.Reader
-	cur   rune // -1 indicates end-of-stream
-	peek  rune // -1 indicates end-of-stream
+	cur   rune
+	peek  rune
 	val   Val
 	token Token
 }
 
-// NewTokenizer wraps an instream in a tokenizer object
-func NewTokenizer(in *strings.Reader) Tokenizer {
-	tokenizer := Tokenizer{
-		in:    in,
-		cur:   0,
-		peek:  0,
-		val:   &Null{},
-		token: tokenDef(),
-	}
+// Init initializes a tokenizer on a Reader
+func (tokenizer *Tokenizer) Init(in *strings.Reader) {
+	tokenizer.in = in
+	tokenizer.cur = 0
+	tokenizer.peek = 0
+	tokenizer.val = &Null{}
+	tokenizer.token = tokenDef()
+
 	tokenizer.consume()
 	tokenizer.consume()
-	return tokenizer
 }
 
 // Next reads the next haystack token, storing the value in the Val, and Token fields
@@ -61,7 +61,7 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 
 	var err error
 	newToken := tokenDef()
-	if tokenizer.cur == -1 {
+	if tokenizer.cur == EOF {
 		newToken = tokenEof()
 	} else if tokenizer.cur == '\n' || tokenizer.cur == '\r' { // newlines
 		if tokenizer.cur == '\r' && tokenizer.peek == '\n' {
@@ -117,7 +117,7 @@ func (tokenizer *Tokenizer) str() (Token, error) {
 	tokenizer.consumeRune('"')
 	buf := strings.Builder{}
 	for {
-		if tokenizer.cur == -1 { // EOF
+		if tokenizer.cur == EOF { // EOF
 			return tokenEof(), errors.New("Unexpected end of str")
 		} else if tokenizer.cur == '"' {
 			tokenizer.consumeRune('"')
@@ -144,7 +144,7 @@ func (tokenizer *Tokenizer) uri() (Token, error) {
 		if tokenizer.cur == '`' {
 			tokenizer.consumeRune('`')
 			break
-		} else if tokenizer.cur == -1 {
+		} else if tokenizer.cur == EOF {
 			return tokenEof(), errors.New("Unexpected end of uri: eof")
 		} else if tokenizer.cur == '\n' {
 			return tokenUri(), errors.New("Unexpected end of uri: newline")
@@ -431,7 +431,7 @@ func (tokenizer *Tokenizer) symbol() (Token, error) {
 		} else {
 			return tokenBang(), nil
 		}
-	} else if c == -1 {
+	} else if c == EOF {
 		return tokenEof(), nil
 	} else {
 		return tokenEof(), errors.New("Unexpected symbol: '" + string(c) + "'") // Not sure what other than EOF to return
@@ -443,7 +443,7 @@ func (tokenizer *Tokenizer) symbol() (Token, error) {
 func (tokenizer *Tokenizer) skipCommentsSingleLine() {
 	tokenizer.consumeRune('/')
 	tokenizer.consumeRune('/')
-	for tokenizer.cur != '\n' && tokenizer.cur != -1 {
+	for tokenizer.cur != '\n' && tokenizer.cur != EOF {
 		tokenizer.consume()
 	}
 }
@@ -452,7 +452,7 @@ func (tokenizer *Tokenizer) skipCommentsMultiLine() {
 	tokenizer.consumeRune('/')
 	tokenizer.consumeRune('*')
 	depth := 1
-	for tokenizer.cur != -1 {
+	for tokenizer.cur != EOF {
 		if tokenizer.cur == '*' && tokenizer.peek == '/' {
 			tokenizer.consumeRune('*')
 			tokenizer.consumeRune('/')
@@ -480,8 +480,8 @@ func (tokenizer *Tokenizer) consume() error {
 	var err error
 	tokenizer.cur = tokenizer.peek
 	tokenizer.peek, _, err = tokenizer.in.ReadRune()
-	if err != nil { // If end-of-stream, indicate with val of -1
-		tokenizer.peek = -1
+	if err != nil { // If end-of-stream, indicate with val of EOF
+		tokenizer.peek = EOF
 	}
 	return err
 }

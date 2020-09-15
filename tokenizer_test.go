@@ -6,145 +6,131 @@ import (
 )
 
 func TestTokenizer_empty(t *testing.T) {
-	testTokenizer(t, "", []Token{}, []Val{})
+	testTokenizerMulti(t, "", []Token{}, []Val{})
 }
 func TestTokenizer_testId(t *testing.T) {
-	testTokenizer(t, "x", []Token{tokenId()}, []Val{Id{val: "x"}})
-	testTokenizer(t, "fooBar", []Token{tokenId()}, []Val{Id{val: "fooBar"}})
-	testTokenizer(t, "fooBar1999x", []Token{tokenId()}, []Val{Id{val: "fooBar1999x"}})
-	testTokenizer(t, "foo_23", []Token{tokenId()}, []Val{Id{val: "foo_23"}})
-	testTokenizer(t, "Foo", []Token{tokenId()}, []Val{Id{val: "Foo"}})
+	testTokenizerSingle(t, "x", tokenId(), Id{val: "x"})
+	testTokenizerSingle(t, "fooBar", tokenId(), Id{val: "fooBar"})
+	testTokenizerSingle(t, "fooBar1999x", tokenId(), Id{val: "fooBar1999x"})
+	testTokenizerSingle(t, "foo_23", tokenId(), Id{val: "foo_23"})
+	testTokenizerSingle(t, "Foo", tokenId(), Id{val: "Foo"})
 }
 func TestTokenizer_testInts(t *testing.T) {
-	testTokenizer(t, "5", []Token{tokenNumber()}, []Val{Number{val: 5}})
-	testTokenizer(t, "0x1234_abcd", []Token{tokenNumber()}, []Val{Number{val: 0x1234_abcd}})
+	testTokenizerSingle(t, "5", tokenNumber(), Number{val: 5})
+	testTokenizerSingle(t, "0x1234_abcd", tokenNumber(), Number{val: 0x1234_abcd})
 }
 func TestTokenizer_testFloats(t *testing.T) {
-	testTokenizer(t, "5.0", []Token{tokenNumber()}, []Val{Number{val: 5.0}})
-	testTokenizer(t, "5.42", []Token{tokenNumber()}, []Val{Number{val: 5.42}})
-	testTokenizer(t, "123.2e32", []Token{tokenNumber()}, []Val{Number{val: 123.2e32}})
-	testTokenizer(t, "123.2e+32", []Token{tokenNumber()}, []Val{Number{val: 123.2e+32}})
-	testTokenizer(t, "2_123.2e+32", []Token{tokenNumber()}, []Val{Number{val: 2_123.2e+32}})
-	testTokenizer(t, "4.2e-7", []Token{tokenNumber()}, []Val{Number{val: 4.2e-7}})
+	testTokenizerSingle(t, "5.0", tokenNumber(), Number{val: 5.0})
+	testTokenizerSingle(t, "5.42", tokenNumber(), Number{val: 5.42})
+	testTokenizerSingle(t, "123.2e32", tokenNumber(), Number{val: 123.2e32})
+	testTokenizerSingle(t, "123.2e+32", tokenNumber(), Number{val: 123.2e+32})
+	testTokenizerSingle(t, "2_123.2e+32", tokenNumber(), Number{val: 2_123.2e+32})
+	testTokenizerSingle(t, "4.2e-7", tokenNumber(), Number{val: 4.2e-7})
 }
 func TestTokenizer_testNumberWithUnits(t *testing.T) {
-	testTokenizer(t, "-40ms", []Token{tokenNumber()}, []Val{Number{val: -40, unit: "ms"}})
-	testTokenizer(t, "1sec", []Token{tokenNumber()}, []Val{Number{val: 1, unit: "sec"}})
-	testTokenizer(t, "2.5day", []Token{tokenNumber()}, []Val{Number{val: 2.5, unit: "day"}})
-	testTokenizer(t, "12%", []Token{tokenNumber()}, []Val{Number{val: 12, unit: "%"}})
-	testTokenizer(t, "987_foo", []Token{tokenNumber()}, []Val{Number{val: 987, unit: "_foo"}})
-	testTokenizer(t, "-1.2m/s", []Token{tokenNumber()}, []Val{Number{val: -1.2, unit: "m/s"}})
-	testTokenizer(t, "12kWh/ft\u00B2", []Token{tokenNumber()}, []Val{Number{val: 12, unit: "kWh/ft\u00B2"}})
-	testTokenizer(t, "3_000.5J/kg_dry", []Token{tokenNumber()}, []Val{Number{val: 3000.5, unit: "J/kg_dry"}})
+	testTokenizerSingle(t, "-40ms", tokenNumber(), Number{val: -40, unit: "ms"})
+	testTokenizerSingle(t, "1sec", tokenNumber(), Number{val: 1, unit: "sec"})
+	testTokenizerSingle(t, "2.5day", tokenNumber(), Number{val: 2.5, unit: "day"})
+	testTokenizerSingle(t, "12%", tokenNumber(), Number{val: 12, unit: "%"})
+	testTokenizerSingle(t, "987_foo", tokenNumber(), Number{val: 987, unit: "_foo"})
+	testTokenizerSingle(t, "-1.2m/s", tokenNumber(), Number{val: -1.2, unit: "m/s"})
+	testTokenizerSingle(t, "12kWh/ft\u00B2", tokenNumber(), Number{val: 12, unit: "kWh/ft\u00B2"})
+	testTokenizerSingle(t, "3_000.5J/kg_dry", tokenNumber(), Number{val: 3000.5, unit: "J/kg_dry"})
 }
 func TestTokenizer_testStr(t *testing.T) {
-	testTokenizer(t, "\"\"", []Token{tokenStr()}, []Val{Str{val: ""}})
-	testTokenizer(t, "\"x y\"", []Token{tokenStr()}, []Val{Str{val: "x y"}})
-	testTokenizer(t, "\"x\\\"y\"", []Token{tokenStr()}, []Val{Str{val: "x\"y"}})
-	testTokenizer(t, "\"_\\u012f \\n \\t \\\\_\"", []Token{tokenStr()}, []Val{Str{val: "_\u012f \n \t \\_"}})
+	testTokenizerSingle(t, "\"\"", tokenStr(), Str{val: ""})
+	testTokenizerSingle(t, "\"x y\"", tokenStr(), Str{val: "x y"})
+	testTokenizerSingle(t, "\"x\\\"y\"", tokenStr(), Str{val: "x\"y"})
+	testTokenizerSingle(t, "\"_\\u012f \\n \\t \\\\_\"", tokenStr(), Str{val: "_\u012f \n \t \\_"})
 }
 func TestTokenizer_testDate(t *testing.T) {
-	testTokenizer(t, "2016-06-06", []Token{tokenDate()}, []Val{Date{year: 2016, month: 6, day: 6}})
+	testTokenizerSingle(t, "2016-06-06", tokenDate(), Date{year: 2016, month: 6, day: 6})
 }
 func TestTokenizer_testTime(t *testing.T) {
-	testTokenizer(t, "8:30", []Token{tokenTime()}, []Val{Time{hour: 8, min: 30}})
-	testTokenizer(t, "20:15", []Token{tokenTime()}, []Val{Time{hour: 20, min: 15}})
-	testTokenizer(t, "00:00", []Token{tokenTime()}, []Val{Time{hour: 0, min: 0}})
-	testTokenizer(t, "00:00:00", []Token{tokenTime()}, []Val{Time{hour: 0, min: 0, sec: 0}})
-	testTokenizer(t, "01:02:03", []Token{tokenTime()}, []Val{Time{hour: 1, min: 2, sec: 3}})
-	testTokenizer(t, "01:02:03", []Token{tokenTime()}, []Val{Time{hour: 1, min: 2, sec: 3}})
-	testTokenizer(t, "23:59:59", []Token{tokenTime()}, []Val{Time{hour: 23, min: 59, sec: 59}})
-	testTokenizer(t, "12:00:12.9", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 900}})
-	testTokenizer(t, "12:00:12.9", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 900}})
-	testTokenizer(t, "12:00:12.9", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 900}})
-	testTokenizer(t, "12:00:12.99", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 990}})
-	testTokenizer(t, "12:00:12.999", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 999}})
-	testTokenizer(t, "12:00:12.000", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 0}})
-	testTokenizer(t, "12:00:12.001", []Token{tokenTime()}, []Val{Time{hour: 12, min: 00, sec: 12, ms: 1}})
+	testTokenizerSingle(t, "8:30", tokenTime(), Time{hour: 8, min: 30})
+	testTokenizerSingle(t, "20:15", tokenTime(), Time{hour: 20, min: 15})
+	testTokenizerSingle(t, "00:00", tokenTime(), Time{hour: 0, min: 0})
+	testTokenizerSingle(t, "00:00:00", tokenTime(), Time{hour: 0, min: 0, sec: 0})
+	testTokenizerSingle(t, "01:02:03", tokenTime(), Time{hour: 1, min: 2, sec: 3})
+	testTokenizerSingle(t, "01:02:03", tokenTime(), Time{hour: 1, min: 2, sec: 3})
+	testTokenizerSingle(t, "23:59:59", tokenTime(), Time{hour: 23, min: 59, sec: 59})
+	testTokenizerSingle(t, "12:00:12.9", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 900})
+	testTokenizerSingle(t, "12:00:12.9", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 900})
+	testTokenizerSingle(t, "12:00:12.9", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 900})
+	testTokenizerSingle(t, "12:00:12.99", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 990})
+	testTokenizerSingle(t, "12:00:12.999", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 999})
+	testTokenizerSingle(t, "12:00:12.000", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 0})
+	testTokenizerSingle(t, "12:00:12.001", tokenTime(), Time{hour: 12, min: 00, sec: 12, ms: 1})
 }
 func TestTokenizer_testDateTime(t *testing.T) {
-	testTokenizer(t, "2016-01-13T09:51:33-05:00 New_York", []Token{tokenDateTime()},
-		[]Val{
-			DateTime{
-				date:     Date{year: 2016, month: 1, day: 13},
-				time:     Time{hour: 9, min: 51, sec: 33},
-				tz:       "New_York",
-				tzOffset: -18000,
-			},
+	testTokenizerSingle(t, "2016-01-13T09:51:33-05:00 New_York", tokenDateTime(),
+		DateTime{
+			date:     Date{year: 2016, month: 1, day: 13},
+			time:     Time{hour: 9, min: 51, sec: 33},
+			tz:       "New_York",
+			tzOffset: -18000,
 		},
 	)
-	testTokenizer(t, "2016-01-13T09:51:33.353-05:00 New_York", []Token{tokenDateTime()},
-		[]Val{
-			DateTime{
-				date:     Date{year: 2016, month: 1, day: 13},
-				time:     Time{hour: 9, min: 51, sec: 33, ms: 353},
-				tz:       "New_York",
-				tzOffset: -18000,
-			},
+	testTokenizerSingle(t, "2016-01-13T09:51:33.353-05:00 New_York", tokenDateTime(),
+		DateTime{
+			date:     Date{year: 2016, month: 1, day: 13},
+			time:     Time{hour: 9, min: 51, sec: 33, ms: 353},
+			tz:       "New_York",
+			tzOffset: -18000,
 		},
 	)
-	testTokenizer(t, "2010-12-18T14:11:30.924Z", []Token{tokenDateTime()},
-		[]Val{
-			DateTime{
-				date:     Date{year: 2010, month: 12, day: 18},
-				time:     Time{hour: 14, min: 11, sec: 30, ms: 924},
-				tz:       "UTC",
-				tzOffset: 0,
-			},
+	testTokenizerSingle(t, "2010-12-18T14:11:30.924Z", tokenDateTime(),
+		DateTime{
+			date:     Date{year: 2010, month: 12, day: 18},
+			time:     Time{hour: 14, min: 11, sec: 30, ms: 924},
+			tz:       "UTC",
+			tzOffset: 0,
 		},
 	)
-	testTokenizer(t, "2010-12-18T14:11:30.924Z UTC", []Token{tokenDateTime()},
-		[]Val{
-			DateTime{
-				date:     Date{year: 2010, month: 12, day: 18},
-				time:     Time{hour: 14, min: 11, sec: 30, ms: 924},
-				tz:       "UTC",
-				tzOffset: 0,
-			},
+	testTokenizerSingle(t, "2010-12-18T14:11:30.924Z UTC", tokenDateTime(),
+		DateTime{
+			date:     Date{year: 2010, month: 12, day: 18},
+			time:     Time{hour: 14, min: 11, sec: 30, ms: 924},
+			tz:       "UTC",
+			tzOffset: 0,
 		},
 	)
 	// TODO: extract tzOffset from timezone name (go has no tz lookup)
-	// testTokenizer(t, "2010-12-18T14:11:30.924Z London", []Token{tokenDateTime()},
-	// 	[]Val{
+	// testTokenizerSingle(t, "2010-12-18T14:11:30.924Z London", tokenDateTime(),
 	//	 DateTime{
 	// 		date: Date{year: 2010, month: 12, day: 18},
 	// 		time: Time{hour: 14, min: 11, sec: 30, ms: 924},
 	// 		tz: "London",
 	// 		tzOffset: 0,
-	// 	}
 	//},
 	// )
-	testTokenizer(t, "2010-03-01T23:55:00.013-05:00 GMT+5", []Token{tokenDateTime()},
-		[]Val{
-			DateTime{
-				date:     Date{year: 2010, month: 3, day: 1},
-				time:     Time{hour: 23, min: 55, sec: 00, ms: 13},
-				tz:       "GMT+5",
-				tzOffset: -18000,
-			},
+	testTokenizerSingle(t, "2010-03-01T23:55:00.013-05:00 GMT+5", tokenDateTime(),
+		DateTime{
+			date:     Date{year: 2010, month: 3, day: 1},
+			time:     Time{hour: 23, min: 55, sec: 00, ms: 13},
+			tz:       "GMT+5",
+			tzOffset: -18000,
 		},
 	)
-	testTokenizer(t, "2010-03-01T23:55:00.013+10:00 GMT-10 ", []Token{tokenDateTime()},
-		[]Val{
-			DateTime{
-				date:     Date{year: 2010, month: 3, day: 1},
-				time:     Time{hour: 23, min: 55, sec: 00, ms: 13},
-				tz:       "GMT-10",
-				tzOffset: 36000,
-			},
+	testTokenizerSingle(t, "2010-03-01T23:55:00.013+10:00 GMT-10 ", tokenDateTime(),
+		DateTime{
+			date:     Date{year: 2010, month: 3, day: 1},
+			time:     Time{hour: 23, min: 55, sec: 00, ms: 13},
+			tz:       "GMT-10",
+			tzOffset: 36000,
 		},
 	)
 }
 func TestTokenizer_testRef(t *testing.T) {
-	testTokenizer(t, "@125b780e-0684e169", []Token{tokenRef()}, []Val{Ref{val: "125b780e-0684e169"}})
-	testTokenizer(t, "@demo:_:-.~", []Token{tokenRef()}, []Val{Ref{val: "demo:_:-.~"}})
+	testTokenizerSingle(t, "@125b780e-0684e169", tokenRef(), Ref{val: "125b780e-0684e169"})
+	testTokenizerSingle(t, "@demo:_:-.~", tokenRef(), Ref{val: "demo:_:-.~"})
 }
 func TestTokenizer_testUri(t *testing.T) {
-	testTokenizer(t, "`http://foo/`", []Token{tokenUri()}, []Val{Uri{val: "http://foo/"}})
-	testTokenizer(t, "`_ \\n \\\\ \\`_`", []Token{tokenUri()}, []Val{Uri{val: "_ \n \\\\ `_"}})
+	testTokenizerSingle(t, "`http://foo/`", tokenUri(), Uri{val: "http://foo/"})
+	testTokenizerSingle(t, "`_ \\n \\\\ \\`_`", tokenUri(), Uri{val: "_ \n \\\\ `_"})
 }
 func TestTokenizer_testWhitespace(t *testing.T) {
-	testTokenizer(t, "a\n  b   \rc \r\nd\n\ne",
+	testTokenizerMulti(t, "a\n  b   \rc \r\nd\n\ne",
 		[]Token{
 			tokenId(),
 			tokenNl(),
@@ -174,7 +160,13 @@ func TestTokenizer_testWhitespace(t *testing.T) {
 
 // Verifies that the tokenized result has the expected token type and value.
 // Values are matched based on the result of the 'toZinc' method
-func testTokenizer(t *testing.T, str string, expectedTokens []Token, expectedVals []Val) {
+func testTokenizerSingle(t *testing.T, str string, expectedToken Token, expectedVal Val) {
+	testTokenizerMulti(t, str, []Token{expectedToken}, []Val{expectedVal})
+}
+
+// Verifies that the tokenized result has the expected token type and value.
+// Values are matched based on the result of the 'toZinc' method
+func testTokenizerMulti(t *testing.T, str string, expectedTokens []Token, expectedVals []Val) {
 	tokens, vals := testTokenizerRead(t, str)
 
 	if len(tokens) != len(expectedTokens) {
@@ -201,7 +193,8 @@ func testTokenizer(t *testing.T, str string, expectedTokens []Token, expectedVal
 }
 
 func testTokenizerRead(t *testing.T, str string) ([]Token, []Val) {
-	tokenizer := NewTokenizer(strings.NewReader(str))
+	var tokenizer Tokenizer
+	tokenizer.Init(strings.NewReader(str))
 
 	var tokens []Token
 	var vals []Val

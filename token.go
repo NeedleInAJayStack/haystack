@@ -1,168 +1,102 @@
 package haystack
 
-type Token struct {
-	symbol  string
-	literal bool
+type Token int
+
+const (
+	// Special tokens
+	DEF Token = iota
+	EOF
+
+	// Literals
+	literal_begin
+	ID
+	NUMBER
+	STR
+	REF
+	URI
+	DATE
+	TIME
+	DATETIME
+	literal_end
+
+	// Syntax
+	syntax_begin
+	COLON
+	COMMA
+	SEMICOLON
+	MINUS
+	EQ
+	NOTEQ
+	LT
+	LT2
+	LTEQ
+	GT
+	GT2
+	GTEQ
+	LBRACKET
+	RBRACKET
+	LBRACE
+	RBRACE
+	LPAREN
+	RPAREN
+	ARROW
+	SLASH
+	ASSIGN
+	BANG
+	NL
+	syntax_end
+)
+
+var tokens = [...]string{
+	DEF: "",
+	EOF: "eof",
+
+	ID:       "id",
+	NUMBER:   "Number",
+	STR:      "Str",
+	REF:      "Ref",
+	URI:      "Uri",
+	DATE:     "Date",
+	TIME:     "Time",
+	DATETIME: "DateTime",
+
+	COLON:     ":",
+	COMMA:     ",",
+	SEMICOLON: ";",
+	MINUS:     "-",
+	EQ:        "=",
+	NOTEQ:     "!=",
+	LT:        "<",
+	LT2:       "<<",
+	LTEQ:      "<=",
+	GT:        ">",
+	GT2:       ">>",
+	GTEQ:      ">=",
+	LBRACKET:  "[",
+	RBRACKET:  "]",
+	LBRACE:    "{",
+	RBRACE:    "}",
+	LPAREN:    "(",
+	RPAREN:    ")",
+	ARROW:     "->",
+	SLASH:     "/",
+	ASSIGN:    "=",
+	BANG:      "!",
+	NL:        "nl",
 }
 
-// Constructors
-
-func tokenSyntax(symbol string) Token {
-	return Token{
-		symbol:  symbol,
-		literal: false,
+func (tok Token) String() string {
+	s := ""
+	if 0 <= tok && tok < Token(len(tokens)) {
+		s = tokens[tok]
 	}
+	return s
 }
 
-func tokenLiteral(symbol string) Token {
-	return Token{
-		symbol:  symbol,
-		literal: true,
-	}
+func (tok Token) IsLiteral() bool {
+	return literal_begin < tok && tok < literal_end
 }
 
-// Instances
-
-// Default token (meaning no token recognized)
-func tokenDef() Token {
-	return tokenSyntax("")
-}
-
-// End of file
-func tokenEof() Token {
-	return tokenSyntax("eof")
-}
-
-// Literals
-
-func tokenId() Token {
-	return tokenSyntax("identifier")
-}
-
-func tokenNumber() Token {
-	return tokenLiteral("Number")
-}
-
-func tokenStr() Token {
-	return tokenLiteral("Str")
-}
-
-func tokenRef() Token {
-	return tokenLiteral("Ref")
-}
-
-func tokenUri() Token {
-	return tokenLiteral("Uri")
-}
-
-func tokenDate() Token {
-	return tokenLiteral("Date")
-}
-
-func tokenTime() Token {
-	return tokenLiteral("Time")
-}
-
-func tokenDateTime() Token {
-	return tokenLiteral("DateTime")
-}
-
-// Syntax characters
-
-func tokenColon() Token {
-	return tokenSyntax(":")
-}
-
-func tokenComma() Token {
-	return tokenSyntax(",")
-}
-
-func tokenSemiColon() Token {
-	return tokenSyntax(",")
-}
-
-func tokenMinus() Token {
-	return tokenSyntax("-")
-}
-
-func tokenEq() Token {
-	return tokenSyntax("==")
-}
-
-func tokenNotEq() Token {
-	return tokenSyntax("!=")
-}
-
-func tokenLt() Token {
-	return tokenSyntax("<")
-}
-
-func tokenLt2() Token {
-	return tokenSyntax("<<")
-}
-
-func tokenLtEq() Token {
-	return tokenSyntax("<=")
-}
-
-func tokenGt() Token {
-	return tokenSyntax(">")
-}
-
-func tokenGt2() Token {
-	return tokenSyntax(">>")
-}
-
-func tokenGtEq() Token {
-	return tokenSyntax(">=")
-}
-
-func tokenLbracket() Token {
-	return tokenSyntax("[")
-}
-
-func tokenRbracket() Token {
-	return tokenSyntax("]")
-}
-
-func tokenLbrace() Token {
-	return tokenSyntax("{")
-}
-
-func tokenRbrace() Token {
-	return tokenSyntax("}")
-}
-
-func tokenLparen() Token {
-	return tokenSyntax("(")
-}
-
-func tokenRparen() Token {
-	return tokenSyntax(")")
-}
-
-func tokenArrow() Token {
-	return tokenSyntax("->")
-}
-
-func tokenSlash() Token {
-	return tokenSyntax("/")
-}
-
-func tokenAssign() Token {
-	return tokenSyntax("=")
-}
-
-func tokenBang() Token {
-	return tokenSyntax("!")
-}
-
-func tokenNl() Token {
-	return tokenSyntax("nl")
-}
-
-// Methods
-
-func (token1 Token) equals(token2 Token) bool {
-	return token1.symbol == token2.symbol
+func (tok Token) IsSyntax() bool {
+	return syntax_begin < tok && tok < syntax_end
 }

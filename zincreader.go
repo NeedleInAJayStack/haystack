@@ -32,9 +32,12 @@ func (reader *ZincReader) ReadVal(in *strings.Reader) (Val, error) {
 	var err error
 
 	if reader.cur.equals(tokenId()) {
-		val = reader.parseGrid()
+f		val, err = reader.parseGrid()
 	} else {
-		val = reader.parseVal()
+		val, err = reader.parseVal()
+	}
+	if err != nil {
+		return Null{}, err
 	}
 
 	if reader.cur.equals(tokenEof()) {
@@ -48,7 +51,10 @@ func (reader *ZincReader) parseVal() (Val, error) {
 
 	if reader.cur.equals(tokenId()) {
 		id := reader.curVal.(Str)
-		reader.consumeToken(tokenId())
+		err = reader.consumeToken(tokenId())
+		if err != nil {
+			return Null{}, err
+		}
 
 		// check for coord or xstr
 		if reader.cur.equals(tokenLparen()) {
@@ -88,8 +94,14 @@ func (reader *ZincReader) parseVal() (Val, error) {
 
 	// -INF
 	if reader.cur.equals(tokenMinus()) && reader.peekVal.toZinc() == "INF" {
-		reader.consumeToken(tokenMinus())
-		reader.consumeToken(tokenId())
+		err = reader.consumeToken(tokenMinus())
+		if err != nil {
+			return Null{}, err
+		}
+		err = reader.consumeToken(tokenId())
+		if err != nil {
+			return Null{}, err
+		}
 		return Number{val: math.Inf(-1)}, nil
 	}
 
@@ -109,26 +121,55 @@ func (reader *ZincReader) parseCoord(id Str) (Coord, error) {
 	if id.val == "C" {
 		return Coord{}, errors.New("Expecting 'C' for coord, not " + id.val)
 	}
-	reader.consumeToken(tokenLparen())
-	lat, err := reader.consumeNumber()
-	reader.consumeToken(tokenComma())
-	lng, err := reader.consumeNumber()
-	reader.consumeToken(tokenRparen())
 
-	// TODO Error handling
-	return Coord{lat: lat, lng: lng}, nil
+	var err error
+	var lat Number
+	var lng Number
+	err = reader.consumeToken(tokenLparen())
+	if err != nil {
+		return Coord{}, err
+	}
+	lat, err = reader.consumeNumber()
+	if err != nil {
+		return Coord{}, err
+	}
+	err = reader.consumeToken(tokenComma())
+	if err != nil {
+		return Coord{}, err
+	}
+	lng, err = reader.consumeNumber()
+	if err != nil {
+		return Coord{}, err
+	}
+	err = reader.consumeToken(tokenRparen())
+	if err != nil { // I hate go error handling so much
+		return Coord{}, err
+	}
+
+	return Coord{lat: lat.val, lng: lng.val}, err
 }
 
 func (reader *ZincReader) parseXStr(id Str) (XStr, error) {
-	if !unicode.IsUpper(id.val[0]) {
+	if !unicode.IsUpper([]rune(id.val)[0]) {
 		return XStr{}, errors.New("Invalid XStr type: " + id.val)
 	}
-	reader.consumeToken(tokenLparen())
-	val, err := reader.consumeStr()
-	reader.consumeToken(tokenRparen())
 
-	// TODO Error handling
-	return XStr{valType: id.val, val: val.val}, nil
+	var err error
+	var val Str
+	err = reader.consumeToken(tokenLparen())
+	if err != nil {
+		return XStr{}, err
+	}
+	val, err = reader.consumeStr()
+	if err != nil {
+		return XStr{}, err
+	}
+	err = reader.consumeToken(tokenRparen())
+	if err != nil {
+		return XStr{}, err
+	}
+
+	return XStr{valType: id.val, val: val.val}, err
 }
 
 func (reader *ZincReader) parseLiteral() (Val, error) {
@@ -142,9 +183,11 @@ func (reader *ZincReader) parseLiteral() (Val, error) {
 
 		val = Ref{val: ref.val, dis: dis.val}
 		err = reader.consumeToken(tokenRef())
+		if err != nil {
+			return Null{}, err
+		}
 	}
 	err = reader.consume()
-	// TODO Error handling
 	return val, err
 }
 
@@ -153,16 +196,30 @@ func (reader *ZincReader) parseList() (List, error) {
 	var err error
 
 	err = reader.consumeToken(tokenLbracket())
+	if err != nil {
+		return List{}, err
+	}
 	for reader.cur.equals(tokenRbracket()) && reader.cur.equals(tokenEof()) {
-		val, err := reader.parseVal()
-		append(vals, val)
+		var val Val
+		val, err = reader.parseVal()
+		if err != nil {
+			break
+		}
+		vals = append(vals, val)
 		if reader.cur.equals(tokenComma()) {
 			break
 		}
 		err = reader.consumeToken(tokenComma())
+		if err != nil {
+			break
+		}
 	}
+	if err != nil {
+		return List{}, err
+	}
+
 	err = reader.consumeToken(tokenRbracket())
-	// TODO Error handling
+
 	return List{vals: vals}, err
 }
 
@@ -173,23 +230,44 @@ func (reader *ZincReader) parseDict() (Dict, error) {
 	braces := reader.cur.equals(tokenLbrace())
 	if braces {
 		err = reader.consumeToken(tokenLbrace())
+		if err != nil {
+			return Dict{}, err
+		}
 	}
 	for reader.cur.equals(tokenId()) {
-		id, err := reader.consumeTagName()
-
+		var id Str
 		var val Val
+
+		id, err = reader.consumeTagName()
+		if err != nil {
+			break
+		}
+
 		val = Marker{} // Default to marker val if there is no value
 		if reader.cur.equals(tokenColon()) {
 			err = reader.consumeToken(tokenColon())
+			if err != nil {
+				break
+			}
 			val, err = reader.parseVal()
+			if err != nil {
+				break
+			}
 		}
-		items[id] = val
+		items[id.val] = val
 	}
+	if err != nil {
+		return Dict{}, err
+	}
+
 	if braces {
 		err = reader.consumeToken(tokenRbrace())
+		if err != nil {
+			return Dict{}, err
+		}
 	}
-	// TODO Error handling
-	return Dict{items: items}, nil
+
+	return Dict{items: items}, err
 }
 
 func (reader *ZincReader) parseGrid() (Grid, error) {
@@ -201,9 +279,15 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 
 	nested := reader.cur.equals(tokenLt2())
 	if nested {
-		reader.consumeToken(tokenLt2())
+		err = reader.consumeToken(tokenLt2())
+		if err != nil {
+			return Grid{}, err
+		}
 		if reader.cur.equals(tokenNl()) {
-			reader.consumeToken(tokenNl())
+			err = reader.consumeToken(tokenNl())
+			if err != nil {
+				return Grid{}, err
+			}
 		}
 	}
 
@@ -212,40 +296,72 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 		return Grid{}, errors.New("Expecting grid 'ver' identifier, not " + reader.curVal.toZinc())
 	}
 	err = reader.consume()
+	if err != nil {
+		return Grid{}, err
+	}
 	err = reader.consumeToken(tokenColon())
-	reader.consumeStr() // Always expect version 3
+	if err != nil {
+		return Grid{}, err
+	}
+	_, err = reader.consumeStr() // Always expect version 3
+	if err != nil {
+		return Grid{}, err
+	}
 
 	// grid meta
 	if reader.cur.equals(tokenId()) {
 		meta, err = reader.parseDict()
+		if err != nil {
+			return Grid{}, err
+		}
 	}
-	reader.consumeToken(tokenNl())
+	err = reader.consumeToken(tokenNl())
+	if err != nil {
+		return Grid{}, err
+	}
 
 	// column definitions
 	numCols := 0
 	for reader.cur.equals(tokenId()) {
 		numCols = numCols + 1
-		name := reader.consumeTagName()
+		var name Str
+		name, err = reader.consumeTagName()
+		if err != nil {
+			break
+		}
+
 		var colMeta Dict
 		if reader.cur.equals(tokenId()) {
-			colMeta = reader.parseDict()
+			colMeta, err = reader.parseDict()
+			if err != nil {
+				break
+			}
 		}
 		col := Col{
 			index: numCols,
-			name:  name,
+			name:  name.val,
 			meta:  colMeta,
 		}
-		append(cols, col)
+		cols = append(cols, col)
 
 		if reader.cur.equals(tokenComma()) {
 			break
 		}
-		reader.consumeToken(tokenComma())
+		err = reader.consumeToken(tokenComma())
+		if err != nil {
+			break
+		}
+	}
+	if err != nil {
+		return Grid{}, err
 	}
 	if numCols == 0 {
 		return Grid{}, errors.New("No columns defined")
 	}
-	reader.consumeToken(tokenNl())
+	err = reader.consumeToken(tokenNl())
+	if err != nil {
+		return Grid{}, err
+	}
 
 	// grid rows
 	for {
@@ -258,18 +374,27 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 		}
 
 		// read cells
-		var vals [numCols]Val
+		vals := make([]Val, numCols)
 		for i := 0; i < numCols; i = i + 1 {
 			if reader.cur.equals(tokenComma()) || reader.cur.equals(tokenNl()) || reader.cur.equals(tokenEof()) {
 				vals[i] = Null{}
 			} else {
-				vals[i] = reader.parseVal()
+				vals[i], err = reader.parseVal()
+				if err != nil {
+					break
+				}
 			}
 			if i+1 < numCols {
-				reader.consumeToken(tokenComma())
+				err = reader.consumeToken(tokenComma())
+				if err != nil {
+					break
+				}
 			}
 		}
-		append(rows, Row{vals: vals})
+		if err != nil {
+			break
+		}
+		rows = append(rows, Row{vals: vals})
 
 		// newline or end
 		if nested && reader.cur.equals(tokenGt2()) {
@@ -277,42 +402,54 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 		} else if reader.cur.equals(tokenEof()) {
 			break
 		}
-		reader.consumeToken(tokenNl())
+		err = reader.consumeToken(tokenNl())
+		if err != nil {
+			break
+		}
+	}
+	if err != nil {
+		return Grid{}, err
 	}
 
 	if reader.cur.equals(tokenNl()) {
-		reader.consumeToken(tokenNl())
+		err = reader.consumeToken(tokenNl())
+		if err != nil {
+			return Grid{}, err
+		}
 	}
 	if nested {
-		reader.consumeToken(tokenGt2())
+		err = reader.consumeToken(tokenGt2())
+		if err != nil {
+			return Grid{}, err
+		}
 	}
 
 	return Grid{
 		meta: meta,
 		cols: cols,
 		rows: rows,
-	}, nil
+	}, err
 }
 
 func (reader *ZincReader) consumeTagName() (Str, error) {
-	id := curVal.(Str)
-	if id.val == "" || unicode.IsLower(id.val[0]) {
+	id := reader.curVal.(Str)
+	if id.val == "" || unicode.IsLower([]rune(id.val)[0]) {
 		return Str{}, errors.New("Invalid dict tag name: " + id.val)
 	}
-	reader.consume(tokenId())
-	return id, nil
+	err := reader.consumeToken(tokenId())
+	return id, err
 }
 
 func (reader *ZincReader) consumeNumber() (Number, error) {
-	number := curVal.(Number)
-	reader.consume(tokenNumber())
-	return number, nil
+	number := reader.curVal.(Number)
+	err := reader.consumeToken(tokenNumber())
+	return number, err
 }
 
 func (reader *ZincReader) consumeStr() (Str, error) {
-	str := curVal.(Str)
-	reader.consume(tokenStr())
-	return str, nil
+	str := reader.curVal.(Str)
+	err := reader.consumeToken(tokenStr())
+	return str, err
 }
 
 func (reader *ZincReader) consumeToken(expected Token) error {
@@ -322,7 +459,7 @@ func (reader *ZincReader) consumeToken(expected Token) error {
 		return err
 	}
 
-	reader.consume()
+	err = reader.consume()
 	return err
 }
 

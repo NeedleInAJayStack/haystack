@@ -32,7 +32,7 @@ func (reader *ZincReader) ReadVal(in *strings.Reader) (Val, error) {
 	var err error
 
 	if reader.cur.equals(tokenId()) {
-f		val, err = reader.parseGrid()
+		val, err = reader.parseGrid()
 	} else {
 		val, err = reader.parseVal()
 	}

@@ -21,10 +21,10 @@ func TestDate_equals(t *testing.T) {
 	}
 }
 
-func TestDate_dateFromStr(t *testing.T) {
+func TestDate_NewDateFromString(t *testing.T) {
 	dateStr := "2020-08-17"
 	exp := Date{year: 2020, month: 8, day: 17}
-	date, err := dateFromStr(dateStr)
+	date, err := NewDateFromString(dateStr)
 	if err != nil {
 		t.Error(err)
 	}

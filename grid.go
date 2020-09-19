@@ -71,7 +71,7 @@ func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
 			buf.WriteString("\n")
 			buf.WriteString(indent)
 		}
-		row.encodeTo(buf)
+		row.encodeTo(buf, &grid.cols)
 	}
 }
 
@@ -106,15 +106,12 @@ func (row *Row) ToDict() Dict {
 	return Dict{items: row.items}
 }
 
-// Format as <val1>, <val2>, ...
-func (row *Row) encodeTo(buf *strings.Builder) {
-	firstVal := true
-	for _, val := range row.items {
-		if firstVal {
-			firstVal = false
-		} else {
+// Format as <val1>, <val2>, ... Cols sets ordering
+func (row *Row) encodeTo(buf *strings.Builder, cols *[]Col) {
+	for colIdx, col := range *cols {
+		if colIdx != 0 {
 			buf.WriteString(", ")
 		}
-		buf.WriteString(val.ToZinc())
+		buf.WriteString(row.items[col.name].ToZinc())
 	}
 }

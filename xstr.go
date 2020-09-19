@@ -5,6 +5,10 @@ type XStr struct {
 	val     string
 }
 
+func NewXStr(valType string, val string) XStr {
+	return XStr{valType: valType, val: val}
+}
+
 // ToZinc representes the object as: "<valType>(<val>)"
 func (xStr XStr) ToZinc() string {
 	result := xStr.valType

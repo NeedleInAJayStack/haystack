@@ -20,8 +20,16 @@ func dateDef() Date {
 	}
 }
 
+func NewDate(year int, month int, day int) Date {
+	return Date{
+		year:  year,
+		month: month,
+		day:   day,
+	}
+}
+
 // Format is YYYY-MM-DD
-func dateFromStr(str string) (Date, error) {
+func NewDateFromString(str string) (Date, error) {
 	parts := strings.Split(str, "-")
 
 	year, yearErr := strconv.Atoi(parts[0])

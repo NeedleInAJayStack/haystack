@@ -16,7 +16,7 @@ type DateTime struct {
 }
 
 // Parses date from "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
-func dateTimeFromStr(str string) (DateTime, error) {
+func NewDateTimeFromString(str string) (DateTime, error) {
 	var input scanner.Scanner
 	input.Init(strings.NewReader(str))
 	curRune := input.Next()
@@ -26,7 +26,7 @@ func dateTimeFromStr(str string) (DateTime, error) {
 		dateStr.WriteRune(curRune)
 		curRune = input.Next()
 	}
-	date, dateErr := dateFromStr(dateStr.String())
+	date, dateErr := NewDateFromString(dateStr.String())
 	if dateErr != nil {
 		return dateTimeDef(), dateErr
 	}
@@ -38,7 +38,7 @@ func dateTimeFromStr(str string) (DateTime, error) {
 		timeStr.WriteRune(curRune)
 		curRune = input.Next()
 	}
-	time, timeErr := timeFromStr(timeStr.String())
+	time, timeErr := NewTimeFromString(timeStr.String())
 	if timeErr != nil {
 		return dateTimeDef(), timeErr
 	}

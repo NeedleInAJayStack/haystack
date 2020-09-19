@@ -10,6 +10,10 @@ func (dict *Dict) isEmpty() bool {
 	return len(dict.items) == 0
 }
 
+func NewDict(items map[string]Val) Dict {
+	return Dict{items: items}
+}
+
 // ToZinc representes the object as: "{<name1>:<val1> <name2>:<val2> ...}". Markers don't require a :val.
 func (dict Dict) ToZinc() string {
 	var buf strings.Builder

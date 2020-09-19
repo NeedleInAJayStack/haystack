@@ -23,8 +23,17 @@ func timeDef() Time {
 	}
 }
 
+func NewTime(hour int, min int, sec int, ms int) Time {
+	return Time{
+		hour: hour,
+		min:  min,
+		sec:  sec,
+		ms:   ms,
+	}
+}
+
 // Format is hh:mm:ss or hh:mm:ss.mmm
-func timeFromStr(str string) (Time, error) {
+func NewTimeFromString(str string) (Time, error) {
 	parts := strings.Split(str, ":")
 
 	hour, hourErr := strconv.Atoi(parts[0])

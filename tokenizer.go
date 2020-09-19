@@ -23,7 +23,7 @@ func (tokenizer *Tokenizer) Init(in *strings.Reader) {
 	tokenizer.in = in
 	tokenizer.cur = 0
 	tokenizer.peek = 0
-	tokenizer.val = &Null{}
+	tokenizer.val = NewNull()
 	tokenizer.token = DEF
 
 	tokenizer.consume()
@@ -98,7 +98,7 @@ func (tokenizer *Tokenizer) id() Token {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
-	tokenizer.val = &Id{val: buf.String()}
+	tokenizer.val = NewId(buf.String())
 	return ID
 }
 
@@ -109,7 +109,7 @@ func (tokenizer *Tokenizer) ref() Token {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
-	tokenizer.val = &Ref{val: buf.String()}
+	tokenizer.val = NewRef(buf.String(), "")
 	return REF
 }
 
@@ -133,7 +133,7 @@ func (tokenizer *Tokenizer) str() (Token, error) {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
-	tokenizer.val = &Str{val: buf.String()}
+	tokenizer.val = NewStr(buf.String())
 	return STR, nil
 }
 
@@ -167,7 +167,7 @@ func (tokenizer *Tokenizer) uri() (Token, error) {
 		}
 	}
 
-	tokenizer.val = &Uri{val: buf.String()}
+	tokenizer.val = NewUri(buf.String())
 	return URI, nil
 }
 
@@ -234,7 +234,7 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 		}
 		valInt, err := strconv.ParseInt(buf.String(), 0, 0) // ParseInt accepts hex format
 		valFloat := float64(valInt)
-		tokenizer.val = &Number{val: valFloat}
+		tokenizer.val = NewNumber(valFloat, "")
 		return NUMBER, err
 	}
 	// consume all things that might be part of this number token
@@ -325,14 +325,14 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) (Token, error) {
 		}
 	}
 
-	dateTime, err := dateTimeFromStr(buf.String())
-	tokenizer.val = &dateTime
+	dateTime, err := NewDateTimeFromString(buf.String())
+	tokenizer.val = dateTime
 	return DATETIME, err
 }
 
 func (tokenizer *Tokenizer) date(str string) (Token, error) {
-	date, err := dateFromStr(str)
-	tokenizer.val = &date
+	date, err := NewDateFromString(str)
+	tokenizer.val = date
 	return DATE, err
 }
 
@@ -340,8 +340,8 @@ func (tokenizer *Tokenizer) time(str string, addSeconds bool) (Token, error) {
 	if addSeconds {
 		str = str + ":00"
 	}
-	time, err := timeFromStr(str)
-	tokenizer.val = &time
+	time, err := NewTimeFromString(str)
+	tokenizer.val = time
 	return TIME, err
 }
 
@@ -351,7 +351,7 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
 		if err != nil {
 			return NUMBER, err
 		}
-		tokenizer.val = &Number{val: number}
+		tokenizer.val = NewNumber(number, "")
 		return NUMBER, err
 	} else {
 		numberStr := str[0:unitIndex]
@@ -360,7 +360,7 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
 		if err != nil {
 			return NUMBER, err
 		}
-		tokenizer.val = &Number{val: number, unit: unit}
+		tokenizer.val = NewNumber(number, unit)
 		return NUMBER, err
 	}
 }

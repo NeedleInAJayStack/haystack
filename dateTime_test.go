@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func TestDateTime_dateTimefromStr(t *testing.T) {
-	utc, _ := dateTimeFromStr("2020-08-17T23:07:10Z UTC")
+func TestDateTime_NewDateTimeFromString(t *testing.T) {
+	utc, _ := NewDateTimeFromString("2020-08-17T23:07:10Z UTC")
 	if utc.date.year != 2020 {
 		t.Error(utc.date.year)
 	}
@@ -29,7 +29,7 @@ func TestDateTime_dateTimefromStr(t *testing.T) {
 		t.Error(utc.tz)
 	}
 
-	la, _ := dateTimeFromStr("2020-08-17T23:07:10-07:00 Los_Angeles")
+	la, _ := NewDateTimeFromString("2020-08-17T23:07:10-07:00 Los_Angeles")
 	if la.tzOffset != -25200 {
 		t.Error(la.tzOffset)
 	}
@@ -37,7 +37,7 @@ func TestDateTime_dateTimefromStr(t *testing.T) {
 		t.Error(la.tz)
 	}
 
-	taipei, _ := dateTimeFromStr("2020-08-17T23:07:10+08:00 Taipei")
+	taipei, _ := NewDateTimeFromString("2020-08-17T23:07:10+08:00 Taipei")
 	if taipei.tzOffset != 28800 {
 		t.Error(la.tzOffset)
 	}

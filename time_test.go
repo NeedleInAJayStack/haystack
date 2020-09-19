@@ -21,10 +21,10 @@ func TestTime_equals(t *testing.T) {
 	}
 }
 
-func TestTime_timeFromStr(t *testing.T) {
+func TestTime_NewTimeFromString(t *testing.T) {
 	noMs := "23:07:10"
 	expNoMs := Time{hour: 23, min: 7, sec: 10}
-	timeNoMs, err := timeFromStr(noMs)
+	timeNoMs, err := NewTimeFromString(noMs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,7 +34,7 @@ func TestTime_timeFromStr(t *testing.T) {
 
 	ms := "23:07:10.957"
 	expMs := Time{hour: 23, min: 7, sec: 10, ms: 957}
-	timeMs, err := timeFromStr(ms)
+	timeMs, err := NewTimeFromString(ms)
 	if err != nil {
 		t.Error(err)
 	}

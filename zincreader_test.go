@@ -5,38 +5,30 @@ import (
 )
 
 func TestZincReader_empty(t *testing.T) {
-	testZincReaderGrid(
-		t,
-		"ver:\"3.0\" tag:N\n"+
-			"a nullmetatag:N, b markermetatag\n"+
-			"",
-		Grid{
-			meta: Dict{
-				items: map[string]Val{
-					"tag": &Null{},
-				},
-			},
-			cols: []Col{
-				Col{
-					name: "a",
-					meta: Dict{
-						items: map[string]Val{
-							"nullmetatag": NewNull(),
-						},
-					},
-				},
-				Col{
-					name: "b",
-					meta: Dict{
-						items: map[string]Val{
-							"markermetatag": NewMarker(),
-						},
-					},
-				},
-			},
-			rows: []Row{},
+	input := "ver:\"3.0\" tag:N\n" +
+		"a nullmetatag:N, b markermetatag\n" +
+		""
+
+	var gb GridBuilder
+	gb.SetMeta(
+		map[string]Val{
+			"tag": NewNull(),
 		},
 	)
+	gb.AddColWMeta(
+		"a",
+		map[string]Val{
+			"nullmetatag": NewNull(),
+		},
+	)
+	gb.AddColWMeta(
+		"b",
+		map[string]Val{
+			"markermetatag": NewMarker(),
+		},
+	)
+	expected := gb.ToGrid()
+	testZincReaderGrid(t, input, expected)
 }
 
 // Verifies that the tokenized result has the expected token type and value.
@@ -57,6 +49,6 @@ func testGridEq(t *testing.T, actual Grid, expected Grid) {
 	expectedZinc := expected.ToZinc()
 
 	if actualZinc != expectedZinc {
-		t.Error("Grids do not match\n" + "ACTUAL:\n" + actualZinc + "EXPECTED:\n" + expectedZinc)
+		t.Error("Grids do not match\nACTUAL:\n" + actualZinc + "\nEXPECTED:\n" + expectedZinc)
 	}
 }

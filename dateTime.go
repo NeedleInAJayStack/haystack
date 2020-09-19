@@ -132,7 +132,7 @@ func dateTimeDef() DateTime {
 	}
 }
 
-// Format is YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz
+// ToZinc representes the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func (dateTime DateTime) ToZinc() string {
 	buf := strings.Builder{}
 	dateTime.encodeTo(&buf)

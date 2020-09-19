@@ -44,7 +44,7 @@ func dateFromStr(str string) (Date, error) {
 	}, nil
 }
 
-// Format is YYYY-MM-DD
+// ToZinc representes the object as: "YYYY-MM-DD"
 func (date Date) ToZinc() string {
 	return date.encode()
 }

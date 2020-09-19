@@ -16,7 +16,7 @@ func NewCoord(lat float64, lng float64) *Coord {
 	return &Coord{lat: lat, lng: lng}
 }
 
-// Represented as "C(lat,lng)"
+// ToZinc representes the object as: "C(<lat>,<lng>)"
 func (coord Coord) ToZinc() string {
 	result := "C("
 	result = result + fmt.Sprintf("%g", coord.lat)

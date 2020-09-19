@@ -4,7 +4,7 @@ type Uri struct {
 	val string
 }
 
-// Format is `<val>`
+// ToZinc representes the object as: "`<val>`"
 func (uri Uri) ToZinc() string {
 	result := "`"
 

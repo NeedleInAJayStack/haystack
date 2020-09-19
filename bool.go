@@ -4,10 +4,10 @@ type Bool struct {
 	val bool
 }
 
+// ToZinc representes the object as: "T" or "F"
 func (b Bool) ToZinc() string {
-	if b.val == true {
+	if b.val {
 		return "T"
-	} else {
-		return "F"
 	}
+	return "F"
 }

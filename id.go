@@ -4,7 +4,7 @@ type Id struct {
 	val string
 }
 
-// Encode using double quotes and back slash escapes
+// ToZinc representes the object as: "<val>"
 func (id Id) ToZinc() string {
 	return id.val
 }

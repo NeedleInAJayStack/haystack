@@ -77,7 +77,7 @@ func timeFromStr(str string) (Time, error) {
 	}, nil
 }
 
-// Format is hh:mm:ss.mmm
+// ToZinc representes the object as: "hh:mm:ss.mmm"
 func (time Time) ToZinc() string {
 	return time.encode()
 }

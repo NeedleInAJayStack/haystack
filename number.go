@@ -10,6 +10,7 @@ type Number struct {
 	unit string // Optional
 }
 
+// ToZinc representes the object as: "<val>[unit]"
 func (number Number) ToZinc() string {
 	return number.encode(false)
 }

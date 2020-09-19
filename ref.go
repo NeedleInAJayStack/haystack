@@ -5,7 +5,7 @@ type Ref struct {
 	dis string // Optional
 }
 
-// Format is "@<id> [dis]"
+// ToZinc representes the object as: "@<id> [dis]"
 func (ref Ref) ToZinc() string {
 	result := "@" + ref.val
 	if ref.dis != "" {

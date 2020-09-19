@@ -6,6 +6,7 @@ type List struct {
 	vals []Val
 }
 
+// ToZinc representes the object as: "[<val1>, <val2>, ...]"
 func (list List) ToZinc() string {
 	var buf strings.Builder
 	list.encodeTo(&buf)

@@ -6,7 +6,7 @@ type Str struct {
 	val string
 }
 
-// Encode using double quotes and back slash escapes
+// ToZinc representes the object as a double-quoted string, with back-slash escapes
 func (str Str) ToZinc() string {
 	result := "\""
 

@@ -5,7 +5,7 @@ type XStr struct {
 	val     string
 }
 
-// Format is <valType>(<val>)
+// ToZinc representes the object as: "<valType>(<val>)"
 func (xStr XStr) ToZinc() string {
 	result := xStr.valType
 	result = result + "(\""

@@ -8,18 +8,27 @@ type Grid struct {
 	rows []Row
 }
 
+// Meta returns the grid-level metadata
 func (grid *Grid) Meta() Dict {
 	return grid.meta
 }
 
+// Cols returns the column objects
 func (grid *Grid) Cols() []Col {
 	return grid.cols
 }
 
+// Rows returns the row objects
 func (grid *Grid) Rows() []Row {
 	return grid.rows
 }
 
+// ToZinc representes the object as:
+//     ver:"3.0" <meta>
+//     <col1>, <col2>, ...
+//     <row1>
+//     <row2>
+//     ...
 func (grid Grid) ToZinc() string {
 	buf := strings.Builder{}
 	grid.encodeTo(&buf, 0)
@@ -72,10 +81,12 @@ type Col struct {
 	meta  Dict
 }
 
+// Name returns the string name
 func (col *Col) Name() string {
 	return col.name
 }
 
+// Meta returns the column-level metadata
 func (col *Col) Meta() Dict {
 	return col.meta
 }
@@ -90,6 +101,7 @@ type Row struct {
 	items map[string]Val
 }
 
+// ToDict returns the values in a Dict format
 func (row *Row) ToDict() Dict {
 	return Dict{items: row.items}
 }

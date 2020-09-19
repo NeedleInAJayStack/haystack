@@ -112,6 +112,8 @@ func (row *Row) encodeTo(buf *strings.Builder, cols *[]Col) {
 		if colIdx != 0 {
 			buf.WriteString(", ")
 		}
-		buf.WriteString(row.items[col.name].ToZinc())
+		item := row.items[col.name]
+		itemZinc := item.ToZinc()
+		buf.WriteString(itemZinc)
 	}
 }

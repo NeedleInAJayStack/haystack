@@ -36,7 +36,7 @@ func (dict Dict) encodeTo(buf *strings.Builder, brackets bool) {
 
 		buf.WriteString(name)
 
-		_, isMarker := val.(*Marker)
+		_, isMarker := val.(Marker)
 		if !isMarker {
 			buf.WriteString(":" + val.ToZinc())
 		}

@@ -1,7 +1,6 @@
 package haystack
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"unicode"
@@ -31,7 +30,7 @@ func (tokenizer *Tokenizer) Init(in *strings.Reader) {
 }
 
 // Next reads the next haystack token, storing the value in the Val, and Token fields
-func (tokenizer *Tokenizer) Next() (Token, error) {
+func (tokenizer *Tokenizer) Next() Token {
 	// reset
 	tokenizer.val = Null{}
 
@@ -59,7 +58,6 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 		break
 	}
 
-	var err error
 	newToken := DEF
 	if tokenizer.cur == runeEOF {
 		newToken = EOF
@@ -73,21 +71,21 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 	} else if isIdStart(tokenizer.cur) { // handle various starting chars
 		newToken = tokenizer.id()
 	} else if tokenizer.cur == '"' {
-		newToken, err = tokenizer.str()
+		newToken = tokenizer.str()
 	} else if tokenizer.cur == '@' {
 		newToken = tokenizer.ref()
 	} else if unicode.IsDigit(tokenizer.cur) {
-		newToken, err = tokenizer.digits()
+		newToken = tokenizer.digits()
 	} else if tokenizer.cur == '`' {
-		newToken, err = tokenizer.uri()
+		newToken = tokenizer.uri()
 	} else if tokenizer.cur == '-' && unicode.IsDigit(tokenizer.peek) {
-		newToken, err = tokenizer.digits()
+		newToken = tokenizer.digits()
 	} else {
-		newToken, err = tokenizer.symbol()
+		newToken = tokenizer.symbol()
 	}
 
 	tokenizer.token = newToken
-	return tokenizer.token, err
+	return tokenizer.token
 }
 
 // Token production methods
@@ -113,20 +111,17 @@ func (tokenizer *Tokenizer) ref() Token {
 	return REF
 }
 
-func (tokenizer *Tokenizer) str() (Token, error) {
+func (tokenizer *Tokenizer) str() Token {
 	tokenizer.consumeRune('"')
 	buf := strings.Builder{}
 	for {
 		if tokenizer.cur == runeEOF { // runeEOF
-			return EOF, errors.New("Unexpected end of str")
+			panic("Unexpected end of str")
 		} else if tokenizer.cur == '"' {
 			tokenizer.consumeRune('"')
 			break
 		} else if tokenizer.cur == '\\' {
-			esc, escErr := tokenizer.escape()
-			if escErr != nil {
-				return STR, escErr
-			}
+			esc := tokenizer.escape()
 			buf.WriteRune(esc)
 			// continue
 		}
@@ -134,10 +129,10 @@ func (tokenizer *Tokenizer) str() (Token, error) {
 		tokenizer.consume()
 	}
 	tokenizer.val = NewStr(buf.String())
-	return STR, nil
+	return STR
 }
 
-func (tokenizer *Tokenizer) uri() (Token, error) {
+func (tokenizer *Tokenizer) uri() Token {
 	tokenizer.consumeRune('`')
 	buf := strings.Builder{}
 	for true {
@@ -145,9 +140,9 @@ func (tokenizer *Tokenizer) uri() (Token, error) {
 			tokenizer.consumeRune('`')
 			break
 		} else if tokenizer.cur == runeEOF {
-			return EOF, errors.New("Unexpected end of uri: eof")
+			panic("Unexpected end of uri: eof")
 		} else if tokenizer.cur == '\n' {
-			return URI, errors.New("Unexpected end of uri: newline")
+			panic("Unexpected end of uri: newline")
 		} else if tokenizer.cur == '\\' {
 			if isUriEscapeIgnore(tokenizer.peek) {
 				buf.WriteRune(tokenizer.cur)
@@ -155,10 +150,7 @@ func (tokenizer *Tokenizer) uri() (Token, error) {
 				buf.WriteRune(tokenizer.cur)
 				tokenizer.consume()
 			} else {
-				char, err := tokenizer.escape()
-				if err != nil {
-					return URI, err
-				}
+				char := tokenizer.escape()
 				buf.WriteRune(char)
 			}
 		} else {
@@ -168,13 +160,12 @@ func (tokenizer *Tokenizer) uri() (Token, error) {
 	}
 
 	tokenizer.val = NewUri(buf.String())
-	return URI, nil
+	return URI
 }
 
-func (tokenizer *Tokenizer) escape() (rune, error) {
+func (tokenizer *Tokenizer) escape() rune {
 	tokenizer.consumeRune('\\')
 	var result rune
-	var err error
 	if tokenizer.cur == 'b' {
 		result = '\b'
 	} else if tokenizer.cur == 'f' {
@@ -208,20 +199,20 @@ func (tokenizer *Tokenizer) escape() (rune, error) {
 
 		codeResult, codeErr := strconv.ParseInt(buf.String(), 16, 0) // Force to base-16 for utf16 format
 		if codeErr != nil {
-			err = codeErr
+			panic(codeErr)
 		} else {
 			result = int32(codeResult)
 		}
 	}
 
-	if result == 0 && err == nil {
-		err = errors.New("Invalid escape sequence: " + string(tokenizer.cur))
+	if result == 0 {
+		panic("Invalid escape sequence: " + string(tokenizer.cur))
 	}
 	tokenizer.consume()
-	return result, err
+	return result
 }
 
-func (tokenizer *Tokenizer) digits() (Token, error) {
+func (tokenizer *Tokenizer) digits() Token {
 	if tokenizer.cur == '0' && tokenizer.peek == 'x' { // hex integer (no unit allowed)
 		buf := strings.Builder{}
 		buf.WriteRune(tokenizer.cur)
@@ -233,9 +224,12 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 			tokenizer.consume()
 		}
 		valInt, err := strconv.ParseInt(buf.String(), 0, 0) // ParseInt accepts hex format
+		if err != nil {
+			panic(err)
+		}
 		valFloat := float64(valInt)
 		tokenizer.val = NewNumber(valFloat, "")
-		return NUMBER, err
+		return NUMBER
 	}
 	// consume all things that might be part of this number token
 	buf := strings.Builder{}
@@ -295,7 +289,7 @@ func (tokenizer *Tokenizer) digits() (Token, error) {
 	}
 }
 
-func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) (Token, error) {
+func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
 	// Format variable formats to: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 
 	// xxx timezone
@@ -304,7 +298,7 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) (Token, error) {
 		if str[len(str)-1] == 'Z' {
 			buf.WriteString(" UTC")
 		} else {
-			return DATETIME, errors.New("Expecting timezone")
+			panic("Expecting timezone")
 		}
 	} else {
 		tokenizer.consume()
@@ -326,111 +320,121 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) (Token, error) {
 	}
 
 	dateTime, err := NewDateTimeFromString(buf.String())
+	if err != nil {
+		panic(err)
+	}
+
 	tokenizer.val = dateTime
-	return DATETIME, err
+	return DATETIME
 }
 
-func (tokenizer *Tokenizer) date(str string) (Token, error) {
+func (tokenizer *Tokenizer) date(str string) Token {
 	date, err := NewDateFromString(str)
+	if err != nil {
+		panic(err)
+	}
 	tokenizer.val = date
-	return DATE, err
+	return DATE
 }
 
-func (tokenizer *Tokenizer) time(str string, addSeconds bool) (Token, error) {
+func (tokenizer *Tokenizer) time(str string, addSeconds bool) Token {
 	if addSeconds {
 		str = str + ":00"
 	}
 	time, err := NewTimeFromString(str)
+	if err != nil {
+		panic(err)
+	}
 	tokenizer.val = time
-	return TIME, err
+	return TIME
 }
 
-func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
+func (tokenizer *Tokenizer) number(str string, unitIndex int) Token {
 	if unitIndex == 0 {
 		number, err := strconv.ParseFloat(str, 64)
 		if err != nil {
-			return NUMBER, err
+			panic(err)
 		}
 		tokenizer.val = NewNumber(number, "")
-		return NUMBER, err
+		return NUMBER
 	} else {
 		numberStr := str[0:unitIndex]
 		unit := str[unitIndex:len(str)]
 		number, err := strconv.ParseFloat(numberStr, 64)
 		if err != nil {
-			return NUMBER, err
+			panic(err)
 		}
 		tokenizer.val = NewNumber(number, unit)
-		return NUMBER, err
+		return NUMBER
 	}
 }
 
-func (tokenizer *Tokenizer) symbol() (Token, error) {
+func (tokenizer *Tokenizer) symbol() Token {
 	c := tokenizer.cur
 	tokenizer.consume()
 	if c == ',' {
-		return COMMA, nil
+		return COMMA
 	} else if c == '/' {
-		return SLASH, nil
+		return SLASH
 	} else if c == ':' {
-		return COLON, nil
+		return COLON
 	} else if c == ';' {
-		return SEMICOLON, nil
+		return SEMICOLON
 	} else if c == '[' {
-		return LBRACKET, nil
+		return LBRACKET
 	} else if c == ']' {
-		return RBRACKET, nil
+		return RBRACKET
 	} else if c == '{' {
-		return LBRACE, nil
+		return LBRACE
 	} else if c == '}' {
-		return RBRACE, nil
+		return RBRACE
 	} else if c == '(' {
-		return LPAREN, nil
+		return LPAREN
 	} else if c == ')' {
-		return RPAREN, nil
+		return RPAREN
 	} else if c == '<' {
 		if tokenizer.cur == '<' {
 			tokenizer.consumeRune('<')
-			return LT2, nil
+			return LT2
 		} else if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return LTEQ, nil
+			return LTEQ
 		} else {
-			return LT, nil
+			return LT
 		}
 	} else if c == '>' {
 		if tokenizer.cur == '>' {
 			tokenizer.consumeRune('>')
-			return GT2, nil
+			return GT2
 		} else if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return GTEQ, nil
+			return GTEQ
 		} else {
-			return GT, nil
+			return GT
 		}
 	} else if c == '-' {
 		if tokenizer.cur == '>' {
 			tokenizer.consumeRune('>')
-			return ARROW, nil
+			return ARROW
 		} else {
-			return MINUS, nil
+			return MINUS
 		}
 	} else if c == '=' {
 		if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return EQ, nil
+			return EQ
 		}
-		return ASSIGN, nil
+		return ASSIGN
 	} else if c == '!' {
 		if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return NOTEQ, nil
+			return NOTEQ
 		}
-		return BANG, nil
+		return BANG
 	} else if c == runeEOF {
-		return EOF, nil
+		return EOF
 	}
-	return EOF, errors.New("Unexpected symbol: '" + string(c) + "'") // Not sure what other than runeEOF to return
+	panic("Unexpected symbol: '" + string(c) + "'")
 }
 
 // Comments
@@ -471,22 +475,20 @@ func (tokenizer *Tokenizer) skipCommentsMultiLine() {
 
 // Consume methods
 
-func (tokenizer *Tokenizer) consume() error {
+func (tokenizer *Tokenizer) consume() {
 	var err error
 	tokenizer.cur = tokenizer.peek
 	tokenizer.peek, _, err = tokenizer.in.ReadRune()
 	if err != nil { // If end-of-stream, indicate with val of runeEOF
 		tokenizer.peek = runeEOF
 	}
-	return err
 }
 
-func (tokenizer *Tokenizer) consumeRune(expected rune) error {
+func (tokenizer *Tokenizer) consumeRune(expected rune) {
 	if tokenizer.cur != expected {
-		return errors.New("Expected " + string(expected))
+		panic("Expected " + string(expected))
 	}
 	tokenizer.consume()
-	return nil
 }
 
 // Rune detection methods. These add onto those in unicode

@@ -201,10 +201,7 @@ func testTokenizerRead(t *testing.T, str string) ([]Token, []Val) {
 
 	// TODO: Adjust to handle multiple vals/tokens
 	for {
-		nextToken, err := tokenizer.Next()
-		if err != nil {
-			t.Error(err)
-		}
+		nextToken := tokenizer.Next()
 		if nextToken != tokenizer.token {
 			t.Error("The same object doesn't equal itself")
 		}

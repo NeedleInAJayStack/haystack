@@ -5,38 +5,38 @@ import (
 )
 
 func TestZincReader_empty(t *testing.T) {
-	// testZincReaderGrid(
-	// 	t,
-	// 	"ver:\"3.0\" tag:N\n"+
-	// 		"a nullmetatag:N, b markermetatag\n"+
-	// 		"",
-	// 	Grid{
-	// 		meta: Dict{
-	// 			items: map[string]Val{
-	// 				"tag": &Null{},
-	// 			},
-	// 		},
-	// 		cols: []Col{
-	// 			Col{
-	// 				name: "a",
-	// 				meta: Dict{
-	// 					items: map[string]Val{
-	// 						"nullmetatag": &Null{},
-	// 					},
-	// 				},
-	// 			},
-	// 			Col{
-	// 				name: "b",
-	// 				meta: Dict{
-	// 					items: map[string]Val{
-	// 						"markermetatag": &Marker{},
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 		rows: []Row{},
-	// 	},
-	// )
+	testZincReaderGrid(
+		t,
+		"ver:\"3.0\" tag:N\n"+
+			"a nullmetatag:N, b markermetatag\n"+
+			"",
+		Grid{
+			meta: Dict{
+				items: map[string]Val{
+					"tag": &Null{},
+				},
+			},
+			cols: []Col{
+				Col{
+					name: "a",
+					meta: Dict{
+						items: map[string]Val{
+							"nullmetatag": NewNull(),
+						},
+					},
+				},
+				Col{
+					name: "b",
+					meta: Dict{
+						items: map[string]Val{
+							"markermetatag": NewMarker(),
+						},
+					},
+				},
+			},
+			rows: []Row{},
+		},
+	)
 }
 
 // Verifies that the tokenized result has the expected token type and value.
@@ -45,11 +45,8 @@ func testZincReaderGrid(t *testing.T, str string, expected Grid) {
 	var reader ZincReader
 	reader.InitString(str)
 
-	val, err := reader.ReadVal()
+	val := reader.ReadVal()
 	actual := val.(Grid)
-	if err != nil {
-		t.Error(err)
-	}
 
 	testGridEq(t, actual, expected)
 }
@@ -60,6 +57,6 @@ func testGridEq(t *testing.T, actual Grid, expected Grid) {
 	expectedZinc := expected.ToZinc()
 
 	if actualZinc != expectedZinc {
-		t.Error("Grids do not match")
+		t.Error("Grids do not match\n" + "ACTUAL:\n" + actualZinc + "EXPECTED:\n" + expectedZinc)
 	}
 }

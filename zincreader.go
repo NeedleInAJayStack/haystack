@@ -1,7 +1,6 @@
 package haystack
 
 import (
-	"errors"
 	"math"
 	"strings"
 	"unicode"
@@ -31,34 +30,25 @@ func (reader *ZincReader) Init(in *strings.Reader) {
 	reader.consume()
 }
 
-func (reader *ZincReader) ReadVal() (Val, error) {
+func (reader *ZincReader) ReadVal() Val {
 	var val Val
-	var err error
 
 	if reader.cur == ID {
-		val, err = reader.parseGrid()
+		val = reader.parseGrid()
 	} else {
-		val, err = reader.parseVal()
-	}
-	if err != nil {
-		return Null{}, err
+		val = reader.parseVal()
 	}
 
-	if reader.cur == EOF {
-		err = errors.New("Expecting EOF")
+	if reader.cur != EOF {
+		panic("Expecting EOF, not " + reader.cur.String())
 	}
-	return val, err
+	return val
 }
 
-func (reader *ZincReader) parseVal() (Val, error) {
-	var err error
-
+func (reader *ZincReader) parseVal() Val {
 	if reader.cur == ID {
-		id := reader.curVal.(Str)
-		err = reader.consumeToken(ID)
-		if err != nil {
-			return Null{}, err
-		}
+		id := reader.curVal.(Id).val
+		reader.consumeToken(ID)
 
 		// check for coord or xstr
 		if reader.cur == LPAREN {
@@ -70,24 +60,24 @@ func (reader *ZincReader) parseVal() (Val, error) {
 		}
 
 		// check for keyword
-		if id.val == "T" {
-			return Bool{val: true}, nil
-		} else if id.val == "F" {
-			return Bool{val: false}, nil
-		} else if id.val == "N" {
-			return Null{}, nil
-		} else if id.val == "M" {
-			return Marker{}, nil
-		} else if id.val == "NA" {
-			return NA{}, nil
-		} else if id.val == "R" {
-			return Remove{}, nil
-		} else if id.val == "NaN" {
-			return Number{val: math.NaN()}, nil
-		} else if id.val == "INF" {
-			return Number{val: math.Inf(1)}, nil
+		if id == "T" {
+			return NewBool(true)
+		} else if id == "F" {
+			return NewBool(false)
+		} else if id == "N" {
+			return NewNull()
+		} else if id == "M" {
+			return NewMarker()
+		} else if id == "NA" {
+			return NewNA()
+		} else if id == "R" {
+			return NewRemove()
+		} else if id == "NaN" {
+			return NewNumber(math.NaN(), "")
+		} else if id == "INF" {
+			return NewNumber(math.Inf(1), "")
 		} else {
-			return Null{}, errors.New("Unexpected identifier: " + id.val)
+			panic("Unexpected identifier: " + id)
 		}
 	}
 
@@ -98,15 +88,9 @@ func (reader *ZincReader) parseVal() (Val, error) {
 
 	// -INF
 	if reader.cur == MINUS && reader.peekVal.ToZinc() == "INF" {
-		err = reader.consumeToken(MINUS)
-		if err != nil {
-			return Null{}, err
-		}
-		err = reader.consumeToken(ID)
-		if err != nil {
-			return Null{}, err
-		}
-		return Number{val: math.Inf(-1)}, nil
+		reader.consumeToken(MINUS)
+		reader.consumeToken(ID)
+		return NewNumber(math.Inf(-1), "")
 	}
 
 	// nested collections
@@ -118,254 +102,152 @@ func (reader *ZincReader) parseVal() (Val, error) {
 		return reader.parseGrid()
 	}
 
-	return Null{}, errors.New("Unexpected token: " + reader.cur.String())
+	panic("Unexpected token: " + reader.cur.String())
 }
 
-func (reader *ZincReader) parseCoord(id Str) (Coord, error) {
-	if id.val == "C" {
-		return Coord{}, errors.New("Expecting 'C' for coord, not " + id.val)
+func (reader *ZincReader) parseCoord(id string) Coord {
+	if id == "C" {
+		panic("Expecting 'C' for coord, not " + id)
 	}
 
-	var err error
 	var lat Number
 	var lng Number
-	err = reader.consumeToken(LPAREN)
-	if err != nil {
-		return Coord{}, err
-	}
-	lat, err = reader.consumeNumber()
-	if err != nil {
-		return Coord{}, err
-	}
-	err = reader.consumeToken(COMMA)
-	if err != nil {
-		return Coord{}, err
-	}
-	lng, err = reader.consumeNumber()
-	if err != nil {
-		return Coord{}, err
-	}
-	err = reader.consumeToken(RPAREN)
-	if err != nil { // I hate go error handling so much
-		return Coord{}, err
-	}
+	reader.consumeToken(LPAREN)
+	lat = reader.consumeNumber()
+	reader.consumeToken(COMMA)
+	lng = reader.consumeNumber()
+	reader.consumeToken(RPAREN)
 
-	return Coord{lat: lat.val, lng: lng.val}, err
+	return NewCoord(lat.val, lng.val)
 }
 
-func (reader *ZincReader) parseXStr(id Str) (XStr, error) {
-	if !unicode.IsUpper([]rune(id.val)[0]) {
-		return XStr{}, errors.New("Invalid XStr type: " + id.val)
+func (reader *ZincReader) parseXStr(id string) XStr {
+	if !unicode.IsUpper([]rune(id)[0]) {
+		panic("Invalid XStr type: " + id)
 	}
 
-	var err error
 	var val Str
-	err = reader.consumeToken(LPAREN)
-	if err != nil {
-		return XStr{}, err
-	}
-	val, err = reader.consumeStr()
-	if err != nil {
-		return XStr{}, err
-	}
-	err = reader.consumeToken(RPAREN)
-	if err != nil {
-		return XStr{}, err
-	}
+	reader.consumeToken(LPAREN)
+	val = reader.consumeStr()
+	reader.consumeToken(RPAREN)
 
-	return XStr{valType: id.val, val: val.val}, err
+	return NewXStr(id, val.val)
 }
 
-func (reader *ZincReader) parseLiteral() (Val, error) {
-	var err error
-
+func (reader *ZincReader) parseLiteral() Val {
 	val := reader.curVal
 	// Combine ref and dis
 	if reader.cur == REF && reader.peek == STR {
 		ref := reader.curVal.(Ref)
 		dis := reader.peekVal.(Str)
 
-		val = Ref{val: ref.val, dis: dis.val}
-		err = reader.consumeToken(REF)
-		if err != nil {
-			return Null{}, err
-		}
+		val = NewRef(ref.val, dis.val)
+		reader.consumeToken(REF)
 	}
-	err = reader.consume()
-	return val, err
+	reader.consume()
+	return val
 }
 
-func (reader *ZincReader) parseList() (List, error) {
+func (reader *ZincReader) parseList() List {
 	var vals []Val
-	var err error
 
-	err = reader.consumeToken(LBRACKET)
-	if err != nil {
-		return List{}, err
-	}
+	reader.consumeToken(LBRACKET)
 	for reader.cur != RBRACKET && reader.cur != EOF {
 		var val Val
-		val, err = reader.parseVal()
-		if err != nil {
-			break
-		}
+		val = reader.parseVal()
 		vals = append(vals, val)
 		if reader.cur == COMMA {
 			break
 		}
-		err = reader.consumeToken(COMMA)
-		if err != nil {
-			break
-		}
-	}
-	if err != nil {
-		return List{}, err
+		reader.consumeToken(COMMA)
 	}
 
-	err = reader.consumeToken(RBRACKET)
+	reader.consumeToken(RBRACKET)
 
-	return List{vals: vals}, err
+	return NewList(vals)
 }
 
-func (reader *ZincReader) parseDict() (Dict, error) {
-	var items map[string]Val
-	var err error
+func (reader *ZincReader) parseDict() Dict {
+	items := make(map[string]Val)
 
 	braces := reader.cur == LBRACE
 	if braces {
-		err = reader.consumeToken(LBRACE)
-		if err != nil {
-			return Dict{}, err
-		}
+		reader.consumeToken(LBRACE)
 	}
 	for reader.cur == ID {
-		var id Str
+		var id string
 		var val Val
 
-		id, err = reader.consumeTagName()
-		if err != nil {
-			break
-		}
+		id = reader.consumeTagName()
 
 		val = Marker{} // Default to marker val if there is no value
 		if reader.cur == COLON {
-			err = reader.consumeToken(COLON)
-			if err != nil {
-				break
-			}
-			val, err = reader.parseVal()
-			if err != nil {
-				break
-			}
+			reader.consumeToken(COLON)
+			val = reader.parseVal()
 		}
-		items[id.val] = val
+		items[id] = val
 	}
-	if err != nil {
-		return Dict{}, err
-	}
-
 	if braces {
-		err = reader.consumeToken(RBRACE)
-		if err != nil {
-			return Dict{}, err
-		}
+		reader.consumeToken(RBRACE)
 	}
 
-	return Dict{items: items}, err
+	return Dict{items: items}
 }
 
-func (reader *ZincReader) parseGrid() (Grid, error) {
+func (reader *ZincReader) parseGrid() Grid {
 	var meta Dict
 	var cols []Col
 	var rows []Row
 
-	var err error
-
 	nested := reader.cur == LT2
 	if nested {
-		err = reader.consumeToken(LT2)
-		if err != nil {
-			return Grid{}, err
-		}
+		reader.consumeToken(LT2)
 		if reader.cur == NL {
-			err = reader.consumeToken(NL)
-			if err != nil {
-				return Grid{}, err
-			}
+			reader.consumeToken(NL)
 		}
 	}
 
 	// ver:"3.0"
 	if reader.cur != ID {
-		return Grid{}, errors.New("Expecting grid 'ver' identifier, not " + reader.curVal.ToZinc())
+		panic("Expecting grid 'ver' identifier, not " + reader.curVal.ToZinc())
 	}
-	err = reader.consume()
-	if err != nil {
-		return Grid{}, err
-	}
-	err = reader.consumeToken(COLON)
-	if err != nil {
-		return Grid{}, err
-	}
-	_, err = reader.consumeStr() // Always expect version 3
-	if err != nil {
-		return Grid{}, err
-	}
+	reader.consume()
+	reader.consumeToken(COLON)
+	reader.consumeStr() // Always expect version 3
+	// TODO Check for version
 
 	// grid meta
 	if reader.cur == ID {
-		meta, err = reader.parseDict()
-		if err != nil {
-			return Grid{}, err
-		}
+		meta = reader.parseDict()
 	}
-	err = reader.consumeToken(NL)
-	if err != nil {
-		return Grid{}, err
-	}
+	reader.consumeToken(NL)
 
 	// column definitions
 	numCols := 0
 	for reader.cur == ID {
 		numCols = numCols + 1
-		var name Str
-		name, err = reader.consumeTagName()
-		if err != nil {
-			break
-		}
+		name := reader.consumeTagName()
 
 		var colMeta Dict
 		if reader.cur == ID {
-			colMeta, err = reader.parseDict()
-			if err != nil {
-				break
-			}
+			colMeta = reader.parseDict()
 		}
 		col := Col{
 			index: numCols,
-			name:  name.val,
+			name:  name,
 			meta:  colMeta,
 		}
 		cols = append(cols, col)
 
-		if reader.cur == COMMA {
+		if reader.cur != COMMA {
 			break
 		}
-		err = reader.consumeToken(COMMA)
-		if err != nil {
-			break
-		}
-	}
-	if err != nil {
-		return Grid{}, err
+		reader.consumeToken(COMMA)
 	}
 	if numCols == 0 {
-		return Grid{}, errors.New("No columns defined")
+		panic("No columns defined")
 	}
-	err = reader.consumeToken(NL)
-	if err != nil {
-		return Grid{}, err
-	}
+	reader.consumeToken(NL)
 
 	// grid rows
 	for {
@@ -384,20 +266,11 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 			if reader.cur == COMMA || reader.cur == NL || reader.cur == EOF {
 				vals[col.Name()] = Null{}
 			} else {
-				vals[col.Name()], err = reader.parseVal()
-				if err != nil {
-					break
-				}
+				vals[col.Name()] = reader.parseVal()
 			}
 			if i+1 < numCols {
-				err = reader.consumeToken(COMMA)
-				if err != nil {
-					break
-				}
+				reader.consumeToken(COMMA)
 			}
-		}
-		if err != nil {
-			break
 		}
 		rows = append(rows, Row{items: vals})
 
@@ -407,72 +280,54 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 		} else if reader.cur == EOF {
 			break
 		}
-		err = reader.consumeToken(NL)
-		if err != nil {
-			break
-		}
-	}
-	if err != nil {
-		return Grid{}, err
+		reader.consumeToken(NL)
 	}
 
 	if reader.cur == NL {
-		err = reader.consumeToken(NL)
-		if err != nil {
-			return Grid{}, err
-		}
+		reader.consumeToken(NL)
 	}
 	if nested {
-		err = reader.consumeToken(GT2)
-		if err != nil {
-			return Grid{}, err
-		}
+		reader.consumeToken(GT2)
 	}
 
 	return Grid{
 		meta: meta,
 		cols: cols,
 		rows: rows,
-	}, err
-}
-
-func (reader *ZincReader) consumeTagName() (Str, error) {
-	id := reader.curVal.(Str)
-	if id.val == "" || unicode.IsLower([]rune(id.val)[0]) {
-		return Str{}, errors.New("Invalid dict tag name: " + id.val)
 	}
-	err := reader.consumeToken(ID)
-	return id, err
 }
 
-func (reader *ZincReader) consumeNumber() (Number, error) {
+func (reader *ZincReader) consumeTagName() string {
+	id := reader.curVal.(Id)
+	val := id.val
+	if val == "" || unicode.IsUpper([]rune(val)[0]) {
+		panic("Invalid dict tag name: " + val)
+	}
+	reader.consumeToken(ID)
+	return val
+}
+
+func (reader *ZincReader) consumeNumber() Number {
 	number := reader.curVal.(Number)
-	err := reader.consumeToken(NUMBER)
-	return number, err
+	reader.consumeToken(NUMBER)
+	return number
 }
 
-func (reader *ZincReader) consumeStr() (Str, error) {
+func (reader *ZincReader) consumeStr() Str {
 	str := reader.curVal.(Str)
-	err := reader.consumeToken(STR)
-	return str, err
+	reader.consumeToken(STR)
+	return str
 }
 
-func (reader *ZincReader) consumeToken(expected Token) error {
-	var err error
+func (reader *ZincReader) consumeToken(expected Token) {
 	if reader.cur != expected {
-		err = errors.New("Expected " + expected.String() + " not " + reader.cur.String())
-		return err
+		panic("Expected " + expected.String() + " not " + reader.cur.String())
 	}
-
-	err = reader.consume()
-	return err
+	reader.consume()
 }
 
-func (reader *ZincReader) consume() error {
-	newToken, err := reader.tokenizer.Next()
-	if err != nil {
-		return err
-	}
+func (reader *ZincReader) consume() {
+	newToken := reader.tokenizer.Next()
 
 	reader.cur = reader.peek
 	reader.curVal = reader.peekVal
@@ -481,6 +336,4 @@ func (reader *ZincReader) consume() error {
 	reader.peek = newToken
 	reader.peekVal = reader.tokenizer.val
 	// reader.peekLine = reader.tokenizer.line
-
-	return err
 }

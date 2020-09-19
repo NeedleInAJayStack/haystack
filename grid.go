@@ -8,6 +8,18 @@ type Grid struct {
 	rows []Row
 }
 
+func (grid *Grid) Meta() Dict {
+	return grid.meta
+}
+
+func (grid *Grid) Cols() []Col {
+	return grid.cols
+}
+
+func (grid *Grid) Rows() []Row {
+	return grid.rows
+}
+
 func (grid Grid) ToZinc() string {
 	buf := strings.Builder{}
 	grid.encodeTo(&buf, 0)
@@ -60,6 +72,14 @@ type Col struct {
 	meta  Dict
 }
 
+func (col *Col) Name() string {
+	return col.name
+}
+
+func (col *Col) Meta() Dict {
+	return col.meta
+}
+
 // Format as <name> <meta>
 func (col *Col) encodeTo(buf *strings.Builder) {
 	buf.WriteString(col.name + " ")
@@ -67,13 +87,20 @@ func (col *Col) encodeTo(buf *strings.Builder) {
 }
 
 type Row struct {
-	vals []Val
+	items map[string]Val
+}
+
+func (row *Row) ToDict() Dict {
+	return Dict{items: row.items}
 }
 
 // Format as <val1>, <val2>, ...
 func (row *Row) encodeTo(buf *strings.Builder) {
-	for idx, val := range row.vals {
-		if idx != 0 {
+	firstVal := true
+	for _, val := range row.items {
+		if firstVal {
+			firstVal = false
+		} else {
 			buf.WriteString(", ")
 		}
 		buf.WriteString(val.ToZinc())

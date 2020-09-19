@@ -378,12 +378,13 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 		}
 
 		// read cells
-		vals := make([]Val, numCols)
+		var vals map[string]Val
 		for i := 0; i < numCols; i = i + 1 {
+			col := cols[i]
 			if reader.cur == COMMA || reader.cur == NL || reader.cur == EOF {
-				vals[i] = Null{}
+				vals[col.Name()] = Null{}
 			} else {
-				vals[i], err = reader.parseVal()
+				vals[col.Name()], err = reader.parseVal()
 				if err != nil {
 					break
 				}
@@ -398,7 +399,7 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 		if err != nil {
 			break
 		}
-		rows = append(rows, Row{vals: vals})
+		rows = append(rows, Row{items: vals})
 
 		// newline or end
 		if nested && reader.cur == GT2 {

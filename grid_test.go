@@ -29,15 +29,15 @@ func TestGrid_ToZinc(t *testing.T) {
 		},
 		rows: []Row{
 			Row{
-				vals: []Val{
-					&Str{val: "Site 1"},
-					&Number{val: 356.214, unit: "kW"},
+				items: map[string]Val{
+					"siteName": &Str{val: "Site 1"},
+					"val":      &Number{val: 356.214, unit: "kW"},
 				},
 			},
 			Row{
-				vals: []Val{
-					&Str{val: "Site 2"},
-					&Number{val: 463.028, unit: "kW"},
+				items: map[string]Val{
+					"siteName": &Str{val: "Site 2"},
+					"val":      &Number{val: 463.028, unit: "kW"},
 				},
 			},
 		},

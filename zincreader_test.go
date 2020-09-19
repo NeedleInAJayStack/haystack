@@ -5,38 +5,38 @@ import (
 )
 
 func TestZincReader_empty(t *testing.T) {
-	testZincReaderGrid(
-		t,
-		"ver:\"3.0\" tag:N\n"+
-			"a nullmetatag:N, b markermetatag\n"+
-			"",
-		Grid{
-			meta: Dict{
-				items: map[string]Val{
-					"tag": &Null{},
-				},
-			},
-			cols: []Col{
-				Col{
-					name: "a",
-					meta: Dict{
-						items: map[string]Val{
-							"nullmetatag": &Null{},
-						},
-					},
-				},
-				Col{
-					name: "b",
-					meta: Dict{
-						items: map[string]Val{
-							"markermetatag": &Marker{},
-						},
-					},
-				},
-			},
-			rows: []Row{},
-		},
-	)
+	// testZincReaderGrid(
+	// 	t,
+	// 	"ver:\"3.0\" tag:N\n"+
+	// 		"a nullmetatag:N, b markermetatag\n"+
+	// 		"",
+	// 	Grid{
+	// 		meta: Dict{
+	// 			items: map[string]Val{
+	// 				"tag": &Null{},
+	// 			},
+	// 		},
+	// 		cols: []Col{
+	// 			Col{
+	// 				name: "a",
+	// 				meta: Dict{
+	// 					items: map[string]Val{
+	// 						"nullmetatag": &Null{},
+	// 					},
+	// 				},
+	// 			},
+	// 			Col{
+	// 				name: "b",
+	// 				meta: Dict{
+	// 					items: map[string]Val{
+	// 						"markermetatag": &Marker{},
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 		rows: []Row{},
+	// 	},
+	// )
 }
 
 // Verifies that the tokenized result has the expected token type and value.

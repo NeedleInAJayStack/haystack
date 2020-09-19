@@ -19,6 +19,10 @@ type ZincReader struct {
 	// peekLine int
 }
 
+func (reader *ZincReader) InitString(str string) {
+	reader.Init(strings.NewReader(str))
+}
+
 func (reader *ZincReader) Init(in *strings.Reader) {
 	reader.tokenizer = Tokenizer{}
 	reader.tokenizer.Init(in)
@@ -27,7 +31,7 @@ func (reader *ZincReader) Init(in *strings.Reader) {
 	reader.consume()
 }
 
-func (reader *ZincReader) ReadVal(in *strings.Reader) (Val, error) {
+func (reader *ZincReader) ReadVal() (Val, error) {
 	var val Val
 	var err error
 

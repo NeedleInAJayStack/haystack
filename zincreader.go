@@ -97,7 +97,7 @@ func (reader *ZincReader) parseVal() (Val, error) {
 	}
 
 	// -INF
-	if reader.cur == MINUS && reader.peekVal.toZinc() == "INF" {
+	if reader.cur == MINUS && reader.peekVal.ToZinc() == "INF" {
 		err = reader.consumeToken(MINUS)
 		if err != nil {
 			return Null{}, err
@@ -297,7 +297,7 @@ func (reader *ZincReader) parseGrid() (Grid, error) {
 
 	// ver:"3.0"
 	if reader.cur != ID {
-		return Grid{}, errors.New("Expecting grid 'ver' identifier, not " + reader.curVal.toZinc())
+		return Grid{}, errors.New("Expecting grid 'ver' identifier, not " + reader.curVal.ToZinc())
 	}
 	err = reader.consume()
 	if err != nil {

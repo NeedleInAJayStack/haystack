@@ -6,7 +6,7 @@ type XStr struct {
 }
 
 // Format is <valType>(<val>)
-func (xStr XStr) toZinc() string {
+func (xStr XStr) ToZinc() string {
 	result := xStr.valType
 	result = result + "(\""
 	result = result + xStr.val

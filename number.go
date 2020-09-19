@@ -10,7 +10,7 @@ type Number struct {
 	unit string // Optional
 }
 
-func (number Number) toZinc() string {
+func (number Number) ToZinc() string {
 	return number.encode(false)
 }
 

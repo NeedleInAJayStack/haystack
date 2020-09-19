@@ -3,6 +3,6 @@ package haystack
 type Null struct {
 }
 
-func (null Null) toZinc() string {
+func (null Null) ToZinc() string {
 	return ""
 }

@@ -40,7 +40,7 @@ func TestZincReader_empty(t *testing.T) {
 }
 
 // Verifies that the tokenized result has the expected token type and value.
-// Values are matched based on the result of the 'toZinc' method
+// Values are matched based on the result of the 'ToZinc' method
 func testZincReaderGrid(t *testing.T, str string, expected Grid) {
 	var reader ZincReader
 	reader.InitString(str)
@@ -54,10 +54,10 @@ func testZincReaderGrid(t *testing.T, str string, expected Grid) {
 	testGridEq(t, actual, expected)
 }
 
-// Test whether the grids match based on a toZinc call
+// Test whether the grids match based on a ToZinc call
 func testGridEq(t *testing.T, actual Grid, expected Grid) {
-	actualZinc := actual.toZinc()
-	expectedZinc := expected.toZinc()
+	actualZinc := actual.ToZinc()
+	expectedZinc := expected.ToZinc()
 
 	if actualZinc != expectedZinc {
 		t.Error("Grids do not match")

@@ -10,7 +10,7 @@ func (dict *Dict) isEmpty() bool {
 	return len(dict.items) == 0
 }
 
-func (dict Dict) toZinc() string {
+func (dict Dict) ToZinc() string {
 	var buf strings.Builder
 	dict.encodeTo(&buf, true)
 	return buf.String()
@@ -33,7 +33,7 @@ func (dict Dict) encodeTo(buf *strings.Builder, brackets bool) {
 
 		_, isMarker := val.(*Marker)
 		if !isMarker {
-			buf.WriteString(":" + val.toZinc())
+			buf.WriteString(":" + val.ToZinc())
 		}
 	}
 	if brackets {

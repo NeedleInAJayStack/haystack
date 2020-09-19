@@ -6,7 +6,7 @@ type List struct {
 	vals []Val
 }
 
-func (list List) toZinc() string {
+func (list List) ToZinc() string {
 	var buf strings.Builder
 	list.encodeTo(&buf)
 	return buf.String()
@@ -19,7 +19,7 @@ func (list List) encodeTo(buf *strings.Builder) {
 		if idx != 0 {
 			buf.WriteString(", ")
 		}
-		buf.WriteString(val.toZinc())
+		buf.WriteString(val.ToZinc())
 	}
 	buf.WriteString("]")
 }

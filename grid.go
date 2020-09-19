@@ -2,39 +2,13 @@ package haystack
 
 import "strings"
 
-type Col struct {
-	index int
-	name  string
-	meta  Dict
-}
-
-// Format as <name> <meta>
-func (col *Col) encodeTo(buf *strings.Builder) {
-	buf.WriteString(col.name + " ")
-	col.meta.encodeTo(buf, false)
-}
-
-type Row struct {
-	vals []Val
-}
-
-// Format as <val1>, <val2>, ...
-func (row *Row) encodeTo(buf *strings.Builder) {
-	for idx, val := range row.vals {
-		if idx != 0 {
-			buf.WriteString(", ")
-		}
-		buf.WriteString(val.toZinc())
-	}
-}
-
 type Grid struct {
 	meta Dict
 	cols []Col
 	rows []Row
 }
 
-func (grid Grid) toZinc() string {
+func (grid Grid) ToZinc() string {
 	buf := strings.Builder{}
 	grid.encodeTo(&buf, 0)
 	return buf.String()
@@ -48,7 +22,7 @@ func (grid Grid) toZinc() string {
 //     ...
 //
 // indentSize is the number of spaces to add to each new-line.
-func (grid Grid) encodeTo(buf *strings.Builder, indentSize int) {
+func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
 	indentBuf := strings.Builder{}
 	for i := 0; i < indentSize; i++ {
 		indentBuf.WriteString(" ")
@@ -77,5 +51,31 @@ func (grid Grid) encodeTo(buf *strings.Builder, indentSize int) {
 			buf.WriteString(indent)
 		}
 		row.encodeTo(buf)
+	}
+}
+
+type Col struct {
+	index int
+	name  string
+	meta  Dict
+}
+
+// Format as <name> <meta>
+func (col *Col) encodeTo(buf *strings.Builder) {
+	buf.WriteString(col.name + " ")
+	col.meta.encodeTo(buf, false)
+}
+
+type Row struct {
+	vals []Val
+}
+
+// Format as <val1>, <val2>, ...
+func (row *Row) encodeTo(buf *strings.Builder) {
+	for idx, val := range row.vals {
+		if idx != 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString(val.ToZinc())
 	}
 }

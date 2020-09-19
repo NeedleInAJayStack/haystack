@@ -43,27 +43,27 @@ func TestTime_timeFromStr(t *testing.T) {
 	}
 }
 
-func TestTime_toZinc(t *testing.T) {
+func TestTime_ToZinc(t *testing.T) {
 	timeNoMs := Time{hour: 23, min: 7, sec: 10}
-	timeNoMsZinc := timeNoMs.toZinc()
+	timeNoMsZinc := timeNoMs.ToZinc()
 	if timeNoMsZinc != "23:07:10" {
 		t.Error(timeNoMsZinc)
 	}
 
 	timeMs := Time{hour: 23, min: 7, sec: 10, ms: 957}
-	timeMsZinc := timeMs.toZinc()
+	timeMsZinc := timeMs.ToZinc()
 	if timeMsZinc != "23:07:10.957" {
 		t.Error(timeMsZinc)
 	}
 
 	timeOnesMs := Time{hour: 23, min: 7, sec: 10, ms: 2}
-	timeOnesMsZinc := timeOnesMs.toZinc()
+	timeOnesMsZinc := timeOnesMs.ToZinc()
 	if timeOnesMsZinc != "23:07:10.002" {
 		t.Error(timeOnesMsZinc)
 	}
 
 	timeTensMs := Time{hour: 23, min: 7, sec: 10, ms: 56}
-	timeTensMsZinc := timeTensMs.toZinc()
+	timeTensMsZinc := timeTensMs.ToZinc()
 	if timeTensMsZinc != "23:07:10.056" {
 		t.Error(timeTensMsZinc)
 	}

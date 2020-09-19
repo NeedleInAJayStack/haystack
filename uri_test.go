@@ -2,9 +2,9 @@ package haystack
 
 import "testing"
 
-func TestUri_toZinc(t *testing.T) {
+func TestUri_ToZinc(t *testing.T) {
 	uri := Uri{val: "http://www.project-haystack.org"}
-	got := uri.toZinc()
+	got := uri.ToZinc()
 	if got != "`http://www.project-haystack.org`" {
 		t.Error(got)
 	}

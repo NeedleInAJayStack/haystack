@@ -2,7 +2,7 @@ package haystack
 
 import "testing"
 
-func TestGrid_toZinc(t *testing.T) {
+func TestGrid_ToZinc(t *testing.T) {
 	grid := Grid{
 		meta: Dict{
 			items: map[string]Val{
@@ -42,7 +42,7 @@ func TestGrid_toZinc(t *testing.T) {
 			},
 		},
 	}
-	gridZinc := grid.toZinc()
+	gridZinc := grid.ToZinc()
 	expected := "ver:\"3.0\" dis:\"Site Energy Summary\"\n" +
 		"siteName dis:\"Sites\", val dis:\"Value\"\n" +
 		"\"Site 1\", 356.214kW\n" +

@@ -5,6 +5,6 @@ type Id struct {
 }
 
 // Encode using double quotes and back slash escapes
-func (id Id) toZinc() string {
+func (id Id) ToZinc() string {
 	return id.val
 }

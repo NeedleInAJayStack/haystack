@@ -159,13 +159,13 @@ func TestTokenizer_testWhitespace(t *testing.T) {
 }
 
 // Verifies that the tokenized result has the expected token type and value.
-// Values are matched based on the result of the 'toZinc' method
+// Values are matched based on the result of the 'ToZinc' method
 func testTokenizerSingle(t *testing.T, str string, expectedToken Token, expectedVal Val) {
 	testTokenizerMulti(t, str, []Token{expectedToken}, []Val{expectedVal})
 }
 
 // Verifies that the tokenized result has the expected token type and value.
-// Values are matched based on the result of the 'toZinc' method
+// Values are matched based on the result of the 'ToZinc' method
 func testTokenizerMulti(t *testing.T, str string, expectedTokens []Token, expectedVals []Val) {
 	tokens, vals := testTokenizerRead(t, str)
 
@@ -184,10 +184,10 @@ func testTokenizerMulti(t *testing.T, str string, expectedTokens []Token, expect
 		t.Error(str + " - Actual and expected value list lengths don't match")
 	}
 	for index, val := range vals {
-		if val.toZinc() != expectedVals[index].toZinc() {
+		if val.ToZinc() != expectedVals[index].ToZinc() {
 			t.Error(str + " - Val doesn't match expected\n" +
-				"\tactual:   " + val.toZinc() + "\n" +
-				"\texpected: " + expectedVals[index].toZinc())
+				"\tactual:   " + val.ToZinc() + "\n" +
+				"\texpected: " + expectedVals[index].ToZinc())
 		}
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestDict_toZinc(t *testing.T) {
+func TestDict_ToZinc(t *testing.T) {
 	dict := Dict{
 		items: map[string]Val{
 			"dis":  &Str{val: "Building"},
@@ -13,7 +13,7 @@ func TestDict_toZinc(t *testing.T) {
 			"area": &Number{val: 35000.0, unit: "ft²"},
 		},
 	}
-	dictZinc := dict.toZinc()
+	dictZinc := dict.ToZinc()
 	if !strings.Contains(dictZinc, "dis:\"Building\"") {
 		t.Error(dictZinc)
 	}

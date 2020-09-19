@@ -2,9 +2,9 @@ package haystack
 
 import "testing"
 
-func TestXStr_toZinc(t *testing.T) {
+func TestXStr_ToZinc(t *testing.T) {
 	easy := XStr{valType: "Str", val: "hello world"}
-	easyStr := easy.toZinc()
+	easyStr := easy.ToZinc()
 	if easyStr != "Str(\"hello world\")" {
 		t.Error(easyStr)
 	}

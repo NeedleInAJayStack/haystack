@@ -33,9 +33,9 @@ func TestDate_dateFromStr(t *testing.T) {
 	}
 }
 
-func TestDate_toZinc(t *testing.T) {
+func TestDate_ToZinc(t *testing.T) {
 	date := Date{year: 2020, month: 8, day: 17}
-	dateZinc := date.toZinc()
+	dateZinc := date.ToZinc()
 	if dateZinc != "2020-08-17" {
 		t.Error(dateZinc)
 	}

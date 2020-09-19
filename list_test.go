@@ -2,7 +2,7 @@ package haystack
 
 import "testing"
 
-func TestList_toZinc(t *testing.T) {
+func TestList_ToZinc(t *testing.T) {
 	list := List{
 		vals: []Val{
 			&Number{val: 5.5},
@@ -10,7 +10,7 @@ func TestList_toZinc(t *testing.T) {
 			&Ref{val: "null"},
 		},
 	}
-	listZinc := list.toZinc()
+	listZinc := list.ToZinc()
 	if listZinc != "[5.5, 23:07:10, @null]" {
 		t.Error(listZinc)
 	}

@@ -2,9 +2,9 @@ package haystack
 
 import "testing"
 
-func TestMarker_toZinc(t *testing.T) {
+func TestMarker_ToZinc(t *testing.T) {
 	marker := Marker{}
-	markerZinc := marker.toZinc()
+	markerZinc := marker.ToZinc()
 	if markerZinc != "M" {
 		t.Error(markerZinc)
 	}

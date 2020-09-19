@@ -20,9 +20,9 @@ func TestCoord_NewCoord(t *testing.T) {
 	}
 }
 
-func TestCoord_toZinc(t *testing.T) {
+func TestCoord_ToZinc(t *testing.T) {
 	valid := NewCoord(41.534, 111.478)
-	validZinc := valid.toZinc()
+	validZinc := valid.ToZinc()
 	if validZinc != "C(41.534,111.478)" {
 		t.Error(validZinc)
 	}

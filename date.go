@@ -45,7 +45,7 @@ func dateFromStr(str string) (Date, error) {
 }
 
 // Format is YYYY-MM-DD
-func (date Date) toZinc() string {
+func (date Date) ToZinc() string {
 	return date.encode()
 }
 

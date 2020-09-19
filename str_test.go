@@ -2,15 +2,15 @@ package haystack
 
 import "testing"
 
-func TestStr_toZinc(t *testing.T) {
+func TestStr_ToZinc(t *testing.T) {
 	easy := Str{val: "hello world"}
-	easyStr := easy.toZinc()
+	easyStr := easy.ToZinc()
 	if easyStr != "\"hello world\"" {
 		t.Error(easyStr)
 	}
 
 	hard := Str{val: "this 1s A #more \n complex \\one"}
-	hardStr := hard.toZinc()
+	hardStr := hard.ToZinc()
 	if hardStr != "\"this 1s A #more \\n complex \\\\one\"" {
 		t.Error(hardStr)
 	}

@@ -3,6 +3,6 @@ package haystack
 type NA struct {
 }
 
-func (na NA) toZinc() string {
+func (na NA) ToZinc() string {
 	return "NA"
 }

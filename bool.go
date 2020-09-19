@@ -4,7 +4,7 @@ type Bool struct {
 	val bool
 }
 
-func (b Bool) toZinc() string {
+func (b Bool) ToZinc() string {
 	if b.val == true {
 		return "T"
 	} else {

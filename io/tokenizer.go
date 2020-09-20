@@ -1,6 +1,7 @@
 package io
 
 import (
+	"io"
 	"strconv"
 	"strings"
 	"unicode"
@@ -12,7 +13,7 @@ const runeEOF = -1
 
 // Tokenizer implements a stream approach for reading Haystack formats such as Zinc, Trio, and Filters
 type Tokenizer struct {
-	in    *strings.Reader
+	in    io.RuneReader
 	cur   rune
 	peek  rune
 	val   haystack.Val
@@ -25,7 +26,7 @@ func (tokenizer *Tokenizer) InitString(str string) {
 }
 
 // Init initializes a tokenizer on a Reader
-func (tokenizer *Tokenizer) Init(in *strings.Reader) {
+func (tokenizer *Tokenizer) Init(in io.RuneReader) {
 	tokenizer.in = in
 	tokenizer.cur = 0
 	tokenizer.peek = 0

@@ -1,6 +1,10 @@
 package haystack
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"strings"
+)
 
 type Str struct {
 	val string
@@ -16,35 +20,42 @@ func (str Str) String() string {
 
 // ToZinc representes the object as a double-quoted string, with back-slash escapes
 func (str Str) ToZinc() string {
-	result := "\""
+	builder := new(strings.Builder)
+	out := bufio.NewWriter(builder)
+	str.WriteZincTo(out)
+	out.Flush()
+	return builder.String()
+}
+
+// WriteZincTo writes the object as a double-quoted string, with back-slash escapes to the given writer
+func (str Str) WriteZincTo(buf *bufio.Writer) {
+	buf.WriteRune('"')
 
 	for i := 0; i < len(str.val); i++ {
 		char := str.val[i]
 		if char < ' ' || char == '"' || char == '\\' {
-			result = result + "\\"
+			buf.WriteRune('\\')
 			switch char {
 			case '\n':
-				result = result + string('n')
+				buf.WriteRune('n')
 			case '\r':
-				result = result + string('r')
+				buf.WriteRune('r')
 			case '\t':
-				result = result + string('t')
+				buf.WriteRune('t')
 			case '"':
-				result = result + string('"')
+				buf.WriteRune('"')
 			case '\\':
-				result = result + string('\\')
+				buf.WriteRune('\\')
 			default:
-				result = result + "u00"
+				buf.WriteString("u00")
 				if char <= 0xf {
-					result = result + string('0')
+					buf.WriteRune('0')
 				}
-				result = result + fmt.Sprintf("%x", char)
+				buf.WriteString(fmt.Sprintf("%x", char))
 			}
 		} else {
-			result = result + string(char)
+			buf.WriteByte(char)
 		}
 	}
-	result = result + "\""
-
-	return result
+	buf.WriteRune('"')
 }

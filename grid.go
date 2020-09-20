@@ -1,6 +1,9 @@
 package haystack
 
-import "strings"
+import (
+	"bufio"
+	"strings"
+)
 
 type Grid struct {
 	meta Dict
@@ -30,9 +33,11 @@ func (grid *Grid) Rows() []Row {
 //     <row2>
 //     ...
 func (grid Grid) ToZinc() string {
-	buf := strings.Builder{}
-	grid.encodeTo(&buf, 0)
-	return buf.String()
+	builder := new(strings.Builder)
+	out := bufio.NewWriter(builder)
+	grid.WriteZincTo(out, 0)
+	out.Flush()
+	return builder.String()
 }
 
 // Format as:
@@ -43,7 +48,7 @@ func (grid Grid) ToZinc() string {
 //     ...
 //
 // indentSize is the number of spaces to add to each new-line.
-func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
+func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 	indentBuf := strings.Builder{}
 	for i := 0; i < indentSize; i++ {
 		indentBuf.WriteString(" ")
@@ -54,7 +59,7 @@ func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
 	buf.WriteString("ver:\"3.0\"")
 	if !grid.meta.IsEmpty() {
 		buf.WriteString(" ")
-		grid.meta.encodeTo(buf, false)
+		grid.meta.WriteZincTo(buf, false)
 	}
 	buf.WriteString("\n")
 	buf.WriteString(indent)
@@ -62,7 +67,7 @@ func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
 		if colIdx != 0 {
 			buf.WriteString(", ")
 		}
-		col.encodeTo(buf)
+		col.WriteZincTo(buf)
 	}
 	buf.WriteString("\n")
 	buf.WriteString(indent)
@@ -71,7 +76,7 @@ func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
 			buf.WriteString("\n")
 			buf.WriteString(indent)
 		}
-		row.encodeTo(buf, &grid.cols)
+		row.WriteZincTo(buf, &grid.cols)
 	}
 }
 
@@ -92,11 +97,11 @@ func (col *Col) Meta() Dict {
 }
 
 // Format as <name> <meta>
-func (col *Col) encodeTo(buf *strings.Builder) {
+func (col *Col) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteString(col.name)
 	if !col.meta.IsEmpty() {
 		buf.WriteRune(' ')
-		col.meta.encodeTo(buf, false)
+		col.meta.WriteZincTo(buf, false)
 	}
 }
 
@@ -110,7 +115,7 @@ func (row *Row) ToDict() Dict {
 }
 
 // Format as <val1>, <val2>, ... Cols sets ordering
-func (row *Row) encodeTo(buf *strings.Builder, cols *[]Col) {
+func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col) {
 	for colIdx, col := range *cols {
 		if colIdx != 0 {
 			buf.WriteString(", ")

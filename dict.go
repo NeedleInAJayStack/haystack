@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"bufio"
 	"sort"
 	"strings"
 )
@@ -19,13 +20,15 @@ func NewDict(items map[string]Val) Dict {
 
 // ToZinc representes the object as: "{<name1>:<val1> <name2>:<val2> ...}" with the names in alphabetical order. Markers don't require a val.
 func (dict Dict) ToZinc() string {
-	var buf strings.Builder
-	dict.encodeTo(&buf, true)
-	return buf.String()
+	builder := new(strings.Builder)
+	out := bufio.NewWriter(builder)
+	dict.WriteZincTo(out, true)
+	out.Flush()
+	return builder.String()
 }
 
 // Format is {<name1>:<val1> <name2>:<val2> ...} with the names in alphabetical order. Markers don't require a val.
-func (dict Dict) encodeTo(buf *strings.Builder, brackets bool) {
+func (dict Dict) WriteZincTo(buf *bufio.Writer, brackets bool) {
 	if brackets {
 		buf.WriteString("{")
 	}

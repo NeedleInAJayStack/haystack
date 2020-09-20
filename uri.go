@@ -1,5 +1,10 @@
 package haystack
 
+import (
+	"bufio"
+	"strings"
+)
+
 type Uri struct {
 	val string
 }
@@ -12,18 +17,24 @@ func (uri Uri) String() string {
 	return uri.val
 }
 
-// ToZinc representes the object as: "`<val>`"
 func (uri Uri) ToZinc() string {
-	result := "`"
+	builder := new(strings.Builder)
+	out := bufio.NewWriter(builder)
+	uri.WriteZincTo(out)
+	out.Flush()
+	return builder.String()
+}
 
+// ToZinc representes the object as: "`<val>`"
+func (uri Uri) WriteZincTo(buf *bufio.Writer) {
+	buf.WriteRune('`')
 	for i := 0; i < len(uri.val); i++ {
 		char := uri.val[i]
-		// URIs cannot contain characters < ' ', so just ignore them.
-		if char > ' ' {
-			result = result + string(char)
+		if char == '`' {
+			buf.WriteString("\\`")
+		} else if char > ' ' { // URIs cannot contain characters < ' ', so just ignore them.
+			buf.WriteByte(char)
 		}
 	}
-	result = result + "`"
-
-	return result
+	buf.WriteRune('`')
 }

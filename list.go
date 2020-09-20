@@ -1,6 +1,9 @@
 package haystack
 
-import "strings"
+import (
+	"bufio"
+	"strings"
+)
 
 type List struct {
 	vals []Val
@@ -12,13 +15,15 @@ func NewList(vals []Val) List {
 
 // ToZinc representes the object as: "[<val1>, <val2>, ...]"
 func (list List) ToZinc() string {
-	var buf strings.Builder
-	list.encodeTo(&buf)
-	return buf.String()
+	builder := new(strings.Builder)
+	out := bufio.NewWriter(builder)
+	list.WriteZincTo(out)
+	out.Flush()
+	return builder.String()
 }
 
 // Format as [<val1>, <val2>, ...]
-func (list List) encodeTo(buf *strings.Builder) {
+func (list List) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteString("[")
 	for idx, val := range list.vals {
 		if idx != 0 {

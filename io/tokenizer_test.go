@@ -165,7 +165,6 @@ func testTokenizerRead(t *testing.T, str string) ([]Token, []haystack.Val) {
 	var tokens []Token
 	var vals []haystack.Val
 
-	// TODO: Adjust to handle multiple vals/tokens
 	for {
 		nextToken := tokenizer.Next()
 		if nextToken != tokenizer.token {

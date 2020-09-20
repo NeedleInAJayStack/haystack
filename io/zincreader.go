@@ -120,7 +120,7 @@ func (reader *ZincReader) parseCoord(id string) haystack.Coord {
 	lng = reader.consumeNumber()
 	reader.consumeToken(RPAREN)
 
-	return haystack.NewCoord(lat.ToFloat(), lng.ToFloat())
+	return haystack.NewCoord(lat.Float(), lng.Float())
 }
 
 func (reader *ZincReader) parseXStr(id string) haystack.XStr {
@@ -213,8 +213,8 @@ func (reader *ZincReader) parseGrid() haystack.Grid {
 	}
 	reader.consume()
 	reader.consumeToken(COLON)
-	reader.consumeStr() // Always expect version 3
-	// TODO Check for version
+	ver := reader.consumeStr()
+	checkVersion(ver.String())
 
 	// grid meta
 	if reader.cur == ID {
@@ -295,6 +295,15 @@ func (reader *ZincReader) consumeTagName() string {
 	}
 	reader.consumeToken(ID)
 	return val
+}
+
+func checkVersion(str string) int {
+	if str == "3.0" {
+		return 3
+	} else if str == "2.0" {
+		return 2
+	}
+	panic("Unsupported version: " + str)
 }
 
 func (reader *ZincReader) consumeNumber() haystack.Number {

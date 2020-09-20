@@ -1,7 +1,6 @@
 package io
 
 import (
-	"strings"
 	"testing"
 
 	"gitlab.com/NeedleInAJayStack/haystack"
@@ -142,8 +141,8 @@ func testTokenizerMulti(t *testing.T, str string, expectedTokens []Token, expect
 	for index, token := range tokens {
 		if token != expectedTokens[index] {
 			t.Error(str + " - Tokens don't match:\n" +
-				"\tactual:   " + token.String() + "\n" +
-				"\texpected: " + expectedTokens[index].String())
+				"\tACTUAL:   " + token.String() + "\n" +
+				"\tEXPECTED: " + expectedTokens[index].String())
 		}
 	}
 
@@ -153,15 +152,15 @@ func testTokenizerMulti(t *testing.T, str string, expectedTokens []Token, expect
 	for index, val := range vals {
 		if val.ToZinc() != expectedVals[index].ToZinc() {
 			t.Error(str + " - Val doesn't match expected\n" +
-				"\tactual:   " + val.ToZinc() + "\n" +
-				"\texpected: " + expectedVals[index].ToZinc())
+				"\tACTUAL:   " + val.ToZinc() + "\n" +
+				"\tEXPECTED: " + expectedVals[index].ToZinc())
 		}
 	}
 }
 
 func testTokenizerRead(t *testing.T, str string) ([]Token, []haystack.Val) {
 	var tokenizer Tokenizer
-	tokenizer.Init(strings.NewReader(str))
+	tokenizer.InitString(str)
 
 	var tokens []Token
 	var vals []haystack.Val

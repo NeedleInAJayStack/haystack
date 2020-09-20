@@ -19,6 +19,11 @@ type Tokenizer struct {
 	token Token
 }
 
+// InitString initializes a tokenizer on an in-memory string
+func (tokenizer *Tokenizer) InitString(str string) {
+	tokenizer.Init(strings.NewReader(str))
+}
+
 // Init initializes a tokenizer on a Reader
 func (tokenizer *Tokenizer) Init(in *strings.Reader) {
 	tokenizer.in = in

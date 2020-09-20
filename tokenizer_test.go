@@ -41,7 +41,7 @@ func TestTokenizer_testStr(t *testing.T) {
 	testTokenizerSingle(t, "\"\"", STR, Str{val: ""})
 	testTokenizerSingle(t, "\"x y\"", STR, Str{val: "x y"})
 	testTokenizerSingle(t, "\"x\\\"y\"", STR, Str{val: "x\"y"})
-	testTokenizerSingle(t, "\"_\\u012f \\n \\t \\\\_\"", STR, Str{val: "_\u012f \n \t \\_"})
+	testTokenizerSingle(t, "\"_\\u012f \\n \\t\\\" \\\\_\"", STR, Str{val: "_\u012f \n \t\" \\_"})
 }
 func TestTokenizer_testDate(t *testing.T) {
 	testTokenizerSingle(t, "2016-06-06", DATE, Date{year: 2016, month: 6, day: 6})

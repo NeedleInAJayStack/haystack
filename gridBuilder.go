@@ -18,12 +18,7 @@ func (gb *GridBuilder) SetMeta(meta map[string]Val) {
 	gb.meta = NewDict(meta)
 }
 
-func (gb *GridBuilder) AddCol(name string) {
-	newCol := Col{name: name}
-	gb.cols = append(gb.cols, newCol)
-}
-
-func (gb *GridBuilder) AddColWMeta(name string, meta map[string]Val) {
+func (gb *GridBuilder) AddCol(name string, meta map[string]Val) {
 	newCol := Col{name: name, meta: NewDict(meta)}
 	gb.cols = append(gb.cols, newCol)
 }

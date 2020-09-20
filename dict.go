@@ -6,7 +6,7 @@ type Dict struct {
 	items map[string]Val
 }
 
-func (dict *Dict) isEmpty() bool {
+func (dict *Dict) IsEmpty() bool {
 	return len(dict.items) == 0
 }
 

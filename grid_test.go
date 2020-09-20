@@ -9,13 +9,13 @@ func TestGrid_ToZinc(t *testing.T) {
 			"dis": NewStr("Site Energy Summary"),
 		},
 	)
-	gb.AddColWMeta(
+	gb.AddCol(
 		"siteName",
 		map[string]Val{
 			"dis": NewStr("Sites"),
 		},
 	)
-	gb.AddColWMeta(
+	gb.AddCol(
 		"val",
 		map[string]Val{
 			"dis": NewStr("Value"),

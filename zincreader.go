@@ -106,7 +106,7 @@ func (reader *ZincReader) parseVal() Val {
 }
 
 func (reader *ZincReader) parseCoord(id string) Coord {
-	if id == "C" {
+	if id != "C" {
 		panic("Expecting 'C' for coord, not " + id)
 	}
 
@@ -260,7 +260,7 @@ func (reader *ZincReader) parseGrid() Grid {
 		}
 
 		// read cells
-		var vals map[string]Val
+		vals := make(map[string]Val)
 		for i := 0; i < numCols; i = i + 1 {
 			col := cols[i]
 			if reader.cur == COMMA || reader.cur == NL || reader.cur == EOF {

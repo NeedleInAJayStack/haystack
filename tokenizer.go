@@ -117,16 +117,17 @@ func (tokenizer *Tokenizer) str() Token {
 	for {
 		if tokenizer.cur == runeEOF { // runeEOF
 			panic("Unexpected end of str")
-		} else if tokenizer.cur == '"' {
-			tokenizer.consumeRune('"')
-			break
 		} else if tokenizer.cur == '\\' {
 			esc := tokenizer.escape()
 			buf.WriteRune(esc)
 			// continue
+		} else if tokenizer.cur == '"' {
+			tokenizer.consumeRune('"')
+			break
+		} else {
+			buf.WriteRune(tokenizer.cur)
+			tokenizer.consume()
 		}
-		buf.WriteRune(tokenizer.cur)
-		tokenizer.consume()
 	}
 	tokenizer.val = NewStr(buf.String())
 	return STR

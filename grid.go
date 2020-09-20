@@ -52,7 +52,7 @@ func (grid *Grid) encodeTo(buf *strings.Builder, indentSize int) {
 
 	buf.WriteString(indent)
 	buf.WriteString("ver:\"3.0\"")
-	if !grid.meta.isEmpty() {
+	if !grid.meta.IsEmpty() {
 		buf.WriteString(" ")
 		grid.meta.encodeTo(buf, false)
 	}
@@ -93,8 +93,11 @@ func (col *Col) Meta() Dict {
 
 // Format as <name> <meta>
 func (col *Col) encodeTo(buf *strings.Builder) {
-	buf.WriteString(col.name + " ")
-	col.meta.encodeTo(buf, false)
+	buf.WriteString(col.name)
+	if !col.meta.IsEmpty() {
+		buf.WriteRune(' ')
+		col.meta.encodeTo(buf, false)
+	}
 }
 
 type Row struct {

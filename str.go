@@ -10,6 +10,10 @@ func NewStr(val string) Str {
 	return Str{val: val}
 }
 
+func (str Str) String() string {
+	return str.val
+}
+
 // ToZinc representes the object as a double-quoted string, with back-slash escapes
 func (str Str) ToZinc() string {
 	result := "\""

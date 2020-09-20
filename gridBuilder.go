@@ -15,11 +15,20 @@ func (gb *GridBuilder) ToGrid() Grid {
 }
 
 func (gb *GridBuilder) SetMeta(meta map[string]Val) {
-	gb.meta = NewDict(meta)
+	gb.SetMetaDict(NewDict(meta))
+}
+
+func (gb *GridBuilder) SetMetaDict(meta Dict) {
+	gb.meta = meta
 }
 
 func (gb *GridBuilder) AddCol(name string, meta map[string]Val) {
-	newCol := Col{name: name, meta: NewDict(meta)}
+	gb.AddColDict(name, NewDict(meta))
+}
+
+func (gb *GridBuilder) AddColDict(name string, meta Dict) {
+	index := len(gb.cols)
+	newCol := Col{index: index, name: name, meta: meta}
 	gb.cols = append(gb.cols, newCol)
 }
 

@@ -11,8 +11,19 @@ import (
 type DateTime struct {
 	date     Date
 	time     Time
-	tz       string // IANA database city name
 	tzOffset int    // offset in seconds from UTC
+	tz       string // IANA database city name
+}
+
+func NewDateTime(year int, month int, day int, hour int, min int, sec int, ms int, tzOffset int, tz string) DateTime {
+	date := NewDate(year, month, day)
+	time := NewTime(hour, min, sec, ms)
+	return DateTime{
+		date:     date,
+		time:     time,
+		tzOffset: tzOffset,
+		tz:       tz,
+	}
 }
 
 // Parses date from "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"

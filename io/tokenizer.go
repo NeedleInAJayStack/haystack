@@ -36,6 +36,11 @@ func (tokenizer *Tokenizer) Init(in *strings.Reader) {
 	tokenizer.consume()
 }
 
+// Val returns the current tokenizer value
+func (tokenizer *Tokenizer) Val() haystack.Val {
+	return tokenizer.val
+}
+
 // Next reads the next haystack token, storing the value in the Val, and Token fields
 func (tokenizer *Tokenizer) Next() Token {
 	// reset

@@ -324,6 +324,6 @@ func (reader *ZincReader) consume() {
 	// reader.curLine = reader.peekLine
 
 	reader.peek = newToken
-	reader.peekVal = reader.tokenizer.val
+	reader.peekVal = reader.tokenizer.Val()
 	// reader.peekLine = reader.tokenizer.line
 }

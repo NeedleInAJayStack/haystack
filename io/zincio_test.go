@@ -1,13 +1,15 @@
 package io
 
 import (
+	"bufio"
 	"math"
+	"strings"
 	"testing"
 
 	"gitlab.com/NeedleInAJayStack/haystack"
 )
 
-func TestZincReader_empty(t *testing.T) {
+func TestZincIo_empty(t *testing.T) {
 	input := "ver:\"3.0\" tag:N\n" +
 		"a nullmetatag:N, b markermetatag\n" +
 		""
@@ -33,7 +35,7 @@ func TestZincReader_empty(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_singleColEmpty(t *testing.T) {
+func TestZincIo_singleColEmpty(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"fooBar33\n" +
 		"\n"
@@ -46,7 +48,7 @@ func TestZincReader_singleColEmpty(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_singleCol(t *testing.T) {
+func TestZincIo_singleCol(t *testing.T) {
 	input := "ver:\"3.0\" tag foo:\"bar\"\n" +
 		"xyz\n" +
 		"\"val\"\n" +
@@ -71,7 +73,7 @@ func TestZincReader_singleCol(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_singleColNull(t *testing.T) {
+func TestZincIo_singleColNull(t *testing.T) {
 	input := "ver:\"3.0\"\n" +
 		"val\n" +
 		"N\n" +
@@ -90,7 +92,7 @@ func TestZincReader_singleColNull(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_doubleCol(t *testing.T) {
+func TestZincIo_doubleCol(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"a,b\n" +
 		"1,2\n" +
@@ -121,7 +123,7 @@ func TestZincReader_doubleCol(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_large(t *testing.T) {
+func TestZincIo_large(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"a,    b,      c,      d\n" +
 		"T,    F,      N,   -99\n" +
@@ -210,7 +212,7 @@ func TestZincReader_large(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_escapes(t *testing.T) {
+func TestZincIo_escapes(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"foo\n" +
 		"`foo$20bar`\n" +
@@ -243,7 +245,7 @@ func TestZincReader_escapes(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_numbers(t *testing.T) {
+func TestZincIo_numbers(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"a, b\n" +
 		"-3.1kg,4kg\n" +
@@ -281,7 +283,7 @@ func TestZincReader_numbers(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_nulls(t *testing.T) {
+func TestZincIo_nulls(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"a, b, c\n" +
 		", 1, 2\n" +
@@ -341,7 +343,7 @@ func TestZincReader_nulls(t *testing.T) {
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
 }
-func TestZincReader_datetimes(t *testing.T) {
+func TestZincIo_datetimes(t *testing.T) {
 	input := "ver:\"2.0\"\n" +
 		"a,b\n" +
 		"2010-03-01T23:55:00.013-05:00 GMT+5,2010-03-01T23:55:00.013+10:00 GMT-10\n"
@@ -361,7 +363,7 @@ func TestZincReader_datetimes(t *testing.T) {
 	testZincReaderGrid(t, input, expected)
 }
 
-func TestZincReader_meta(t *testing.T) {
+func TestZincIo_meta(t *testing.T) {
 	input := "ver:\"2.0\" a: 2009-02-03T04:05:06Z foo b: 2010-02-03T04:05:06Z UTC bar c: 2009-12-03T04:05:06Z London baz\n" +
 		"a\n" +
 		"3.814697265625E-6\n" +
@@ -448,6 +450,81 @@ func TestZincReader_meta(t *testing.T) {
 	testZincReaderGrid(t, input, expected)
 }
 
+// TODO improve support for writing nested grids
+// func TestZincIo_nested(t *testing.T) {
+// 	var gb haystack.GridBuilder
+// 	gb.AddCol("type", map[string]haystack.Val{})
+// 	gb.AddCol("val", map[string]haystack.Val{})
+// 	gb.AddRow(
+// 		[]haystack.Val{
+// 			haystack.NewStr("list"),
+// 			haystack.NewList(
+// 				[]haystack.Val{
+// 					haystack.NewNumber(1, ""),
+// 					haystack.NewNumber(2, ""),
+// 					haystack.NewNumber(3, ""),
+// 				},
+// 			),
+// 		},
+// 	)
+// 	gb.AddRow(
+// 		[]haystack.Val{
+// 			haystack.NewStr("dict"),
+// 			haystack.NewDict(
+// 				map[string]haystack.Val{
+// 					"dis": haystack.NewStr("Dict!"),
+// 					"foo": haystack.NewMarker(),
+// 				},
+// 			),
+// 		},
+// 	)
+// 	var nestedGb haystack.GridBuilder
+// 	nestedGb.AddCol("a", map[string]haystack.Val{})
+// 	nestedGb.AddCol("b", map[string]haystack.Val{})
+// 	nestedGb.AddRow(
+// 		[]haystack.Val{
+// 			haystack.NewNumber(1, ""),
+// 			haystack.NewNumber(2, ""),
+// 		},
+// 	)
+// 	nestedGb.AddRow(
+// 		[]haystack.Val{
+// 			haystack.NewNumber(3, ""),
+// 			haystack.NewNumber(4, ""),
+// 		},
+// 	)
+// 	nestedGrid := nestedGb.ToGrid()
+// 	gb.AddRow(
+// 		[]haystack.Val{
+// 			haystack.NewStr("grid"),
+// 			nestedGrid,
+// 		},
+// 	)
+// 	gb.AddRow(
+// 		[]haystack.Val{
+// 			haystack.NewStr("scalar"),
+// 			haystack.NewStr("simple string"),
+// 		},
+// 	)
+// 	input := gb.ToGrid()
+// 	actual := ValToZincString(input)
+
+// 	expected := "ver:\"3.0\"\n" +
+// 		"type, val\n" +
+// 		"\"list\",[1,2,3]\n" +
+// 		"\"dict\",{dis:\"Dict!\" foo}\n" +
+// 		"\"grid\",<<\n" +
+// 		" ver:\"3.0\"\n" +
+// 		" a, b\n" +
+// 		" 1, 2\n" +
+// 		" 3, 4\n" +
+// 		" >>\n" +
+// 		"\"scalar\",\"simple string\""
+// 	if actual != expected {
+// 		t.Error("Zinc results do not match\nACTUAL:\n" + actual + "\nEXPECTED:\n" + expected)
+// 	}
+// }
+
 // UTILITIES
 
 // Verifies that the tokenized result has the expected token type and value.
@@ -457,9 +534,20 @@ func testZincReaderGrid(t *testing.T, str string, expected haystack.Grid) {
 	reader.InitString(str)
 
 	val := reader.ReadVal()
-	actual := val.(haystack.Grid)
+	grid := val.(haystack.Grid)
+	testGridEq(t, grid, expected)
 
-	testGridEq(t, actual, expected)
+	// write grid, read grid, and verify it equals the original
+	out := new(strings.Builder)
+	writer := NewZincWriter(bufio.NewWriter(out))
+	writer.WriteVal(grid)
+	writer.Flush()
+	writeStr := out.String()
+	var writtenReader ZincReader
+	writtenReader.InitString(writeStr)
+	writeReadVal := writtenReader.ReadVal()
+	writeReadGrid := writeReadVal.(haystack.Grid)
+	testGridEq(t, writeReadGrid, expected)
 }
 
 // Test whether the grids match based on a ToZinc call
@@ -468,6 +556,6 @@ func testGridEq(t *testing.T, actual haystack.Grid, expected haystack.Grid) {
 	expectedZinc := expected.ToZinc()
 
 	if actualZinc != expectedZinc {
-		t.Error("Grids do not match\nACTUAL:\n" + actualZinc + "\nEXPECTED:\n" + expectedZinc)
+		t.Error("Grids don't match\nACTUAL:\n" + actualZinc + "\nEXPECTED:\n" + expectedZinc)
 	}
 }

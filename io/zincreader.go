@@ -297,13 +297,10 @@ func (reader *ZincReader) consumeTagName() string {
 	return val
 }
 
-func checkVersion(str string) int {
-	if str == "3.0" {
-		return 3
-	} else if str == "2.0" {
-		return 2
+func checkVersion(str string) {
+	if str != "2.0" && str != "3.0" {
+		panic("Unsupported version: " + str)
 	}
-	panic("Unsupported version: " + str)
 }
 
 func (reader *ZincReader) consumeNumber() haystack.Number {

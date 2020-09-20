@@ -8,7 +8,7 @@ import (
 )
 
 func TestZincReader_empty(t *testing.T) {
-	input := "ver:\"1.0\" tag:N\n" +
+	input := "ver:\"3.0\" tag:N\n" +
 		"a nullmetatag:N, b markermetatag\n" +
 		""
 

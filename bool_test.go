@@ -3,13 +3,13 @@ package haystack
 import "testing"
 
 func TestBool_ToZinc(t *testing.T) {
-	trueBool := Bool{val: true}
+	trueBool := NewBool(true)
 	trueStr := trueBool.ToZinc()
 	if trueStr != "T" {
 		t.Error(trueStr)
 	}
 
-	falseBool := Bool{val: false}
+	falseBool := NewBool(false)
 	falseStr := falseBool.ToZinc()
 	if falseStr != "F" {
 		t.Error(falseStr)

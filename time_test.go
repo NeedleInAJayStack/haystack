@@ -3,9 +3,9 @@ package haystack
 import "testing"
 
 func TestTime_equals(t *testing.T) {
-	time1 := Time{hour: 23, min: 7, sec: 10, ms: 957}
-	time2 := Time{hour: 23, min: 7, sec: 10, ms: 957}
-	time3 := Time{hour: 0, min: 0, sec: 0, ms: 0}
+	time1 := NewTime(23, 7, 10, 957)
+	time2 := NewTime(23, 7, 10, 957)
+	time3 := NewTime(0, 0, 0, 0)
 
 	if !time1.equals(&time1) {
 		t.Error("The same object doesn't equal itself")
@@ -23,7 +23,7 @@ func TestTime_equals(t *testing.T) {
 
 func TestTime_NewTimeFromString(t *testing.T) {
 	noMs := "23:07:10"
-	expNoMs := Time{hour: 23, min: 7, sec: 10}
+	expNoMs := NewTime(23, 7, 10, 0)
 	timeNoMs, err := NewTimeFromString(noMs)
 	if err != nil {
 		t.Error(err)
@@ -33,7 +33,7 @@ func TestTime_NewTimeFromString(t *testing.T) {
 	}
 
 	ms := "23:07:10.957"
-	expMs := Time{hour: 23, min: 7, sec: 10, ms: 957}
+	expMs := NewTime(23, 7, 10, 957)
 	timeMs, err := NewTimeFromString(ms)
 	if err != nil {
 		t.Error(err)
@@ -44,25 +44,25 @@ func TestTime_NewTimeFromString(t *testing.T) {
 }
 
 func TestTime_ToZinc(t *testing.T) {
-	timeNoMs := Time{hour: 23, min: 7, sec: 10}
+	timeNoMs := NewTime(23, 7, 10, 0)
 	timeNoMsZinc := timeNoMs.ToZinc()
 	if timeNoMsZinc != "23:07:10" {
 		t.Error(timeNoMsZinc)
 	}
 
-	timeMs := Time{hour: 23, min: 7, sec: 10, ms: 957}
+	timeMs := NewTime(23, 7, 10, 957)
 	timeMsZinc := timeMs.ToZinc()
 	if timeMsZinc != "23:07:10.957" {
 		t.Error(timeMsZinc)
 	}
 
-	timeOnesMs := Time{hour: 23, min: 7, sec: 10, ms: 2}
+	timeOnesMs := NewTime(23, 7, 10, 2)
 	timeOnesMsZinc := timeOnesMs.ToZinc()
 	if timeOnesMsZinc != "23:07:10.002" {
 		t.Error(timeOnesMsZinc)
 	}
 
-	timeTensMs := Time{hour: 23, min: 7, sec: 10, ms: 56}
+	timeTensMs := NewTime(23, 7, 10, 56)
 	timeTensMsZinc := timeTensMs.ToZinc()
 	if timeTensMsZinc != "23:07:10.056" {
 		t.Error(timeTensMsZinc)

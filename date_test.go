@@ -3,9 +3,9 @@ package haystack
 import "testing"
 
 func TestDate_equals(t *testing.T) {
-	date1 := Date{year: 2020, month: 8, day: 17}
-	date2 := Date{year: 2020, month: 8, day: 17}
-	date3 := Date{year: 0, month: 0, day: 0}
+	date1 := NewDate(2020, 8, 17)
+	date2 := NewDate(2020, 8, 17)
+	date3 := NewDate(0, 0, 0)
 
 	if !date1.equals(&date1) {
 		t.Error("The same object doesn't equal itself")
@@ -23,7 +23,7 @@ func TestDate_equals(t *testing.T) {
 
 func TestDate_NewDateFromString(t *testing.T) {
 	dateStr := "2020-08-17"
-	exp := Date{year: 2020, month: 8, day: 17}
+	exp := NewDate(2020, 8, 17)
 	date, err := NewDateFromString(dateStr)
 	if err != nil {
 		t.Error(err)
@@ -34,7 +34,7 @@ func TestDate_NewDateFromString(t *testing.T) {
 }
 
 func TestDate_ToZinc(t *testing.T) {
-	date := Date{year: 2020, month: 8, day: 17}
+	date := NewDate(2020, 8, 17)
 	dateZinc := date.ToZinc()
 	if dateZinc != "2020-08-17" {
 		t.Error(dateZinc)

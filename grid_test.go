@@ -24,13 +24,13 @@ func TestGrid_ToZinc(t *testing.T) {
 	gb.AddRow(
 		[]Val{
 			NewStr("Site 1"),
-			&Number{val: 356.214, unit: "kW"},
+			NewNumber(356.214, "kW"),
 		},
 	)
 	gb.AddRow(
 		[]Val{
 			NewStr("Site 2"),
-			&Number{val: 463.028, unit: "kW"},
+			NewNumber(463.028, "kW"),
 		},
 	)
 	gridZinc := gb.ToGrid().ToZinc()

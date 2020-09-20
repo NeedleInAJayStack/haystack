@@ -16,6 +16,14 @@ func NewCoord(lat float64, lng float64) Coord {
 	return Coord{lat: lat, lng: lng}
 }
 
+func (coord Coord) Lat() float64 {
+	return coord.lat
+}
+
+func (coord Coord) Lng() float64 {
+	return coord.lng
+}
+
 // ToZinc representes the object as: "C(<lat>,<lng>)"
 func (coord Coord) ToZinc() string {
 	result := "C("

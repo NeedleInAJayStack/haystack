@@ -8,6 +8,10 @@ func NewUri(val string) Uri {
 	return Uri{val: val}
 }
 
+func (uri Uri) String() string {
+	return uri.val
+}
+
 // ToZinc representes the object as: "`<val>`"
 func (uri Uri) ToZinc() string {
 	result := "`"

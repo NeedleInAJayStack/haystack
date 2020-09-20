@@ -52,6 +52,18 @@ func NewDateFromString(str string) (Date, error) {
 	}, nil
 }
 
+func (date Date) Year() int {
+	return date.year
+}
+
+func (date Date) Month() int {
+	return date.month
+}
+
+func (date Date) Day() int {
+	return date.day
+}
+
 // ToZinc representes the object as: "YYYY-MM-DD"
 func (date Date) ToZinc() string {
 	return date.encode()

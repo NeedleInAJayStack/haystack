@@ -86,6 +86,22 @@ func NewTimeFromString(str string) (Time, error) {
 	}, nil
 }
 
+func (time Time) Hour() int {
+	return time.hour
+}
+
+func (time Time) Min() int {
+	return time.min
+}
+
+func (time Time) Sec() int {
+	return time.sec
+}
+
+func (time Time) Millis() int {
+	return time.ms
+}
+
 // ToZinc representes the object as: "hh:mm:ss.mmm"
 func (time Time) ToZinc() string {
 	return time.encode()

@@ -14,8 +14,12 @@ func NewNumber(val float64, unit string) Number {
 	return Number{val: val, unit: unit}
 }
 
-func (number Number) ToFloat() float64 {
+func (number Number) Float() float64 {
 	return number.val
+}
+
+func (number Number) Unit() string {
+	return number.unit
 }
 
 // ToZinc representes the object as: "<val>[unit]"

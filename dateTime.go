@@ -143,6 +143,22 @@ func dateTimeDef() DateTime {
 	}
 }
 
+func (dateTime DateTime) Date() Date {
+	return dateTime.date
+}
+
+func (dateTime DateTime) Time() Time {
+	return dateTime.time
+}
+
+func (dateTime DateTime) Tz() string {
+	return dateTime.tz
+}
+
+func (dateTime DateTime) TzOffset() int {
+	return dateTime.tzOffset
+}
+
 // ToZinc representes the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func (dateTime DateTime) ToZinc() string {
 	buf := strings.Builder{}

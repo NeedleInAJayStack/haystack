@@ -5,6 +5,37 @@ import (
 	"time"
 )
 
+func TestDateTime_NewDateTime(t *testing.T) {
+	utc := NewDateTime(2020, 8, 17, 23, 07, 10, 0, 0, "UTC")
+	if utc.date.year != 2020 {
+		t.Error(utc.date.year)
+	}
+	if utc.date.month != 8 {
+		t.Error(utc.date.month)
+	}
+	if utc.date.day != 17 {
+		t.Error(utc.date.day)
+	}
+	if utc.time.hour != 23 {
+		t.Error(utc.time.hour)
+	}
+	if utc.time.min != 7 {
+		t.Error(utc.time.min)
+	}
+	if utc.time.sec != 10 {
+		t.Error(utc.time.sec)
+	}
+	if utc.time.ms != 0 {
+		t.Error(utc.time.ms)
+	}
+	if utc.tzOffset != 0 {
+		t.Error(utc.tzOffset)
+	}
+	if utc.tz != "UTC" {
+		t.Error(utc.tz)
+	}
+}
+
 func TestDateTime_NewDateTimeFromString(t *testing.T) {
 	utc, _ := NewDateTimeFromString("2020-08-17T23:07:10Z UTC")
 	if utc.date.year != 2020 {
@@ -20,7 +51,13 @@ func TestDateTime_NewDateTimeFromString(t *testing.T) {
 		t.Error(utc.time.hour)
 	}
 	if utc.time.min != 7 {
-		t.Error(utc.time.hour)
+		t.Error(utc.time.min)
+	}
+	if utc.time.sec != 10 {
+		t.Error(utc.time.sec)
+	}
+	if utc.time.ms != 0 {
+		t.Error(utc.time.ms)
 	}
 	if utc.tzOffset != 0 {
 		t.Error(utc.tzOffset)

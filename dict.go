@@ -45,8 +45,12 @@ func (dict Dict) WriteZincTo(buf *bufio.Writer, brackets bool) {
 		buf.WriteString(name)
 
 		val := dict.items[name]
-		_, isMarker := val.(Marker)
-		if !isMarker {
+		switch val := val.(type) {
+		case Grid:
+			val.WriteZincTo(buf, 1)
+		case Marker:
+			break
+		default:
 			buf.WriteString(":" + val.ToZinc())
 		}
 	}

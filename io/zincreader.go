@@ -158,7 +158,7 @@ func (reader *ZincReader) parseList() haystack.List {
 		var val haystack.Val
 		val = reader.parseVal()
 		vals = append(vals, val)
-		if reader.cur == COMMA {
+		if reader.cur != COMMA {
 			break
 		}
 		reader.consumeToken(COMMA)

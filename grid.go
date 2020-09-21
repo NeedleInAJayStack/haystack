@@ -49,20 +49,14 @@ func (grid Grid) ToZinc() string {
 //
 // indentSize is the number of spaces to add to each new-line.
 func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
-	indentBuf := strings.Builder{}
-	for i := 0; i < indentSize; i++ {
-		indentBuf.WriteString(" ")
-	}
-	indent := indentBuf.String()
-
-	buf.WriteString(indent)
+	writeIndent(buf, indentSize)
 	buf.WriteString("ver:\"3.0\"")
 	if !grid.meta.IsEmpty() {
 		buf.WriteString(" ")
 		grid.meta.WriteZincTo(buf, false)
 	}
 	buf.WriteString("\n")
-	buf.WriteString(indent)
+	writeIndent(buf, indentSize)
 	for colIdx, col := range grid.cols {
 		if colIdx != 0 {
 			buf.WriteString(", ")
@@ -70,13 +64,13 @@ func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 		col.WriteZincTo(buf)
 	}
 	buf.WriteString("\n")
-	buf.WriteString(indent)
+	writeIndent(buf, indentSize)
 	for rowIdx, row := range grid.rows {
 		if rowIdx != 0 {
 			buf.WriteString("\n")
-			buf.WriteString(indent)
+			writeIndent(buf, indentSize)
 		}
-		row.WriteZincTo(buf, &grid.cols)
+		row.WriteZincTo(buf, &grid.cols, indentSize)
 	}
 }
 
@@ -115,13 +109,37 @@ func (row *Row) ToDict() Dict {
 }
 
 // Format as <val1>, <val2>, ... Cols sets ordering
-func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col) {
+func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col, indentSize int) {
 	for colIdx, col := range *cols {
 		if colIdx != 0 {
 			buf.WriteString(", ")
 		}
-		item := row.items[col.name]
-		itemZinc := item.ToZinc()
-		buf.WriteString(itemZinc)
+		val := row.items[col.name]
+		switch val := val.(type) {
+		case Grid:
+			indentSize = indentSize + 1
+			buf.WriteString("<<\n")
+			val.WriteZincTo(buf, indentSize)
+			buf.WriteString("\n")
+			writeIndent(buf, indentSize)
+			buf.WriteString(">>")
+			indentSize = indentSize - 1
+		case List:
+			val.WriteZincTo(buf)
+		case Dict:
+			val.WriteZincTo(buf, true)
+		case Str:
+			val.WriteZincTo(buf)
+		case Uri:
+			val.WriteZincTo(buf)
+		default:
+			buf.WriteString(val.ToZinc())
+		}
+	}
+}
+
+func writeIndent(buf *bufio.Writer, indentSize int) {
+	for i := 0; i < indentSize; i++ {
+		buf.WriteString("  ") // Each indent is 2 spaces
 	}
 }

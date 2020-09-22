@@ -148,3 +148,7 @@ func genNonce() string {
 	}
 	return base64.RawURLEncoding.EncodeToString(nonce)
 }
+
+func gs2Header() string {
+	return "n,,"
+}

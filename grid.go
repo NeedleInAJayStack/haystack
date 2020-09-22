@@ -12,18 +12,44 @@ type Grid struct {
 }
 
 // Meta returns the grid-level metadata
-func (grid *Grid) Meta() Dict {
-	return grid.meta
+func (grid *Grid) Meta() *Dict {
+	return &grid.meta
 }
 
-// Cols returns the column objects
-func (grid *Grid) Cols() []Col {
-	return grid.cols
+// ColCount returns the count of columns
+func (grid *Grid) ColCount() int {
+	return len(grid.cols)
 }
 
-// Rows returns the row objects
-func (grid *Grid) Rows() []Row {
-	return grid.rows
+// Col returns the column matching the name
+func (grid *Grid) Col(name string) *Col {
+	var colMatch *Col
+	for i := 0; i < grid.ColCount(); i++ {
+		col := grid.ColAt(i)
+		if grid.cols[i].name == name {
+			colMatch = col
+			break
+		}
+	}
+	if colMatch == nil {
+		panic("Unknown column: " + name)
+	}
+	return colMatch
+}
+
+// ColAt returns the column at the index
+func (grid *Grid) ColAt(index int) *Col {
+	return &grid.cols[index]
+}
+
+// RowCount returns the count of rows
+func (grid *Grid) RowCount() int {
+	return len(grid.rows)
+}
+
+// RowAt returns the row at the index
+func (grid *Grid) RowAt(index int) *Row {
+	return &grid.rows[index]
 }
 
 // ToZinc representes the object as:
@@ -101,6 +127,10 @@ func (col *Col) WriteZincTo(buf *bufio.Writer) {
 
 type Row struct {
 	items map[string]Val
+}
+
+func (row *Row) Get(name string) Val {
+	return row.items[name]
 }
 
 // ToDict returns the values in a Dict format

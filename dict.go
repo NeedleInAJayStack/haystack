@@ -10,12 +10,24 @@ type Dict struct {
 	items map[string]Val
 }
 
-func (dict *Dict) IsEmpty() bool {
-	return len(dict.items) == 0
-}
-
 func NewDict(items map[string]Val) Dict {
 	return Dict{items: items}
+}
+
+func (dict *Dict) Get(key string) Val {
+	val := dict.items[key]
+	if val == nil {
+		val = NewNull()
+	}
+	return val
+}
+
+func (dict *Dict) Size() int {
+	return len(dict.items)
+}
+
+func (dict *Dict) IsEmpty() bool {
+	return len(dict.items) == 0
 }
 
 // ToZinc representes the object as: "{<name1>:<val1> <name2>:<val2> ...}" with the names in alphabetical order. Markers don't require a val.

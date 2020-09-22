@@ -29,6 +29,7 @@ func (gb *GridBuilder) AddCol(name string, meta map[string]Val) {
 func (gb *GridBuilder) AddColDict(name string, meta Dict) {
 	index := len(gb.cols)
 	newCol := Col{index: index, name: name, meta: meta}
+	// TODO check that the name doesn't duplicate
 	gb.cols = append(gb.cols, newCol)
 }
 

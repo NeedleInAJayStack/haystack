@@ -2,10 +2,13 @@ package client
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/lib/pq/scram"
 )
 
 type Client struct {
@@ -56,21 +59,20 @@ func (client *Client) Open(uri string, username string, password string) error {
 
 func (client *Client) sendHello() (*http.Response, error) {
 	// Send Hello message
-	username := []byte(client.username)
 	req, _ := http.NewRequest("get", client.uri+"about", nil)
 	scheme := "hello"
 	attrs := map[string]string{
-		"username": base64.RawURLEncoding.EncodeToString(username),
+		"username": base64.RawURLEncoding.EncodeToString([]byte(client.username)),
 	}
 	req.Header.Add("Authorization", buildAuth(scheme, attrs))
 	return client.httpClient.Do(req)
 }
 
-func (client *Client) openStd(res *http.Response) error {
-	if res.StatusCode != 401 {
-		return errors.New(res.Status)
+func (client *Client) openStd(helloRes *http.Response) error {
+	if helloRes.StatusCode != 401 {
+		return errors.New(helloRes.Status)
 	}
-	helloAuth := res.Header.Get("WWW-Authenticate")
+	helloAuth := helloRes.Header.Get("WWW-Authenticate")
 	if helloAuth == "" {
 		return errors.New("Missing required header: WWW-Authenticate")
 	}
@@ -83,18 +85,81 @@ func (client *Client) openStd(res *http.Response) error {
 		return errors.New("Auth scheme not supported: " + scheme)
 	}
 
-	// Do SCRAM auth
-	hash := helloAttrs["hash"]
 	handshakeToken := helloAttrs["handshakeToken"]
+	hashFunc := helloAttrs["hash"]
 
-	nonce := genNonce()
-
-	req, _ := http.NewRequest("get", client.uri+"about", nil)
-	initAttrs := map[string]string{
-		"handshakeToken": handshakeToken,
+	if hashFunc != "SHA-256" { // Only support SHA-256
+		return errors.New("Auth hash not supported: " + hashFunc)
 	}
-	req.Header.Add("Authorization", buildAuth(scheme, initAttrs))
-	initReq, _ := http.NewRequest("get", client.uri+"about", nil)
+
+	// Do SCRAM auth
+	var in []byte
+	var scramClient = scram.NewClient(sha256.New, client.username, client.password)
+	for scramClient.Step(in) {
+		out := scramClient.Out()
+
+		req, _ := http.NewRequest("get", client.uri+"about", nil)
+		reqAttrs := map[string]string{
+			"handshakeToken": handshakeToken,
+			"data":           base64.RawURLEncoding.EncodeToString(out),
+		}
+		req.Header.Add("Authorization", buildAuth(scheme, reqAttrs))
+		res, _ := client.httpClient.Do(req)
+
+		auth := res.Header.Get("WWW-Authenticate")
+		_, resAttrs := parseAuth(auth)
+
+		handshakeToken = resAttrs["handshakeToken"] // it grows over time
+		dataEnc := resAttrs["data"]
+		data, _ := base64.RawURLEncoding.DecodeString(dataEnc)
+
+		in = data
+	}
+	if scramClient.Err() != nil {
+		return scramClient.Err()
+	}
+
+	// This was the work done before I found an existing implementation
+
+	// nonce := "r=" + genNonce()
+	// username := "n=" + client.username
+	// clientFirstMessageBare := client.username + "," + nonce
+	// clientFirstMessage := gs2Header() + clientFirstMessageBare
+
+	// initReq, _ := http.NewRequest("get", client.uri+"about", nil)
+	// initAttrs := map[string]string{
+	// 	"handshakeToken": helloHandshakeToken,
+	// 	"data":           base64.RawURLEncoding.EncodeToString([]byte(initMsg)),
+	// }
+	// initReq.Header.Add("Authorization", buildAuth(scheme, initAttrs))
+	// initRes, _ := client.httpClient.Do(initReq)
+
+	// initAuth := initRes.Header.Get("WWW-Authenticate")
+	// scheme, initAttrs := parseAuth(initAuth)
+
+	// initHandshakeToken := initAttrs["handshakeToken"]
+	// initHashFunc := initAttrs["hash"]
+	// initDataEnc := initAttrs["data"]
+	// initDataStr, _ := string(base64.RawURLEncoding.DecodeString(initDataEnc))
+
+	// initData := extractScramData(initDataStr)
+
+	// finalNonceVal := initData["r"]
+	// salt := initData["s"]
+	// // iterationCount := initData["i"]
+
+	// nonce = "r=" + finalNonceVal
+	// cbindInput := gs2Header()
+	// channelBinding := "c=" + base64.RawURLEncoding.EncodeToString(cbindInput)
+	// clientFinalMessageWithoutProof := channelBinding + "," + nonce
+
+	// // TODO Add support for other hash functions
+	// if initHashFunc=="SHA-256"{
+	// 	hash := sha256.New()
+	// 	hash.Write([]byte(clientFinalMessageWithoutProof))
+
+	// }
+	// proof :=
 
 	// TODO PLACEHOLDER
 	return nil
@@ -151,4 +216,16 @@ func genNonce() string {
 
 func gs2Header() string {
 	return "n,,"
+}
+
+// Extracts data from an X=ABCD,Y=1234 format to a map
+func extractScramData(data string) map[string]string {
+	dataParts := strings.Split(data, ",")
+	result := make(map[string]string)
+	for _, part := range dataParts {
+		name := string(part[0])
+		val := string(part[2:len(part)])
+		result[name] = val
+	}
+	return result
 }

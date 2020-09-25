@@ -5,10 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/lib/pq/scram"
 )
 
 type Client struct {
@@ -22,7 +21,7 @@ type Client struct {
 
 func NewClient(uri string, username string, password string) *Client {
 	// check URI
-	if !strings.HasPrefix(uri, "http://") || !strings.HasPrefix(uri, "https://") {
+	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
 		panic("URI isn't http or https: " + uri)
 	}
 	if !strings.HasSuffix(uri, "/") {
@@ -41,7 +40,7 @@ func NewClient(uri string, username string, password string) *Client {
 }
 
 // Open simply opens and authenticates the connection
-func (client *Client) Open(uri string, username string, password string) error {
+func (client *Client) Open() error {
 	helloRes, helloErr := client.sendHello()
 	if helloErr != nil {
 		return helloErr
@@ -94,29 +93,42 @@ func (client *Client) openStd(helloRes *http.Response) error {
 
 	// Do SCRAM auth
 	var in []byte
-	var scramClient = scram.NewClient(sha256.New, client.username, client.password)
-	for scramClient.Step(in) {
-		out := scramClient.Out()
+	var scram = NewScram(sha256.New, client.username, client.password)
+	for !scram.Step(in) {
+		out := scram.Out()
 
 		req, _ := http.NewRequest("get", client.uri+"about", nil)
 		reqAttrs := map[string]string{
 			"handshakeToken": handshakeToken,
 			"data":           base64.RawURLEncoding.EncodeToString(out),
 		}
-		req.Header.Add("Authorization", buildAuth(scheme, reqAttrs))
-		res, _ := client.httpClient.Do(req)
+		reqAuth := buildAuth(scheme, reqAttrs)
 
-		auth := res.Header.Get("WWW-Authenticate")
-		_, resAttrs := parseAuth(auth)
+		// TODO DELETE ME. Debugging...
+		fmt.Println("C: " + reqAuth)
+		fmt.Println("    " + string(out))
+
+		req.Header.Add("Authorization", reqAuth)
+		res, _ := client.httpClient.Do(req)
+		if res.StatusCode != 401 && res.StatusCode != 200 { // 401 is expected auth challenge, 200 is success
+			return errors.New(res.Status)
+		}
+		resAuth := res.Header.Get("WWW-Authenticate")
+
+		_, resAttrs := parseAuth(resAuth)
 
 		handshakeToken = resAttrs["handshakeToken"] // it grows over time
 		dataEnc := resAttrs["data"]
 		data, _ := base64.RawURLEncoding.DecodeString(dataEnc)
 
+		// TODO DELETE ME. Debugging...
+		fmt.Println("S: " + resAuth)
+		fmt.Println("    " + string(data))
+		
 		in = data
 	}
-	if scramClient.Err() != nil {
-		return scramClient.Err()
+	if scram.Err() != nil {
+		return scram.Err()
 	}
 
 	// This was the work done before I found an existing implementation
@@ -178,8 +190,8 @@ func parseAuth(str string) (string, map[string]string) {
 	attrs := make(map[string]string)
 	for _, attributeStr := range attributeStrs {
 		attributeSplit := strings.Split(attributeStr, "=")
-		name := attributeSplit[0]
-		val := attributeSplit[1]
+		name := strings.TrimSpace(attributeSplit[0])
+		val := strings.TrimSpace(attributeSplit[1])
 		attrs[name] = val
 	}
 

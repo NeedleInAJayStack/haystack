@@ -3,9 +3,11 @@ package client
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"hash"
 	"net/http"
 	"strings"
 )
@@ -87,13 +89,18 @@ func (client *Client) openStd(helloRes *http.Response) error {
 	handshakeToken := helloAttrs["handshakeToken"]
 	hashFunc := helloAttrs["hash"]
 
-	if hashFunc != "SHA-256" { // Only support SHA-256
+	var hash func() hash.Hash
+	if hashFunc == "SHA-256" {
+		hash = sha256.New
+	} else if hashFunc == "SHA-512" {
+		hash = sha512.New
+	} else { // Only support SHA-256 and SHA-512
 		return errors.New("Auth hash not supported: " + hashFunc)
 	}
 
 	// Do SCRAM auth
 	var in []byte
-	var scram = NewScram(sha256.New, client.username, client.password)
+	var scram = NewScram(hash, client.username, client.password)
 	for !scram.Step(in) {
 		out := scram.Out()
 
@@ -124,7 +131,7 @@ func (client *Client) openStd(helloRes *http.Response) error {
 		// TODO DELETE ME. Debugging...
 		fmt.Println("S: " + resAuth)
 		fmt.Println("    " + string(data))
-		
+
 		in = data
 	}
 	if scram.Err() != nil {

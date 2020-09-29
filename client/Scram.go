@@ -69,6 +69,10 @@ type Scram struct {
 	authMsg     bytes.Buffer
 }
 
+// Need both because Haystack seems to switch between them for different parts.
+var b64Std = base64.StdEncoding
+var b64Uri = base64.RawURLEncoding // No padding
+
 // NewScram returns a new SCRAM-* client with the provided hash algorithm.
 //
 // For SCRAM-SHA-256, for example, use:
@@ -131,12 +135,12 @@ func (c *Scram) Step(in []byte) bool {
 func (c *Scram) step1(in []byte) error {
 	if len(c.clientNonce) == 0 {
 		const nonceLen = 16
-		buf := make([]byte, nonceLen+b64.EncodedLen(nonceLen))
+		buf := make([]byte, nonceLen+b64Uri.EncodedLen(nonceLen))
 		if _, err := rand.Read(buf[:nonceLen]); err != nil {
 			return fmt.Errorf("cannot read random SCRAM-SHA-256 nonce from operating system: %v", err)
 		}
 		c.clientNonce = buf[nonceLen:]
-		b64.Encode(c.clientNonce, buf[:nonceLen])
+		b64Uri.Encode(c.clientNonce, buf[:nonceLen])
 	}
 	c.authMsg.WriteString("n=")
 	escaper.WriteString(&c.authMsg, c.user)
@@ -147,8 +151,6 @@ func (c *Scram) step1(in []byte) error {
 	c.out.Write(c.authMsg.Bytes())
 	return nil
 }
-
-var b64 = base64.StdEncoding
 
 func (c *Scram) step2(in []byte) error {
 	c.authMsg.WriteByte(',')
@@ -173,8 +175,8 @@ func (c *Scram) step2(in []byte) error {
 		return fmt.Errorf("server SCRAM-SHA-256 nonce is not prefixed by client nonce: got %q, want %q+\"...\"", c.serverNonce, c.clientNonce)
 	}
 
-	salt := make([]byte, b64.DecodedLen(len(fields[1][2:])))
-	n, err := b64.Decode(salt, fields[1][2:])
+	salt := make([]byte, b64Std.DecodedLen(len(fields[1][2:])))
+	n, err := b64Std.Decode(salt, fields[1][2:])
 	if err != nil {
 		return fmt.Errorf("cannot decode SCRAM-SHA-256 salt sent by server: %q", fields[1])
 	}
@@ -244,8 +246,8 @@ func (c *Scram) clientProof() []byte {
 	for i, b := range clientKey {
 		clientProof[i] ^= b
 	}
-	clientProof64 := make([]byte, b64.EncodedLen(len(clientProof)))
-	b64.Encode(clientProof64, clientProof)
+	clientProof64 := make([]byte, b64Std.EncodedLen(len(clientProof)))
+	b64Std.Encode(clientProof64, clientProof)
 	return clientProof64
 }
 
@@ -258,7 +260,7 @@ func (c *Scram) serverSignature() []byte {
 	mac.Write(c.authMsg.Bytes())
 	serverSignature := mac.Sum(nil)
 
-	encoded := make([]byte, b64.EncodedLen(len(serverSignature)))
-	b64.Encode(encoded, serverSignature)
+	encoded := make([]byte, b64Uri.EncodedLen(len(serverSignature)))
+	b64Uri.Encode(encoded, serverSignature)
 	return encoded
 }

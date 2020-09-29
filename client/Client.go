@@ -19,6 +19,7 @@ type Client struct {
 	password       string
 	connectTimeout int
 	readTimeout    int
+	encoding       *base64.Encoding
 }
 
 func NewClient(uri string, username string, password string) *Client {
@@ -37,8 +38,8 @@ func NewClient(uri string, username string, password string) *Client {
 		password:       password,
 		connectTimeout: 60 * 1000, // in milliseconds
 		readTimeout:    60 * 1000, // in milliseconds
+		encoding:       base64.RawURLEncoding,
 	}
-
 }
 
 // Open simply opens and authenticates the connection
@@ -63,9 +64,11 @@ func (client *Client) sendHello() (*http.Response, error) {
 	req, _ := http.NewRequest("get", client.uri+"about", nil)
 	scheme := "hello"
 	attrs := map[string]string{
-		"username": base64.RawURLEncoding.EncodeToString([]byte(client.username)),
+		"username": client.encoding.EncodeToString([]byte(client.username)),
 	}
-	req.Header.Add("Authorization", buildAuth(scheme, attrs))
+	reqAuth := buildAuth(scheme, attrs)
+	fmt.Println("C: " + reqAuth)
+	req.Header.Add("Authorization", reqAuth)
 	return client.httpClient.Do(req)
 }
 
@@ -107,7 +110,7 @@ func (client *Client) openStd(helloRes *http.Response) error {
 		req, _ := http.NewRequest("get", client.uri+"about", nil)
 		reqAttrs := map[string]string{
 			"handshakeToken": handshakeToken,
-			"data":           base64.RawURLEncoding.EncodeToString(out),
+			"data":           client.encoding.EncodeToString(out),
 		}
 		reqAuth := buildAuth(scheme, reqAttrs)
 
@@ -126,7 +129,7 @@ func (client *Client) openStd(helloRes *http.Response) error {
 
 		handshakeToken = resAttrs["handshakeToken"] // it grows over time
 		dataEnc := resAttrs["data"]
-		data, _ := base64.RawURLEncoding.DecodeString(dataEnc)
+		data, _ := client.encoding.DecodeString(dataEnc)
 
 		// TODO DELETE ME. Debugging...
 		fmt.Println("S: " + resAuth)
@@ -148,7 +151,7 @@ func (client *Client) openStd(helloRes *http.Response) error {
 	// initReq, _ := http.NewRequest("get", client.uri+"about", nil)
 	// initAttrs := map[string]string{
 	// 	"handshakeToken": helloHandshakeToken,
-	// 	"data":           base64.RawURLEncoding.EncodeToString([]byte(initMsg)),
+	// 	"data":           client.encoding.EncodeToString([]byte(initMsg)),
 	// }
 	// initReq.Header.Add("Authorization", buildAuth(scheme, initAttrs))
 	// initRes, _ := client.httpClient.Do(initReq)
@@ -159,7 +162,7 @@ func (client *Client) openStd(helloRes *http.Response) error {
 	// initHandshakeToken := initAttrs["handshakeToken"]
 	// initHashFunc := initAttrs["hash"]
 	// initDataEnc := initAttrs["data"]
-	// initDataStr, _ := string(base64.RawURLEncoding.DecodeString(initDataEnc))
+	// initDataStr, _ := string(client.encoding.DecodeString(initDataEnc))
 
 	// initData := extractScramData(initDataStr)
 
@@ -169,7 +172,7 @@ func (client *Client) openStd(helloRes *http.Response) error {
 
 	// nonce = "r=" + finalNonceVal
 	// cbindInput := gs2Header()
-	// channelBinding := "c=" + base64.RawURLEncoding.EncodeToString(cbindInput)
+	// channelBinding := "c=" + client.encoding.EncodeToString(cbindInput)
 	// clientFinalMessageWithoutProof := channelBinding + "," + nonce
 
 	// // TODO Add support for other hash functions
@@ -223,14 +226,14 @@ func buildAuth(scheme string, attrs map[string]string) string {
 	return builder.String()
 }
 
-func genNonce() string {
+func (client *Client) genNonce() string {
 	nonceSize := 16
 	nonce := make([]byte, nonceSize)
 	_, err := rand.Read(nonce) // This replaces the array values with random bytes
 	if err != nil {
 		panic(err)
 	}
-	return base64.RawURLEncoding.EncodeToString(nonce)
+	return client.encoding.EncodeToString(nonce)
 }
 
 func gs2Header() string {

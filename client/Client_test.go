@@ -1,6 +1,11 @@
 package client
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	"gitlab.com/NeedleInAJayStack/haystack"
+)
 
 func TestClient(t *testing.T) {
 
@@ -10,9 +15,14 @@ func TestClient(t *testing.T) {
 	pass := "test"
 
 	haystackClient := NewClient(uri, user, pass)
-	err := haystackClient.Open()
+	openErr := haystackClient.Open()
+	if openErr != nil {
+		t.Error(openErr)
+	}
 
+	about, err := haystackClient.Call("about", haystack.Grid{})
 	if err != nil {
+		fmt.Println(about.ToZinc())
 		t.Error(err)
 	}
 }

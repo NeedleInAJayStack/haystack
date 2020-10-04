@@ -260,7 +260,7 @@ func (c *Scram) serverSignature() []byte {
 	mac.Write(c.authMsg.Bytes())
 	serverSignature := mac.Sum(nil)
 
-	encoded := make([]byte, b64Uri.EncodedLen(len(serverSignature)))
-	b64Uri.Encode(encoded, serverSignature)
+	encoded := make([]byte, b64Std.EncodedLen(len(serverSignature)))
+	b64Std.Encode(encoded, serverSignature)
 	return encoded
 }

@@ -1,25 +1,26 @@
 package client
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"hash"
+	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
+
+	"gitlab.com/NeedleInAJayStack/haystack"
+	"gitlab.com/NeedleInAJayStack/haystack/io"
 )
 
 type Client struct {
-	httpClient     *http.Client
-	uri            string
-	username       string
-	password       string
-	connectTimeout int
-	readTimeout    int
-	encoding       *base64.Encoding
+	httpClient  *http.Client
+	uri         string
+	username    string
+	password    string
+	authHeaders map[string]string
 }
 
 func NewClient(uri string, username string, password string) *Client {
@@ -30,55 +31,25 @@ func NewClient(uri string, username string, password string) *Client {
 	if !strings.HasSuffix(uri, "/") {
 		uri = uri + "/"
 	}
+	timeout, _ := time.ParseDuration("1m")
 
 	return &Client{
-		httpClient:     &http.Client{},
-		uri:            uri,
-		username:       username,
-		password:       password,
-		connectTimeout: 60 * 1000, // in milliseconds
-		readTimeout:    60 * 1000, // in milliseconds
-		encoding:       base64.RawURLEncoding,
+		httpClient:  &http.Client{Timeout: timeout},
+		uri:         uri,
+		username:    username,
+		password:    password,
+		authHeaders: map[string]string{},
 	}
 }
+
+var encoding = base64.RawURLEncoding
+var userAgent = "go"
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	helloRes, helloErr := client.sendHello()
+	helloAuth, helloErr := client.sendHello()
 	if helloErr != nil {
 		return helloErr
-	}
-
-	// Attempt standard authentication via Haystack/RFC 7235
-	openErr := client.openStd(helloRes)
-	if openErr != nil {
-		return openErr
-	}
-
-	// TODO PLACEHOLDER
-	return nil
-}
-
-func (client *Client) sendHello() (*http.Response, error) {
-	// Send Hello message
-	req, _ := http.NewRequest("get", client.uri+"about", nil)
-	scheme := "hello"
-	attrs := map[string]string{
-		"username": client.encoding.EncodeToString([]byte(client.username)),
-	}
-	reqAuth := buildAuth(scheme, attrs)
-	fmt.Println("C: " + reqAuth)
-	req.Header.Add("Authorization", reqAuth)
-	return client.httpClient.Do(req)
-}
-
-func (client *Client) openStd(helloRes *http.Response) error {
-	if helloRes.StatusCode != 401 {
-		return errors.New(helloRes.Status)
-	}
-	helloAuth := helloRes.Header.Get("WWW-Authenticate")
-	if helloAuth == "" {
-		return errors.New("Missing required header: WWW-Authenticate")
 	}
 
 	// TODO Expand support to multiple auth scheme returns
@@ -90,55 +61,77 @@ func (client *Client) openStd(helloRes *http.Response) error {
 	}
 
 	handshakeToken := helloAttrs["handshakeToken"]
-	hashFunc := helloAttrs["hash"]
+	hashName := helloAttrs["hash"]
 
+	scramErr := client.openScram(handshakeToken, hashName)
+	return scramErr
+}
+
+// sendHello sends a hello message and returns the value of the WWW-Authenticate header
+func (client *Client) sendHello() (string, error) {
+	// Send Hello message
+	req, _ := http.NewRequest("get", client.uri+"about", nil)
+	scheme := "hello"
+	attrs := map[string]string{
+		"username": encoding.EncodeToString([]byte(client.username)),
+	}
+	reqAuth := buildAuth(scheme, attrs)
+	req.Header.Add("Authorization", reqAuth)
+	resp, respErr := client.httpClient.Do(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	if resp.StatusCode != 401 {
+		return "", errors.New(resp.Status)
+	}
+	resp.Body.Close()
+	auth := resp.Header.Get("WWW-Authenticate")
+	if auth == "" {
+		return "", errors.New("Missing required header: WWW-Authenticate")
+	}
+	return auth, nil
+}
+
+// openScram opens a scram connection. 'hashName' only supports "SHA-256" and "SHA-512"
+func (client *Client) openScram(handshakeToken string, hashName string) error {
 	var hash func() hash.Hash
-	if hashFunc == "SHA-256" {
+	if hashName == "SHA-256" {
 		hash = sha256.New
-	} else if hashFunc == "SHA-512" {
+	} else if hashName == "SHA-512" {
 		hash = sha512.New
 	} else { // Only support SHA-256 and SHA-512
-		return errors.New("Auth hash not supported: " + hashFunc)
+		return errors.New("Auth hash not supported: " + hashName)
 	}
 
-	// Do SCRAM auth
 	var in []byte
 	var scram = NewScram(hash, client.username, client.password)
+	var authToken string
 	for !scram.Step(in) {
 		out := scram.Out()
 
 		req, _ := http.NewRequest("get", client.uri+"about", nil)
 		reqAttrs := map[string]string{
 			"handshakeToken": handshakeToken,
-			"data":           client.encoding.EncodeToString(out),
+			"data":           encoding.EncodeToString(out),
 		}
-		reqAuth := buildAuth(scheme, reqAttrs)
-
-		// TODO DELETE ME. Debugging...
-		fmt.Println("C: " + reqAuth)
-		fmt.Println("    " + string(out))
+		reqAuth := buildAuth("scram", reqAttrs)
 
 		req.Header.Add("Authorization", reqAuth)
-		res, _ := client.httpClient.Do(req)
-		if res.StatusCode != 401 && res.StatusCode != 200 { // 401 is expected auth challenge
-			return errors.New(res.Status)
+		resp, _ := client.httpClient.Do(req)
+
+		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
+			return errors.New(resp.Status)
 		}
-		resAuth := res.Header.Get("WWW-Authenticate")
+		respAuth := resp.Header.Get("WWW-Authenticate")
+		if respAuth == "" { // This header switches to Authentication-Info on success
+			respAuth = resp.Header.Get("Authentication-Info")
+		}
+		_, respAttrs := parseAuth(respAuth)
 
-		fmt.Println(res.Status)
-		// TODO We've got to stop when we're authenticated and the res.StatusCode == 200 (but it seems the initial value is 200...)
-
-		// TODO DELETE ME. Debugging...
-		fmt.Println("S: " + resAuth)
-
-		_, resAttrs := parseAuth(resAuth)
-
-		handshakeToken = resAttrs["handshakeToken"] // it grows over time
-		dataEnc := resAttrs["data"]
-		data, _ := client.encoding.DecodeString(dataEnc)
-
-		// TODO DELETE ME. Debugging...
-		fmt.Println("    " + string(data))
+		handshakeToken = respAttrs["handshakeToken"] // it grows over time
+		dataEnc := respAttrs["data"]
+		authToken = respAttrs["authToken"] // This will only be set on the last message
+		data, _ := encoding.DecodeString(dataEnc)
 
 		in = data
 	}
@@ -146,63 +139,28 @@ func (client *Client) openStd(helloRes *http.Response) error {
 		return scram.Err()
 	}
 
-	// This was the work done before I found an existing implementation
+	authAttrs := map[string]string{ // Only keep the authToken
+		"authToken": authToken,
+	}
+	client.authHeaders["Authorization"] = buildAuth("bearer", authAttrs)
 
-	// nonce := "r=" + genNonce()
-	// username := "n=" + client.username
-	// clientFirstMessageBare := client.username + "," + nonce
-	// clientFirstMessage := gs2Header() + clientFirstMessageBare
-
-	// initReq, _ := http.NewRequest("get", client.uri+"about", nil)
-	// initAttrs := map[string]string{
-	// 	"handshakeToken": helloHandshakeToken,
-	// 	"data":           client.encoding.EncodeToString([]byte(initMsg)),
-	// }
-	// initReq.Header.Add("Authorization", buildAuth(scheme, initAttrs))
-	// initRes, _ := client.httpClient.Do(initReq)
-
-	// initAuth := initRes.Header.Get("WWW-Authenticate")
-	// scheme, initAttrs := parseAuth(initAuth)
-
-	// initHandshakeToken := initAttrs["handshakeToken"]
-	// initHashFunc := initAttrs["hash"]
-	// initDataEnc := initAttrs["data"]
-	// initDataStr, _ := string(client.encoding.DecodeString(initDataEnc))
-
-	// initData := extractScramData(initDataStr)
-
-	// finalNonceVal := initData["r"]
-	// salt := initData["s"]
-	// // iterationCount := initData["i"]
-
-	// nonce = "r=" + finalNonceVal
-	// cbindInput := gs2Header()
-	// channelBinding := "c=" + client.encoding.EncodeToString(cbindInput)
-	// clientFinalMessageWithoutProof := channelBinding + "," + nonce
-
-	// // TODO Add support for other hash functions
-	// if initHashFunc=="SHA-256"{
-	// 	hash := sha256.New()
-	// 	hash.Write([]byte(clientFinalMessageWithoutProof))
-
-	// }
-	// proof :=
-
-	// TODO PLACEHOLDER
 	return nil
 }
 
 // Parses an authentication message, and returns the scheme, and the attributes
-// Assumes auth messages follow the form: "<scheme> <name1>=<val1>, <name2>=<val2>, ..."
+// Assumes auth messages follow the form: "[scheme] <name1>=<val1>, <name2>=<val2>, ..."
 func parseAuth(str string) (string, map[string]string) {
-	firstSpaceIndex := strings.Index(str, " ")
-	scheme := str[0:firstSpaceIndex]
-	scheme = strings.ToLower(scheme)
-
-	allAttrs := str[firstSpaceIndex+1 : len(str)]
-	attributeStrs := strings.Split(allAttrs, ",")
-
 	attrs := make(map[string]string)
+	attributeStrs := strings.Split(str, ",")
+	scheme := ""
+
+	firstAttr := attributeStrs[0]
+	if strings.Contains(attributeStrs[0], " ") {
+		schemeSplit := strings.Split(firstAttr, " ")
+		scheme = strings.TrimSpace(schemeSplit[0])
+		attributeStrs[0] = schemeSplit[1]
+	}
+
 	for _, attributeStr := range attributeStrs {
 		attributeSplit := strings.Split(attributeStr, "=")
 		name := strings.TrimSpace(attributeSplit[0])
@@ -213,10 +171,14 @@ func parseAuth(str string) (string, map[string]string) {
 	return scheme, attrs
 }
 
+// Aggregates an authentication message and returns the result
+// Resulting auth messages follow the form: "[scheme] <name1>=<val1>, <name2>=<val2>, ..."
 func buildAuth(scheme string, attrs map[string]string) string {
 	builder := new(strings.Builder)
-	builder.WriteString(strings.ToUpper(scheme))
-	builder.WriteRune(' ')
+	if scheme != "" {
+		builder.WriteString(strings.ToUpper(scheme))
+		builder.WriteRune(' ')
+	}
 	firstVal := true
 	for name, val := range attrs {
 		if firstVal {
@@ -231,28 +193,44 @@ func buildAuth(scheme string, attrs map[string]string) string {
 	return builder.String()
 }
 
-func (client *Client) genNonce() string {
-	nonceSize := 16
-	nonce := make([]byte, nonceSize)
-	_, err := rand.Read(nonce) // This replaces the array values with random bytes
+func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, error) {
+	req := reqGrid.ToZinc()
+	resp, err := client.postString(op, req)
 	if err != nil {
-		panic(err)
+		return haystack.Grid{}, err
 	}
-	return client.encoding.EncodeToString(nonce)
+
+	var reader io.ZincReader
+	reader.InitString(resp)
+	val := reader.ReadVal()
+	switch val := val.(type) {
+	case haystack.Grid:
+		return val, nil
+	default:
+		return haystack.Grid{}, errors.New("Result was not a grid")
+	}
 }
 
-func gs2Header() string {
-	return "n,,"
+func (client *Client) postString(op string, reqBody string) (string, error) {
+	reqReader := strings.NewReader(reqBody)
+	req, _ := http.NewRequest("post", client.uri+op, reqReader)
+	client.prepare(req)
+	req.Header.Add("Connection", "Close")
+	req.Header.Add("Content-Type", "text/zinc; charset=utf-8") // TODO support more mimeTypes beyond UTF-8 zinc
+	resp, respErr := client.httpClient.Do(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("http response: " + resp.Status)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	return string(body), err
 }
 
-// Extracts data from an X=ABCD,Y=1234 format to a map
-func extractScramData(data string) map[string]string {
-	dataParts := strings.Split(data, ",")
-	result := make(map[string]string)
-	for _, part := range dataParts {
-		name := string(part[0])
-		val := string(part[2:len(part)])
-		result[name] = val
+func (client *Client) prepare(req *http.Request) {
+	for name, val := range client.authHeaders {
+		req.Header.Add(name, val)
 	}
-	return result
 }

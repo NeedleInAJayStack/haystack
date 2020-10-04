@@ -43,6 +43,15 @@ func TestGrid_ToZinc(t *testing.T) {
 	}
 }
 
+func TestGrid_ToZinc_empty(t *testing.T) {
+	actual := Grid{}.ToZinc()
+	expected := "ver:\"3.0\"\n" +
+		"empty\n"
+	if actual != expected {
+		t.Error("Grids don't match\nACTUAL:\n" + actual + "\nEXPECTED:\n" + expected)
+	}
+}
+
 func TestGrid_ToZinc_nested(t *testing.T) {
 	var gb GridBuilder
 	gb.AddCol("type", map[string]Val{})

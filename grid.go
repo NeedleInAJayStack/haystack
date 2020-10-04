@@ -83,20 +83,24 @@ func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 	}
 	buf.WriteString("\n")
 	writeIndent(buf, indentSize)
-	for colIdx, col := range grid.cols {
-		if colIdx != 0 {
-			buf.WriteString(", ")
+	if len(grid.cols) == 0 { // Empty grids get just the word: empty
+		buf.WriteString("empty\n")
+	} else {
+		for colIdx, col := range grid.cols {
+			if colIdx != 0 {
+				buf.WriteString(", ")
+			}
+			col.WriteZincTo(buf)
 		}
-		col.WriteZincTo(buf)
-	}
-	buf.WriteString("\n")
-	writeIndent(buf, indentSize)
-	for rowIdx, row := range grid.rows {
-		if rowIdx != 0 {
-			buf.WriteString("\n")
-			writeIndent(buf, indentSize)
+		buf.WriteString("\n")
+		writeIndent(buf, indentSize)
+		for rowIdx, row := range grid.rows {
+			if rowIdx != 0 {
+				buf.WriteString("\n")
+				writeIndent(buf, indentSize)
+			}
+			row.WriteZincTo(buf, &grid.cols, indentSize)
 		}
-		row.WriteZincTo(buf, &grid.cols, indentSize)
 	}
 }
 

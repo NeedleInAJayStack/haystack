@@ -235,7 +235,7 @@ func (c *Scram) saltPassword(salt []byte, iterCount int) {
 
 func (c *Scram) clientProof() []byte {
 	mac := hmac.New(c.newHash, c.saltedPass)
-	mac.Write([]byte("Scram Key"))
+	mac.Write([]byte("Client Key"))
 	clientKey := mac.Sum(nil)
 	hash := c.newHash()
 	hash.Write(clientKey)

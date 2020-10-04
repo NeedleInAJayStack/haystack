@@ -120,10 +120,16 @@ func (client *Client) openStd(helloRes *http.Response) error {
 
 		req.Header.Add("Authorization", reqAuth)
 		res, _ := client.httpClient.Do(req)
-		if res.StatusCode != 401 && res.StatusCode != 200 { // 401 is expected auth challenge, 200 is success
+		if res.StatusCode != 401 && res.StatusCode != 200 { // 401 is expected auth challenge
 			return errors.New(res.Status)
 		}
 		resAuth := res.Header.Get("WWW-Authenticate")
+
+		fmt.Println(res.Status)
+		// TODO We've got to stop when we're authenticated and the res.StatusCode == 200 (but it seems the initial value is 200...)
+
+		// TODO DELETE ME. Debugging...
+		fmt.Println("S: " + resAuth)
 
 		_, resAttrs := parseAuth(resAuth)
 
@@ -132,7 +138,6 @@ func (client *Client) openStd(helloRes *http.Response) error {
 		data, _ := client.encoding.DecodeString(dataEnc)
 
 		// TODO DELETE ME. Debugging...
-		fmt.Println("S: " + resAuth)
 		fmt.Println("    " + string(data))
 
 		in = data

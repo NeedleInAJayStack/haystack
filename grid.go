@@ -11,6 +11,11 @@ type Grid struct {
 	rows []Row
 }
 
+// EmptyGrid returns an empty grid
+func EmptyGrid() Grid {
+	return Grid{}
+}
+
 // Meta returns the grid-level metadata
 func (grid *Grid) Meta() *Dict {
 	return &grid.meta

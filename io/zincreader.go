@@ -63,9 +63,9 @@ func (reader *ZincReader) parseVal() haystack.Val {
 
 		// check for keyword
 		if id == "T" {
-			return haystack.NewBool(true)
+			return haystack.TRUE
 		} else if id == "F" {
-			return haystack.NewBool(false)
+			return haystack.FALSE
 		} else if id == "N" {
 			return haystack.NewNull()
 		} else if id == "M" {

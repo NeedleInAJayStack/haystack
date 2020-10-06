@@ -141,8 +141,8 @@ func TestZincReader_large(t *testing.T) {
 	gb.AddCol("d", map[string]haystack.Val{})
 	gb.AddRow( // T,    F,      N,   -99
 		[]haystack.Val{
-			haystack.NewBool(true),
-			haystack.NewBool(false),
+			haystack.TRUE,
+			haystack.FALSE,
 			haystack.NewNull(),
 			haystack.NewNumber(-99.0, ""),
 		},

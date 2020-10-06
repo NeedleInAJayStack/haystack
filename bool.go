@@ -1,23 +1,24 @@
 package haystack
 
 // Bool models a boolean for true/false tag values.
-type Bool struct {
-	val bool
-}
+type Bool bool
 
-// NewBool creates a new Bool object.
-func NewBool(val bool) Bool {
-	return Bool{val: val}
-}
+const (
+	TRUE  Bool = true
+	FALSE Bool = false
+)
 
 // ToBool returns the value of this object as a Go bool
 func (b Bool) ToBool() bool {
-	return b.val
+	if b == TRUE {
+		return true
+	}
+	return false
 }
 
 // ToZinc representes the object as: "T" or "F"
 func (b Bool) ToZinc() string {
-	if b.val {
+	if b.ToBool() {
 		return "T"
 	}
 	return "F"

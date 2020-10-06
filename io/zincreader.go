@@ -123,17 +123,23 @@ func (reader *ZincReader) parseCoord(id string) haystack.Coord {
 	return haystack.NewCoord(lat.Float(), lng.Float())
 }
 
-func (reader *ZincReader) parseXStr(id string) haystack.XStr {
+func (reader *ZincReader) parseXStr(id string) haystack.Val {
 	if !unicode.IsUpper([]rune(id)[0]) {
 		panic("Invalid XStr type: " + id)
 	}
+	if id == "Bin" { // I think Bins are obselete
+		reader.consumeToken(LPAREN)
+		mime := reader.consumeStr()
+		reader.consumeToken(RPAREN)
 
-	var val haystack.Str
-	reader.consumeToken(LPAREN)
-	val = reader.consumeStr()
-	reader.consumeToken(RPAREN)
+		return haystack.NewBin(mime.String())
+	} else {
+		reader.consumeToken(LPAREN)
+		val := reader.consumeStr()
+		reader.consumeToken(RPAREN)
 
-	return haystack.NewXStr(id, val.String())
+		return haystack.NewXStr(id, val.String())
+	}
 }
 
 func (reader *ZincReader) parseLiteral() haystack.Val {

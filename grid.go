@@ -5,13 +5,14 @@ import (
 	"strings"
 )
 
+// Grid is a two dimension data structure of cols and rows.
 type Grid struct {
 	meta Dict
 	cols []Col
 	rows []Row
 }
 
-// EmptyGrid returns an empty grid
+// EmptyGrid creates an empty grid.
 func EmptyGrid() Grid {
 	return Grid{}
 }
@@ -71,7 +72,7 @@ func (grid Grid) ToZinc() string {
 	return builder.String()
 }
 
-// Format as:
+// WriteZincTo appends the Writer with the Grid zinc representation:
 //     ver:"3.0" <meta>
 //     <col1>, <col2>, ...
 //     <row1>
@@ -109,6 +110,7 @@ func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 	}
 }
 
+// Col is a column in a Grid.
 type Col struct {
 	index int
 	name  string
@@ -125,7 +127,7 @@ func (col *Col) Meta() Dict {
 	return col.meta
 }
 
-// Format as <name> <meta>
+// WriteZincTo appends the Writer with the Col representation: <name> <meta>
 func (col *Col) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteString(col.name)
 	if !col.meta.IsEmpty() {
@@ -134,10 +136,12 @@ func (col *Col) WriteZincTo(buf *bufio.Writer) {
 	}
 }
 
+// Row is a row in a Grid.
 type Row struct {
 	items map[string]Val
 }
 
+// Get returns the Val of the given name. If the name is not found, Null is returned.
 func (row *Row) Get(name string) Val {
 	return row.items[name]
 }
@@ -147,7 +151,7 @@ func (row *Row) ToDict() Dict {
 	return Dict{items: row.items}
 }
 
-// Format as <val1>, <val2>, ... Cols sets ordering
+// WriteZincTo appends the Writer with the Row representation: <val1>, <val2>, ... Cols sets ordering
 func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col, indentSize int) {
 	for colIdx, col := range *cols {
 		if colIdx != 0 {

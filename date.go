@@ -6,20 +6,14 @@ import (
 	"strings"
 )
 
+// Date models a date (day in year) tag value.
 type Date struct {
 	year  int
 	month int
 	day   int
 }
 
-func dateDef() Date {
-	return Date{
-		year:  0,
-		month: 0,
-		day:   0,
-	}
-}
-
+// NewDate creates a new Date object. The values are not validated for correctness.
 func NewDate(year int, month int, day int) Date {
 	return Date{
 		year:  year,
@@ -28,21 +22,21 @@ func NewDate(year int, month int, day int) Date {
 	}
 }
 
-// Format is YYYY-MM-DD
+// NewDateFromString creates a Date object from a string in the format: "YYYY-MM-DD"
 func NewDateFromString(str string) (Date, error) {
 	parts := strings.Split(str, "-")
 
 	year, yearErr := strconv.Atoi(parts[0])
 	if yearErr != nil {
-		return dateDef(), yearErr
+		return Date{}, yearErr
 	}
 	month, monthErr := strconv.Atoi(parts[1])
 	if monthErr != nil {
-		return dateDef(), monthErr
+		return Date{}, monthErr
 	}
 	day, dayErr := strconv.Atoi(parts[2])
 	if dayErr != nil {
-		return dateDef(), dayErr
+		return Date{}, dayErr
 	}
 
 	return Date{
@@ -52,14 +46,17 @@ func NewDateFromString(str string) (Date, error) {
 	}, nil
 }
 
+// Year returns the years of the object.
 func (date Date) Year() int {
 	return date.year
 }
 
+// Month returns the numerical month of the object.
 func (date Date) Month() int {
 	return date.month
 }
 
+// Day returns the day-of-month of the object.
 func (date Date) Day() int {
 	return date.day
 }

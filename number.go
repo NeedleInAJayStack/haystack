@@ -5,19 +5,23 @@ import (
 	"math"
 )
 
+// Number wraps a 64-bit floating point number and unit name.
 type Number struct {
 	val  float64
-	unit string // Optional
+	unit string
 }
 
+// NewNumber creates a new Number. For unitless numbers, use an empty string unit: ""
 func NewNumber(val float64, unit string) Number {
 	return Number{val: val, unit: unit}
 }
 
+// Float returns the numerical value
 func (number Number) Float() float64 {
 	return number.val
 }
 
+// Unit returns the unit symbol
 func (number Number) Unit() string {
 	return number.unit
 }

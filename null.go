@@ -1,8 +1,10 @@
 package haystack
 
+// Null is the value used to indicate a Val with no type.
 type Null struct {
 }
 
+// NewNull creates a new Null object.
 func NewNull() Null {
 	return Null{}
 }

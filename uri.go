@@ -5,18 +5,22 @@ import (
 	"strings"
 )
 
+// Uri models a URI tag value.
 type Uri struct {
 	val string
 }
 
+// NewUri creates a new Uri object.
 func NewUri(val string) Uri {
 	return Uri{val: val}
 }
 
+// Type returns the XStr object type
 func (uri Uri) String() string {
 	return uri.val
 }
 
+// ToZinc representes the object as: "`<val>`"
 func (uri Uri) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)
@@ -25,7 +29,7 @@ func (uri Uri) ToZinc() string {
 	return builder.String()
 }
 
-// ToZinc representes the object as: "`<val>`"
+// WriteZincTo appends the Writer with the URI zinc representation
 func (uri Uri) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteRune('`')
 	for i := 0; i < len(uri.val); i++ {

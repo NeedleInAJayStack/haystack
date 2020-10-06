@@ -7,22 +7,15 @@ import (
 	"strings"
 )
 
+// Time models a time of day tag value.
 type Time struct {
 	hour int
 	min  int
 	sec  int
-	ms   int // Optional
+	ms   int
 }
 
-func timeDef() Time {
-	return Time{
-		hour: 0,
-		min:  0,
-		sec:  0,
-		ms:   0,
-	}
-}
-
+// NewTime creates a new Time object. The values are not validated for correctness.
 func NewTime(hour int, min int, sec int, ms int) Time {
 	return Time{
 		hour: hour,
@@ -32,17 +25,17 @@ func NewTime(hour int, min int, sec int, ms int) Time {
 	}
 }
 
-// Format is hh:mm:ss or hh:mm:ss.mmm
+// NewTimeFromString creates a Time object from a string in the format: "hh:mm:ss" or "hh:mm:ss.mmm"
 func NewTimeFromString(str string) (Time, error) {
 	parts := strings.Split(str, ":")
 
 	hour, hourErr := strconv.Atoi(parts[0])
 	if hourErr != nil {
-		return timeDef(), hourErr
+		return Time{}, hourErr
 	}
 	min, minErr := strconv.Atoi(parts[1])
 	if minErr != nil {
-		return timeDef(), minErr
+		return Time{}, minErr
 	}
 
 	sec := 0
@@ -52,13 +45,13 @@ func NewTimeFromString(str string) (Time, error) {
 
 		secVal, secErr := strconv.Atoi(secParts[0])
 		if secErr != nil {
-			return timeDef(), secErr
+			return Time{}, secErr
 		}
 		sec = secVal
 		msPart := secParts[1]
 		msVal, msErr := strconv.Atoi(msPart)
 		if msErr != nil {
-			return timeDef(), msErr
+			return Time{}, msErr
 		}
 		// Support inputting up to 3 digit accuracy
 		if len(msPart) == 1 {
@@ -68,12 +61,12 @@ func NewTimeFromString(str string) (Time, error) {
 		} else if len(msPart) == 3 {
 			ms = msVal
 		} else {
-			return timeDef(), errors.New("ms section contained more than 3 digits")
+			return Time{}, errors.New("ms section contained more than 3 digits")
 		}
 	} else {
 		secVal, secErr := strconv.Atoi(parts[2])
 		if secErr != nil {
-			return timeDef(), secErr
+			return Time{}, secErr
 		}
 		sec = secVal
 	}
@@ -86,18 +79,22 @@ func NewTimeFromString(str string) (Time, error) {
 	}, nil
 }
 
+// Hour returns the hours of the object.
 func (time Time) Hour() int {
 	return time.hour
 }
 
+// Min returns the minutes of the object.
 func (time Time) Min() int {
 	return time.min
 }
 
+// Sec returns the seconds of the object.
 func (time Time) Sec() int {
 	return time.sec
 }
 
+// Millis returns the milliseconds of the object.
 func (time Time) Millis() int {
 	return time.ms
 }

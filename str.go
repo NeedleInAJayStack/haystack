@@ -6,14 +6,17 @@ import (
 	"strings"
 )
 
+// Str models a string tag value.
 type Str struct {
 	val string
 }
 
+// NewStr creates a new Str object
 func NewStr(val string) Str {
 	return Str{val: val}
 }
 
+// String returns the object's value directly as a Go string
 func (str Str) String() string {
 	return str.val
 }

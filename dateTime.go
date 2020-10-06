@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// DateTime models a timestamp with a specific timezone.
 type DateTime struct {
 	date     Date
 	time     Time
@@ -15,6 +16,7 @@ type DateTime struct {
 	tz       string // IANA database city name
 }
 
+// NewDateTime creates a new DateTime object. The values are not validated for correctness.
 func NewDateTime(year int, month int, day int, hour int, min int, sec int, ms int, tzOffset int, tz string) DateTime {
 	date := NewDate(year, month, day)
 	time := NewTime(hour, min, sec, ms)
@@ -26,7 +28,7 @@ func NewDateTime(year int, month int, day int, hour int, min int, sec int, ms in
 	}
 }
 
-// Parses date from "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+// NewDateTimeFromString creates a DateTime object from a string in the format: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func NewDateTimeFromString(str string) (DateTime, error) {
 	var input scanner.Scanner
 	input.Init(strings.NewReader(str))
@@ -136,25 +138,29 @@ func dateTimeFromGo(goTime time.Time) DateTime {
 
 func dateTimeDef() DateTime {
 	return DateTime{
-		date:     dateDef(),
-		time:     timeDef(),
+		date:     Date{},
+		time:     Time{},
 		tz:       "UTC",
 		tzOffset: 0,
 	}
 }
 
+// Date returns the date of the object.
 func (dateTime DateTime) Date() Date {
 	return dateTime.date
 }
 
+// Time returns the date of the object.
 func (dateTime DateTime) Time() Time {
 	return dateTime.time
 }
 
+// Tz returns the timezone of the object.
 func (dateTime DateTime) Tz() string {
 	return dateTime.tz
 }
 
+// TzOffset returns the timezone offset of the object.
 func (dateTime DateTime) TzOffset() int {
 	return dateTime.tzOffset
 }

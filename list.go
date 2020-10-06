@@ -5,10 +5,12 @@ import (
 	"strings"
 )
 
+// List is a list of Val items.
 type List struct {
 	vals []Val
 }
 
+// NewList creates a new List object.
 func NewList(vals []Val) List {
 	return List{vals: vals}
 }
@@ -22,7 +24,7 @@ func (list List) ToZinc() string {
 	return builder.String()
 }
 
-// Format as [<val1>, <val2>, ...]
+// WriteZincTo appends the Writer with the List zinc representation.
 func (list List) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteString("[")
 	for idx, val := range list.vals {

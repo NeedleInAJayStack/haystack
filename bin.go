@@ -1,9 +1,11 @@
 package haystack
 
+// Bin models a binary file with a MIME type.
 type Bin struct {
 	mime string
 }
 
+// NewBin creates a new Bin object.
 func NewBin(mime string) Bin {
 	return Bin{mime: mime}
 }

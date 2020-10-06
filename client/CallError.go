@@ -16,8 +16,8 @@ func (err CallError) Error() string {
 	dis := err.grid.Meta().Get("dis")
 	switch val := dis.(type) {
 	case haystack.Str:
-		return val.String()
+		return "Call error: " + val.String()
 	default:
-		return "Server side error"
+		return "Call error: Server side error"
 	}
 }

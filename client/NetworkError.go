@@ -9,5 +9,5 @@ func NewNetworkError(message string) NetworkError {
 }
 
 func (err NetworkError) Error() string {
-	return err.message
+	return "Network error: " + err.message
 }

@@ -10,5 +10,5 @@ func NewHttpError(code int, message string) HttpError {
 }
 
 func (err HttpError) Error() string {
-	return string(err.code) + err.message
+	return "HTTP error: " + string(err.code) + err.message
 }

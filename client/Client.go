@@ -23,6 +23,9 @@ type Client struct {
 	authHeaders map[string]string
 }
 
+var encoding = base64.RawURLEncoding
+var userAgent = "go"
+
 func NewClient(uri string, username string, password string) *Client {
 	// check URI
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
@@ -42,9 +45,6 @@ func NewClient(uri string, username string, password string) *Client {
 	}
 }
 
-var encoding = base64.RawURLEncoding
-var userAgent = "go"
-
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
 	helloAuth, helloErr := client.sendHello()
@@ -53,43 +53,45 @@ func (client *Client) Open() error {
 	}
 
 	// TODO Expand support to multiple auth scheme returns
-	scheme, helloAttrs := parseAuth(helloAuth)
-	scheme = strings.ToLower(scheme)
 	// TODO Add support for non-scram auth
-	if scheme != "scram" {
-		return errors.New("Auth scheme not supported: " + scheme)
+	if helloAuth.scheme != "scram" {
+		return errors.New("Auth scheme not supported: " + helloAuth.scheme)
 	}
 
-	handshakeToken := helloAttrs["handshakeToken"]
-	hashName := helloAttrs["hash"]
+	handshakeToken := helloAuth.get("handshakeToken")
+	hashName := helloAuth.get("hash")
 
 	scramErr := client.openScram(handshakeToken, hashName)
 	return scramErr
 }
 
+func (client *Client) IsOpen() bool {
+	return client.authHeaders["Authorization"] == ""
+}
+
 // sendHello sends a hello message and returns the value of the WWW-Authenticate header
-func (client *Client) sendHello() (string, error) {
-	// Send Hello message
+func (client *Client) sendHello() (authMsg, error) {
 	req, _ := http.NewRequest("get", client.uri+"about", nil)
-	scheme := "hello"
-	attrs := map[string]string{
-		"username": encoding.EncodeToString([]byte(client.username)),
+	reqAuth := authMsg{
+		scheme: "hello",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(client.username)),
+		},
 	}
-	reqAuth := buildAuth(scheme, attrs)
-	req.Header.Add("Authorization", reqAuth)
+	req.Header.Add("Authorization", reqAuth.toString())
 	resp, respErr := client.httpClient.Do(req)
 	if respErr != nil {
-		return "", respErr
+		return authMsg{}, respErr
 	}
 	if resp.StatusCode != 401 {
-		return "", errors.New(resp.Status)
+		return authMsg{}, NewHttpError(resp.StatusCode, resp.Status)
 	}
 	resp.Body.Close()
-	auth := resp.Header.Get("WWW-Authenticate")
-	if auth == "" {
-		return "", errors.New("Missing required header: WWW-Authenticate")
+	respAuthString := resp.Header.Get("WWW-Authenticate")
+	if respAuthString == "" {
+		return authMsg{}, NewAuthError("Missing required header: WWW-Authenticate")
 	}
-	return auth, nil
+	return authMsgFromString(respAuthString), nil
 }
 
 // openScram opens a scram connection. 'hashName' only supports "SHA-256" and "SHA-512"
@@ -100,7 +102,7 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 	} else if hashName == "SHA-512" {
 		hash = sha512.New
 	} else { // Only support SHA-256 and SHA-512
-		return errors.New("Auth hash not supported: " + hashName)
+		return NewAuthError("Auth hash not supported: " + hashName)
 	}
 
 	var in []byte
@@ -110,27 +112,29 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 		out := scram.Out()
 
 		req, _ := http.NewRequest("get", client.uri+"about", nil)
-		reqAttrs := map[string]string{
-			"handshakeToken": handshakeToken,
-			"data":           encoding.EncodeToString(out),
+		reqAuth := authMsg{
+			scheme: "scram",
+			attrs: map[string]string{
+				"handshakeToken": handshakeToken,
+				"data":           encoding.EncodeToString(out),
+			},
 		}
-		reqAuth := buildAuth("scram", reqAttrs)
 
-		req.Header.Add("Authorization", reqAuth)
+		req.Header.Add("Authorization", reqAuth.toString())
 		resp, _ := client.httpClient.Do(req)
 
 		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
-			return errors.New(resp.Status)
+			return NewHttpError(resp.StatusCode, resp.Status)
 		}
-		respAuth := resp.Header.Get("WWW-Authenticate")
-		if respAuth == "" { // This header switches to Authentication-Info on success
-			respAuth = resp.Header.Get("Authentication-Info")
+		respAuthString := resp.Header.Get("WWW-Authenticate")
+		if respAuthString == "" { // This header switches to Authentication-Info on success
+			respAuthString = resp.Header.Get("Authentication-Info")
 		}
-		_, respAttrs := parseAuth(respAuth)
+		respAuth := authMsgFromString(respAuthString)
 
-		handshakeToken = respAttrs["handshakeToken"] // it grows over time
-		dataEnc := respAttrs["data"]
-		authToken = respAttrs["authToken"] // This will only be set on the last message
+		handshakeToken = respAuth.get("handshakeToken") // it grows over time
+		dataEnc := respAuth.get("data")
+		authToken = respAuth.get("authToken") // This will only be set on the last message
 		data, _ := encoding.DecodeString(dataEnc)
 
 		in = data
@@ -139,65 +143,87 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 		return scram.Err()
 	}
 
-	authAttrs := map[string]string{ // Only keep the authToken
-		"authToken": authToken,
+	finalAuth := authMsg{
+		scheme: "bearer",
+		attrs: map[string]string{ // Only keep the authToken
+			"authToken": authToken,
+		},
 	}
-	client.authHeaders["Authorization"] = buildAuth("bearer", authAttrs)
+	client.authHeaders["Authorization"] = finalAuth.toString()
 
 	return nil
 }
 
-// Parses an authentication message, and returns the scheme, and the attributes
-// Assumes auth messages follow the form: "[scheme] <name1>=<val1>, <name2>=<val2>, ..."
-func parseAuth(str string) (string, map[string]string) {
-	attrs := make(map[string]string)
-	attributeStrs := strings.Split(str, ",")
-	scheme := ""
-
-	firstAttr := attributeStrs[0]
-	if strings.Contains(attributeStrs[0], " ") {
-		schemeSplit := strings.Split(firstAttr, " ")
-		scheme = strings.TrimSpace(schemeSplit[0])
-		attributeStrs[0] = schemeSplit[1]
+func (client *Client) About() (haystack.Dict, error) {
+	result, err := client.Call("about", haystack.EmptyGrid())
+	if err != nil {
+		return haystack.Dict{}, err
 	}
-
-	for _, attributeStr := range attributeStrs {
-		attributeSplit := strings.Split(attributeStr, "=")
-		name := strings.TrimSpace(attributeSplit[0])
-		val := strings.TrimSpace(attributeSplit[1])
-		attrs[name] = val
-	}
-
-	return scheme, attrs
+	return result.RowAt(0).ToDict(), nil
 }
 
-// Aggregates an authentication message and returns the result
-// Resulting auth messages follow the form: "[scheme] <name1>=<val1>, <name2>=<val2>, ..."
-func buildAuth(scheme string, attrs map[string]string) string {
-	builder := new(strings.Builder)
-	if scheme != "" {
-		builder.WriteString(strings.ToUpper(scheme))
-		builder.WriteRune(' ')
+func (client *Client) Ops() (haystack.Grid, error) {
+	return client.Call("ops", haystack.EmptyGrid())
+}
+
+func (client *Client) Formats() (haystack.Grid, error) {
+	return client.Call("formats", haystack.EmptyGrid())
+}
+
+func (client *Client) Read(filter string) (haystack.Grid, error) {
+	return client.ReadLimit(filter, 0)
+}
+
+func (client *Client) ReadLimit(filter string, limit int) (haystack.Grid, error) {
+	var limitVal haystack.Val
+	if limit <= 0 {
+		limitVal = haystack.NewNull()
+	} else {
+		limitVal = haystack.NewNumber(float64(limit), "")
 	}
-	firstVal := true
-	for name, val := range attrs {
-		if firstVal {
-			firstVal = false
-		} else {
-			builder.WriteString(", ")
-		}
-		builder.WriteString(name)
-		builder.WriteRune('=')
-		builder.WriteString(val)
-	}
-	return builder.String()
+	var gb haystack.GridBuilder
+	gb.AddColNoMeta("filter")
+	gb.AddColNoMeta("limit")
+	gb.AddRow([]haystack.Val{
+		haystack.NewStr(filter),
+		limitVal,
+	})
+	return client.Call("read", gb.ToGrid())
+}
+
+func (client *Client) HisReadAbsDate(id haystack.Ref, from haystack.Date, to haystack.Date) (haystack.Grid, error) {
+	rangeString := from.ToZinc() + "," + to.ToZinc()
+	return client.HisRead(id, rangeString)
+}
+
+func (client *Client) HisReadAbsDateTime(id haystack.Ref, from haystack.DateTime, to haystack.DateTime) (haystack.Grid, error) {
+	rangeString := from.ToZinc() + "," + to.ToZinc()
+	return client.HisRead(id, rangeString)
+}
+
+func (client *Client) HisRead(id haystack.Ref, rangeString string) (haystack.Grid, error) {
+	var gb haystack.GridBuilder
+	gb.AddColNoMeta("id")
+	gb.AddColNoMeta("range")
+	gb.AddRow([]haystack.Val{
+		id,
+		haystack.NewStr(rangeString),
+	})
+	return client.Call("hisRead", gb.ToGrid())
+}
+
+func (client *Client) Eval(expr string) (haystack.Grid, error) {
+	var gb haystack.GridBuilder
+	gb.AddColNoMeta("expr")
+	gb.AddRow([]haystack.Val{haystack.NewStr(expr)})
+	return client.Call("eval", gb.ToGrid())
 }
 
 func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, error) {
 	req := reqGrid.ToZinc()
 	resp, err := client.postString(op, req)
 	if err != nil {
-		return haystack.Grid{}, err
+		return haystack.EmptyGrid(), err
 	}
 
 	var reader io.ZincReader
@@ -205,9 +231,13 @@ func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, err
 	val := reader.ReadVal()
 	switch val := val.(type) {
 	case haystack.Grid:
-		return val, nil
+		if val.Meta().Get("err") != haystack.NewNull() {
+			return haystack.EmptyGrid(), NewCallError(val)
+		} else {
+			return val, nil
+		}
 	default:
-		return haystack.Grid{}, errors.New("Result was not a grid")
+		return haystack.EmptyGrid(), errors.New("Result was not a grid")
 	}
 }
 
@@ -222,7 +252,7 @@ func (client *Client) postString(op string, reqBody string) (string, error) {
 		return "", respErr
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("http response: " + resp.Status)
+		return "", NewHttpError(resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

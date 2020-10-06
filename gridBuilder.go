@@ -26,6 +26,10 @@ func (gb *GridBuilder) AddCol(name string, meta map[string]Val) {
 	gb.AddColDict(name, NewDict(meta))
 }
 
+func (gb *GridBuilder) AddColNoMeta(name string) {
+	gb.AddColDict(name, NewDict(map[string]Val{}))
+}
+
 func (gb *GridBuilder) AddColDict(name string, meta Dict) {
 	index := len(gb.cols)
 	newCol := Col{index: index, name: name, meta: meta}

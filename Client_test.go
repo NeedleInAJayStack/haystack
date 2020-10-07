@@ -1,10 +1,8 @@
-package client
+package haystack
 
 import (
 	"fmt"
 	"testing"
-
-	"gitlab.com/NeedleInAJayStack/haystack"
 )
 
 func TestClient(t *testing.T) {

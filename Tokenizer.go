@@ -1,12 +1,10 @@
-package io
+package haystack
 
 import (
 	"io"
 	"strconv"
 	"strings"
 	"unicode"
-
-	"gitlab.com/NeedleInAJayStack/haystack"
 )
 
 const runeEOF = -1
@@ -16,7 +14,7 @@ type Tokenizer struct {
 	in    io.RuneReader
 	cur   rune
 	peek  rune
-	val   haystack.Val
+	val   Val
 	token Token
 }
 
@@ -30,7 +28,7 @@ func (tokenizer *Tokenizer) Init(in io.RuneReader) {
 	tokenizer.in = in
 	tokenizer.cur = 0
 	tokenizer.peek = 0
-	tokenizer.val = haystack.NewNull()
+	tokenizer.val = NewNull()
 	tokenizer.token = DEF
 
 	tokenizer.consume()
@@ -38,14 +36,14 @@ func (tokenizer *Tokenizer) Init(in io.RuneReader) {
 }
 
 // Val returns the current tokenizer value
-func (tokenizer *Tokenizer) Val() haystack.Val {
+func (tokenizer *Tokenizer) Val() Val {
 	return tokenizer.val
 }
 
-// Next reads the next haystack token, storing the value in the Val, and Token fields
+// Next reads the next token, storing the value in the Val, and Token fields
 func (tokenizer *Tokenizer) Next() Token {
 	// reset
-	tokenizer.val = haystack.NewNull()
+	tokenizer.val = NewNull()
 
 	// skip non-meaningful whitespace and comments
 	//int startLine = line
@@ -109,7 +107,7 @@ func (tokenizer *Tokenizer) id() Token {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
-	tokenizer.val = haystack.NewId(buf.String())
+	tokenizer.val = NewId(buf.String())
 	return ID
 }
 
@@ -120,7 +118,7 @@ func (tokenizer *Tokenizer) ref() Token {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
-	tokenizer.val = haystack.NewRef(buf.String(), "")
+	tokenizer.val = NewRef(buf.String(), "")
 	return REF
 }
 
@@ -142,7 +140,7 @@ func (tokenizer *Tokenizer) str() Token {
 			tokenizer.consume()
 		}
 	}
-	tokenizer.val = haystack.NewStr(buf.String())
+	tokenizer.val = NewStr(buf.String())
 	return STR
 }
 
@@ -173,7 +171,7 @@ func (tokenizer *Tokenizer) uri() Token {
 		}
 	}
 
-	tokenizer.val = haystack.NewUri(buf.String())
+	tokenizer.val = NewUri(buf.String())
 	return URI
 }
 
@@ -242,7 +240,7 @@ func (tokenizer *Tokenizer) digits() Token {
 			panic(err)
 		}
 		valFloat := float64(valInt)
-		tokenizer.val = haystack.NewNumber(valFloat, "")
+		tokenizer.val = NewNumber(valFloat, "")
 		return NUMBER
 	}
 	// consume all things that might be part of this number token
@@ -333,7 +331,7 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
 		}
 	}
 
-	dateTime, err := haystack.NewDateTimeFromString(buf.String())
+	dateTime, err := NewDateTimeFromString(buf.String())
 	if err != nil {
 		panic(err)
 	}
@@ -343,7 +341,7 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
 }
 
 func (tokenizer *Tokenizer) date(str string) Token {
-	date, err := haystack.NewDateFromString(str)
+	date, err := NewDateFromString(str)
 	if err != nil {
 		panic(err)
 	}
@@ -355,7 +353,7 @@ func (tokenizer *Tokenizer) time(str string, addSeconds bool) Token {
 	if addSeconds {
 		str = str + ":00"
 	}
-	time, err := haystack.NewTimeFromString(str)
+	time, err := NewTimeFromString(str)
 	if err != nil {
 		panic(err)
 	}
@@ -369,7 +367,7 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) Token {
 		if err != nil {
 			panic(err)
 		}
-		tokenizer.val = haystack.NewNumber(number, "")
+		tokenizer.val = NewNumber(number, "")
 		return NUMBER
 	} else {
 		numberStr := str[0:unitIndex]
@@ -378,7 +376,7 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) Token {
 		if err != nil {
 			panic(err)
 		}
-		tokenizer.val = haystack.NewNumber(number, unit)
+		tokenizer.val = NewNumber(number, unit)
 		return NUMBER
 	}
 }

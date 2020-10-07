@@ -1,4 +1,4 @@
-package io
+package haystack
 
 type Token int
 

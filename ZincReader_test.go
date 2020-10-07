@@ -1,10 +1,8 @@
-package io
+package haystack
 
 import (
 	"math"
 	"testing"
-
-	"gitlab.com/NeedleInAJayStack/haystack"
 )
 
 func TestZincReader_empty(t *testing.T) {

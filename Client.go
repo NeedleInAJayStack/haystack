@@ -1,4 +1,4 @@
-package client
+package haystack
 
 import (
 	"crypto/sha256"
@@ -10,11 +10,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"gitlab.com/NeedleInAJayStack/haystack"
-	"gitlab.com/NeedleInAJayStack/haystack/io"
 )
 
+// Client models a client connection to a server using the Haystack API.
 type Client struct {
 	httpClient  *http.Client
 	uri         string
@@ -26,6 +24,7 @@ type Client struct {
 var encoding = base64.RawURLEncoding
 var userAgent = "go"
 
+// NewClient creates a new Client object.
 func NewClient(uri string, username string, password string) *Client {
 	// check URI
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
@@ -65,10 +64,6 @@ func (client *Client) Open() error {
 	return scramErr
 }
 
-func (client *Client) IsOpen() bool {
-	return client.authHeaders["Authorization"] == ""
-}
-
 // sendHello sends a hello message and returns the value of the WWW-Authenticate header
 func (client *Client) sendHello() (authMsg, error) {
 	req, _ := http.NewRequest("get", client.uri+"about", nil)
@@ -84,7 +79,7 @@ func (client *Client) sendHello() (authMsg, error) {
 		return authMsg{}, respErr
 	}
 	if resp.StatusCode != 401 {
-		return authMsg{}, NewHttpError(resp.StatusCode, resp.Status)
+		return authMsg{}, NewHTTPError(resp.StatusCode, resp.Status)
 	}
 	resp.Body.Close()
 	respAuthString := resp.Header.Get("WWW-Authenticate")
@@ -124,7 +119,7 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 		resp, _ := client.httpClient.Do(req)
 
 		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
-			return NewHttpError(resp.StatusCode, resp.Status)
+			return NewHTTPError(resp.StatusCode, resp.Status)
 		}
 		respAuthString := resp.Header.Get("WWW-Authenticate")
 		if respAuthString == "" { // This header switches to Authentication-Info on success
@@ -154,90 +149,99 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 	return nil
 }
 
-func (client *Client) About() (haystack.Dict, error) {
-	result, err := client.Call("about", haystack.EmptyGrid())
+// About calls the 'about' op.
+func (client *Client) About() (Dict, error) {
+	result, err := client.Call("about", EmptyGrid())
 	if err != nil {
-		return haystack.Dict{}, err
+		return Dict{}, err
 	}
 	return result.RowAt(0).ToDict(), nil
 }
 
-func (client *Client) Ops() (haystack.Grid, error) {
-	return client.Call("ops", haystack.EmptyGrid())
+// Ops calls the 'ops' op.
+func (client *Client) Ops() (Grid, error) {
+	return client.Call("ops", EmptyGrid())
 }
 
-func (client *Client) Formats() (haystack.Grid, error) {
-	return client.Call("formats", haystack.EmptyGrid())
+// Formats calls the 'formats' op.
+func (client *Client) Formats() (Grid, error) {
+	return client.Call("formats", EmptyGrid())
 }
 
-func (client *Client) Read(filter string) (haystack.Grid, error) {
+// Read calls the 'read' op.
+func (client *Client) Read(filter string) (Grid, error) {
 	return client.ReadLimit(filter, 0)
 }
 
-func (client *Client) ReadLimit(filter string, limit int) (haystack.Grid, error) {
-	var limitVal haystack.Val
+// ReadLimit calls the 'read' op with a limit on the results.
+func (client *Client) ReadLimit(filter string, limit int) (Grid, error) {
+	var limitVal Val
 	if limit <= 0 {
-		limitVal = haystack.NewNull()
+		limitVal = NewNull()
 	} else {
-		limitVal = haystack.NewNumber(float64(limit), "")
+		limitVal = NewNumber(float64(limit), "")
 	}
-	var gb haystack.GridBuilder
+	var gb GridBuilder
 	gb.AddColNoMeta("filter")
 	gb.AddColNoMeta("limit")
-	gb.AddRow([]haystack.Val{
-		haystack.NewStr(filter),
+	gb.AddRow([]Val{
+		NewStr(filter),
 		limitVal,
 	})
 	return client.Call("read", gb.ToGrid())
 }
 
-func (client *Client) HisReadAbsDate(id haystack.Ref, from haystack.Date, to haystack.Date) (haystack.Grid, error) {
+// HisReadAbsDate calls the 'hisRead' op with an input absolute Date range.
+func (client *Client) HisReadAbsDate(id Ref, from Date, to Date) (Grid, error) {
 	rangeString := from.ToZinc() + "," + to.ToZinc()
 	return client.HisRead(id, rangeString)
 }
 
-func (client *Client) HisReadAbsDateTime(id haystack.Ref, from haystack.DateTime, to haystack.DateTime) (haystack.Grid, error) {
+// HisReadAbsDateTime calls the 'hisRead' op with an input absolute DateTime range.
+func (client *Client) HisReadAbsDateTime(id Ref, from DateTime, to DateTime) (Grid, error) {
 	rangeString := from.ToZinc() + "," + to.ToZinc()
 	return client.HisRead(id, rangeString)
 }
 
-func (client *Client) HisRead(id haystack.Ref, rangeString string) (haystack.Grid, error) {
-	var gb haystack.GridBuilder
+// HisRead calls the 'hisRead' op with the given range string. See Haystack API docs for accepted rangeString values.
+func (client *Client) HisRead(id Ref, rangeString string) (Grid, error) {
+	var gb GridBuilder
 	gb.AddColNoMeta("id")
 	gb.AddColNoMeta("range")
-	gb.AddRow([]haystack.Val{
+	gb.AddRow([]Val{
 		id,
-		haystack.NewStr(rangeString),
+		NewStr(rangeString),
 	})
 	return client.Call("hisRead", gb.ToGrid())
 }
 
-func (client *Client) Eval(expr string) (haystack.Grid, error) {
-	var gb haystack.GridBuilder
+// Eval calls the 'eval' op to evaluate a vendor specific expression.
+func (client *Client) Eval(expr string) (Grid, error) {
+	var gb GridBuilder
 	gb.AddColNoMeta("expr")
-	gb.AddRow([]haystack.Val{haystack.NewStr(expr)})
+	gb.AddRow([]Val{NewStr(expr)})
 	return client.Call("eval", gb.ToGrid())
 }
 
-func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, error) {
+// Call calls the given operation.  The request grid is posted to the client URI and the response is parsed as a grid.
+func (client *Client) Call(op string, reqGrid Grid) (Grid, error) {
 	req := reqGrid.ToZinc()
 	resp, err := client.postString(op, req)
 	if err != nil {
-		return haystack.EmptyGrid(), err
+		return EmptyGrid(), err
 	}
 
-	var reader io.ZincReader
+	var reader ZincReader
 	reader.InitString(resp)
 	val := reader.ReadVal()
 	switch val := val.(type) {
-	case haystack.Grid:
-		if val.Meta().Get("err") != haystack.NewNull() {
-			return haystack.EmptyGrid(), NewCallError(val)
-		} else {
-			return val, nil
+	case Grid:
+		if val.Meta().Get("err") != NewNull() {
+			return EmptyGrid(), NewCallError(val)
 		}
+		return val, nil
 	default:
-		return haystack.EmptyGrid(), errors.New("Result was not a grid")
+		return EmptyGrid(), errors.New("Result was not a grid")
 	}
 }
 
@@ -252,7 +256,7 @@ func (client *Client) postString(op string, reqBody string) (string, error) {
 		return "", respErr
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", NewHttpError(resp.StatusCode, resp.Status)
+		return "", NewHTTPError(resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -263,4 +267,129 @@ func (client *Client) prepare(req *http.Request) {
 	for name, val := range client.authHeaders {
 		req.Header.Add(name, val)
 	}
+}
+
+// authMsg models a message in the Haystack authorization header format.
+// They follow the form: "[scheme] <name1>=<val1>, <name2>=<val2>, ..."
+type authMsg struct {
+	scheme string
+	attrs  map[string]string
+}
+
+func authMsgFromString(str string) authMsg {
+	attrs := make(map[string]string)
+	attributeStrs := strings.Split(str, ",")
+	scheme := ""
+
+	// The first one MAY include the scheme but not necessarily. Handle both situations
+	firstAttr := attributeStrs[0]
+	if strings.Contains(attributeStrs[0], " ") {
+		schemeSplit := strings.Split(firstAttr, " ")
+		scheme = strings.TrimSpace(schemeSplit[0])
+		attributeStrs[0] = schemeSplit[1]
+	}
+
+	for _, attributeStr := range attributeStrs {
+		attributeSplit := strings.Split(attributeStr, "=")
+		name := strings.TrimSpace(attributeSplit[0])
+		val := strings.TrimSpace(attributeSplit[1])
+		attrs[name] = val
+	}
+
+	return authMsg{
+		scheme: scheme,
+		attrs:  attrs,
+	}
+}
+
+func (authMsg *authMsg) get(attrName string) string {
+	return authMsg.attrs[attrName]
+}
+
+func (authMsg *authMsg) toString() string {
+	builder := new(strings.Builder)
+	if authMsg.scheme != "" {
+		builder.WriteString(strings.ToUpper(authMsg.scheme))
+		builder.WriteRune(' ')
+	}
+	firstVal := true
+	for name, val := range authMsg.attrs {
+		if firstVal {
+			firstVal = false
+		} else {
+			builder.WriteString(", ")
+		}
+		builder.WriteString(name)
+		builder.WriteRune('=')
+		builder.WriteString(val)
+	}
+	return builder.String()
+}
+
+/////////////////////
+// Errors
+/////////////////////
+
+// AuthError represents an error in the authorization
+type AuthError struct {
+	message string
+}
+
+// NewAuthError creates a new AuthError object.
+func NewAuthError(message string) AuthError {
+	return AuthError{message: message}
+}
+
+func (err AuthError) Error() string {
+	return "Auth error: " + err.message
+}
+
+// CallError occurs when communication is successful, and a Grid is returned, but the grid has an err
+// tag indicating a server side error.
+type CallError struct {
+	grid Grid
+}
+
+// NewCallError creates a new CallError object.
+func NewCallError(grid Grid) CallError {
+	return CallError{grid: grid}
+}
+
+func (err CallError) Error() string {
+	dis := err.grid.Meta().Get("dis")
+	switch val := dis.(type) {
+	case Str:
+		return "Call error: " + val.String()
+	default:
+		return "Call error: Server side error"
+	}
+}
+
+// HTTPError occurs when communication is successful with a server, but we receive an HTTP error response.
+type HTTPError struct {
+	code    int
+	message string
+}
+
+// NewHTTPError creates a new HTTPError object.
+func NewHTTPError(code int, message string) HTTPError {
+	return HTTPError{code: code, message: message}
+}
+
+func (err HTTPError) Error() string {
+	return "HTTP error: " + string(err.code) + err.message
+}
+
+// NetworkError occurs when there is a network I/O or connection problem with communication to the server.
+type NetworkError struct {
+	message string
+}
+
+// NewNetworkError creates a new NetworkError object.
+func NewNetworkError(message string) NetworkError {
+	return NetworkError{message: message}
+}
+
+func (err NetworkError) Error() string {
+	return "Network error: " + err.message
 }

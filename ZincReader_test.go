@@ -10,22 +10,22 @@ func TestZincReader_empty(t *testing.T) {
 		"a nullmetatag:N, b markermetatag\n" +
 		""
 
-	var gb haystack.GridBuilder
+	var gb GridBuilder
 	gb.SetMeta(
-		map[string]haystack.Val{
-			"tag": haystack.NewNull(),
+		map[string]Val{
+			"tag": NewNull(),
 		},
 	)
 	gb.AddCol(
 		"a",
-		map[string]haystack.Val{
-			"nullmetatag": haystack.NewNull(),
+		map[string]Val{
+			"nullmetatag": NewNull(),
 		},
 	)
 	gb.AddCol(
 		"b",
-		map[string]haystack.Val{
-			"markermetatag": haystack.NewMarker(),
+		map[string]Val{
+			"markermetatag": NewMarker(),
 		},
 	)
 	expected := gb.ToGrid()
@@ -36,10 +36,10 @@ func TestZincReader_singleColEmpty(t *testing.T) {
 		"fooBar33\n" +
 		"\n"
 
-	var gb haystack.GridBuilder
+	var gb GridBuilder
 	gb.AddCol(
 		"fooBar33",
-		map[string]haystack.Val{},
+		map[string]Val{},
 	)
 	expected := gb.ToGrid()
 	testZincReaderGrid(t, input, expected)
@@ -50,20 +50,20 @@ func TestZincReader_singleCol(t *testing.T) {
 		"\"val\"\n" +
 		"\n"
 
-	var gb haystack.GridBuilder
+	var gb GridBuilder
 	gb.SetMeta(
-		map[string]haystack.Val{
-			"tag": haystack.NewMarker(),
-			"foo": haystack.NewStr("bar"),
+		map[string]Val{
+			"tag": NewMarker(),
+			"foo": NewStr("bar"),
 		},
 	)
 	gb.AddCol(
 		"xyz",
-		map[string]haystack.Val{},
+		map[string]Val{},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewStr("val"),
+		[]Val{
+			NewStr("val"),
 		},
 	)
 	expected := gb.ToGrid()
@@ -75,14 +75,14 @@ func TestZincReader_singleColNull(t *testing.T) {
 		"N\n" +
 		"\n"
 
-	var gb haystack.GridBuilder
+	var gb GridBuilder
 	gb.AddCol(
 		"val",
-		map[string]haystack.Val{},
+		map[string]Val{},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNull(),
+		[]Val{
+			NewNull(),
 		},
 	)
 	expected := gb.ToGrid()
@@ -95,25 +95,25 @@ func TestZincReader_doubleCol(t *testing.T) {
 		"3,4\n" +
 		"\n"
 
-	var gb haystack.GridBuilder
+	var gb GridBuilder
 	gb.AddCol(
 		"a",
-		map[string]haystack.Val{},
+		map[string]Val{},
 	)
 	gb.AddCol(
 		"b",
-		map[string]haystack.Val{},
+		map[string]Val{},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(1.0, ""),
-			haystack.NewNumber(2.0, ""),
+		[]Val{
+			NewNumber(1.0, ""),
+			NewNumber(2.0, ""),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(3.0, ""),
-			haystack.NewNumber(4.0, ""),
+		[]Val{
+			NewNumber(3.0, ""),
+			NewNumber(4.0, ""),
 		},
 	)
 	expected := gb.ToGrid()
@@ -132,57 +132,57 @@ func TestZincReader_large(t *testing.T) {
 		"C(12,-34),C(0.123,-0.789),C(84.5,-77.45),C(-90,180)\n" +
 		"\n"
 
-	var gb haystack.GridBuilder
-	gb.AddCol("a", map[string]haystack.Val{})
-	gb.AddCol("b", map[string]haystack.Val{})
-	gb.AddCol("c", map[string]haystack.Val{})
-	gb.AddCol("d", map[string]haystack.Val{})
+	var gb GridBuilder
+	gb.AddCol("a", map[string]Val{})
+	gb.AddCol("b", map[string]Val{})
+	gb.AddCol("c", map[string]Val{})
+	gb.AddCol("d", map[string]Val{})
 	gb.AddRow( // T,    F,      N,   -99
-		[]haystack.Val{
-			haystack.TRUE,
-			haystack.FALSE,
-			haystack.NewNull(),
-			haystack.NewNumber(-99.0, ""),
+		[]Val{
+			TRUE,
+			FALSE,
+			NewNull(),
+			NewNumber(-99.0, ""),
 		},
 	)
 	gb.AddRow( // 2.3,  -5e-10, 2.4e20, 123e-10
-		[]haystack.Val{
-			haystack.NewNumber(2.3, ""),
-			haystack.NewNumber(-5e-10, ""),
-			haystack.NewNumber(2.4e20, ""),
-			haystack.NewNumber(123e-10, ""),
+		[]Val{
+			NewNumber(2.3, ""),
+			NewNumber(-5e-10, ""),
+			NewNumber(2.4e20, ""),
+			NewNumber(123e-10, ""),
 		},
 	)
 	gb.AddRow( // "",   "a",   "\" \\ \t \n \r", "\uabcd"
-		[]haystack.Val{
-			haystack.NewStr(""),
-			haystack.NewStr("a"),
-			haystack.NewStr("\" \\ \t \n \r"),
-			haystack.NewStr("\uabcd"),
+		[]Val{
+			NewStr(""),
+			NewStr("a"),
+			NewStr("\" \\ \t \n \r"),
+			NewStr("\uabcd"),
 		},
 	)
 	gb.AddRow( // `path`, @12cbb082-0c02ae73, 4s, -2.5min
-		[]haystack.Val{
-			haystack.NewUri("path"),
-			haystack.NewRef("12cbb082-0c02ae73", ""),
-			haystack.NewNumber(4.0, "s"),
-			haystack.NewNumber(-2.5, "min"),
+		[]Val{
+			NewUri("path"),
+			NewRef("12cbb082-0c02ae73", ""),
+			NewNumber(4.0, "s"),
+			NewNumber(-2.5, "min"),
 		},
 	)
 	gb.AddRow( // M,R,N,N
-		[]haystack.Val{
-			haystack.NewMarker(),
-			haystack.NewRemove(),
-			haystack.NewNull(),
-			haystack.NewNull(),
+		[]Val{
+			NewMarker(),
+			NewRemove(),
+			NewNull(),
+			NewNull(),
 		},
 	)
-	date, _ := haystack.NewDateFromString("2009-12-31")
-	time1, _ := haystack.NewTimeFromString("23:59:01")
-	time2, _ := haystack.NewTimeFromString("01:02:03.123")
-	datetime, _ := haystack.NewDateTimeFromString("2009-02-03T04:05:06Z")
+	date, _ := NewDateFromString("2009-12-31")
+	time1, _ := NewTimeFromString("23:59:01")
+	time2, _ := NewTimeFromString("01:02:03.123")
+	datetime, _ := NewDateTimeFromString("2009-02-03T04:05:06Z")
 	gb.AddRow( // 2009-12-31, 23:59:01, 01:02:03.123, 2009-02-03T04:05:06Z
-		[]haystack.Val{
+		[]Val{
 			date,
 			time1,
 			time2,
@@ -190,19 +190,19 @@ func TestZincReader_large(t *testing.T) {
 		},
 	)
 	gb.AddRow( // INF, -INF, \"\", NaN
-		[]haystack.Val{
-			haystack.NewNumber(math.Inf(1), ""),
-			haystack.NewNumber(math.Inf(-1), ""),
-			haystack.NewStr(""),
-			haystack.NewNumber(math.NaN(), ""),
+		[]Val{
+			NewNumber(math.Inf(1), ""),
+			NewNumber(math.Inf(-1), ""),
+			NewStr(""),
+			NewNumber(math.NaN(), ""),
 		},
 	)
 	gb.AddRow( // C(12,-34),C(0.123,-0.789),C(84.5,-77.45),C(-90,180)
-		[]haystack.Val{
-			haystack.NewCoord(12.0, -34.0),
-			haystack.NewCoord(0.123, -0.789),
-			haystack.NewCoord(84.5, -77.45),
-			haystack.NewCoord(-90, 180),
+		[]Val{
+			NewCoord(12.0, -34.0),
+			NewCoord(0.123, -0.789),
+			NewCoord(84.5, -77.45),
+			NewCoord(-90, 180),
 		},
 	)
 	expected := gb.ToGrid()
@@ -216,26 +216,26 @@ func TestZincReader_escapes(t *testing.T) {
 		"`file \\#2`\n" +
 		"\"$15\"\n"
 
-	var gb haystack.GridBuilder
-	gb.AddCol("foo", map[string]haystack.Val{})
+	var gb GridBuilder
+	gb.AddCol("foo", map[string]Val{})
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewUri("foo$20bar"),
+		[]Val{
+			NewUri("foo$20bar"),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewUri("foo`bar"),
+		[]Val{
+			NewUri("foo`bar"),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewUri("file \\#2"),
+		[]Val{
+			NewUri("file \\#2"),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewStr("$15"),
+		[]Val{
+			NewStr("$15"),
 		},
 	)
 	expected := gb.ToGrid()
@@ -249,31 +249,31 @@ func TestZincReader_numbers(t *testing.T) {
 		"5kWh/ft\u00b2,-15kWh/m\u00b2\n" +
 		"123e+12kJ/kg_dry,74\u0394\u00b0F\n"
 
-	var gb haystack.GridBuilder
-	gb.AddCol("a", map[string]haystack.Val{})
-	gb.AddCol("b", map[string]haystack.Val{})
+	var gb GridBuilder
+	gb.AddCol("a", map[string]Val{})
+	gb.AddCol("b", map[string]Val{})
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(-3.1, "kg"),
-			haystack.NewNumber(4.0, "kg"),
+		[]Val{
+			NewNumber(-3.1, "kg"),
+			NewNumber(4.0, "kg"),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(5.0, "%"),
-			haystack.NewNumber(3.2, "%"),
+		[]Val{
+			NewNumber(5.0, "%"),
+			NewNumber(3.2, "%"),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(5.0, "kWh/ft\u00b2"),
-			haystack.NewNumber(-15.0, "kWh/m\u00b2"),
+		[]Val{
+			NewNumber(5.0, "kWh/ft\u00b2"),
+			NewNumber(-15.0, "kWh/m\u00b2"),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(123e+12, "kJ/kg_dry"),
-			haystack.NewNumber(74.0, "\u0394\u00b0F"),
+		[]Val{
+			NewNumber(123e+12, "kJ/kg_dry"),
+			NewNumber(74.0, "\u0394\u00b0F"),
 		},
 	)
 	expected := gb.ToGrid()
@@ -290,50 +290,50 @@ func TestZincReader_nulls(t *testing.T) {
 		"14,,\n" +
 		"\n"
 
-	var gb haystack.GridBuilder
-	gb.AddCol("a", map[string]haystack.Val{})
-	gb.AddCol("b", map[string]haystack.Val{})
-	gb.AddCol("c", map[string]haystack.Val{})
+	var gb GridBuilder
+	gb.AddCol("a", map[string]Val{})
+	gb.AddCol("b", map[string]Val{})
+	gb.AddCol("c", map[string]Val{})
 	gb.AddRow( // , 1, 2
-		[]haystack.Val{
-			haystack.NewNull(),
-			haystack.NewNumber(1.0, ""),
-			haystack.NewNumber(2.0, ""),
+		[]Val{
+			NewNull(),
+			NewNumber(1.0, ""),
+			NewNumber(2.0, ""),
 		},
 	)
 	gb.AddRow( // 3, , 5
-		[]haystack.Val{
-			haystack.NewNumber(3.0, ""),
-			haystack.NewNull(),
-			haystack.NewNumber(5.0, ""),
+		[]Val{
+			NewNumber(3.0, ""),
+			NewNull(),
+			NewNumber(5.0, ""),
 		},
 	)
 	gb.AddRow( // 6, 7_000,
-		[]haystack.Val{
-			haystack.NewNumber(6.0, ""),
-			haystack.NewNumber(7000.0, ""),
-			haystack.NewNull(),
+		[]Val{
+			NewNumber(6.0, ""),
+			NewNumber(7000.0, ""),
+			NewNull(),
 		},
 	)
 	gb.AddRow( // ,,10
-		[]haystack.Val{
-			haystack.NewNull(),
-			haystack.NewNull(),
-			haystack.NewNumber(10.0, ""),
+		[]Val{
+			NewNull(),
+			NewNull(),
+			NewNumber(10.0, ""),
 		},
 	)
 	gb.AddRow( // ,,
-		[]haystack.Val{
-			haystack.NewNull(),
-			haystack.NewNull(),
-			haystack.NewNull(),
+		[]Val{
+			NewNull(),
+			NewNull(),
+			NewNull(),
 		},
 	)
 	gb.AddRow( // 14,,
-		[]haystack.Val{
-			haystack.NewNumber(14.0, ""),
-			haystack.NewNull(),
-			haystack.NewNull(),
+		[]Val{
+			NewNumber(14.0, ""),
+			NewNull(),
+			NewNull(),
 		},
 	)
 	expected := gb.ToGrid()
@@ -344,13 +344,13 @@ func TestZincReader_datetimes(t *testing.T) {
 		"a,b\n" +
 		"2010-03-01T23:55:00.013-05:00 GMT+5,2010-03-01T23:55:00.013+10:00 GMT-10\n"
 
-	var gb haystack.GridBuilder
-	gb.AddCol("a", map[string]haystack.Val{})
-	gb.AddCol("b", map[string]haystack.Val{})
-	datetime1, _ := haystack.NewDateTimeFromString("2010-03-01T23:55:00.013-05:00 GMT+5")
-	datetime2, _ := haystack.NewDateTimeFromString("2010-03-01T23:55:00.013+10:00 GMT-10")
+	var gb GridBuilder
+	gb.AddCol("a", map[string]Val{})
+	gb.AddCol("b", map[string]Val{})
+	datetime1, _ := NewDateTimeFromString("2010-03-01T23:55:00.013-05:00 GMT+5")
+	datetime2, _ := NewDateTimeFromString("2010-03-01T23:55:00.013+10:00 GMT-10")
 	gb.AddRow(
-		[]haystack.Val{
+		[]Val{
 			datetime1,
 			datetime2,
 		},
@@ -373,72 +373,72 @@ func TestZincReader_meta(t *testing.T) {
 		"R\n" +
 		"NA\n"
 
-	var gb haystack.GridBuilder
-	metaDt1, _ := haystack.NewDateTimeFromString("2009-02-03T04:05:06Z")
-	metaDt2, _ := haystack.NewDateTimeFromString("2010-02-03T04:05:06Z UTC")
-	metaDt3, _ := haystack.NewDateTimeFromString("2009-12-03T04:05:06Z London")
+	var gb GridBuilder
+	metaDt1, _ := NewDateTimeFromString("2009-02-03T04:05:06Z")
+	metaDt2, _ := NewDateTimeFromString("2010-02-03T04:05:06Z UTC")
+	metaDt3, _ := NewDateTimeFromString("2009-12-03T04:05:06Z London")
 	gb.SetMeta(
-		map[string]haystack.Val{
+		map[string]Val{
 			"a":   metaDt1,
-			"foo": haystack.NewMarker(),
+			"foo": NewMarker(),
 			"b":   metaDt2,
-			"bar": haystack.NewMarker(),
+			"bar": NewMarker(),
 			"c":   metaDt3,
-			"baz": haystack.NewMarker(),
+			"baz": NewMarker(),
 		},
 	)
-	gb.AddCol("a", map[string]haystack.Val{})
+	gb.AddCol("a", map[string]Val{})
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(3.814697265625e-6, ""),
+		[]Val{
+			NewNumber(3.814697265625e-6, ""),
 		},
 	)
-	datetime1, _ := haystack.NewDateTimeFromString("2010-12-18T14:11:30.924Z")
+	datetime1, _ := NewDateTimeFromString("2010-12-18T14:11:30.924Z")
 	gb.AddRow(
-		[]haystack.Val{
+		[]Val{
 			datetime1,
 		},
 	)
-	datetime2, _ := haystack.NewDateTimeFromString("2010-12-18T14:11:30.925Z UTC")
+	datetime2, _ := NewDateTimeFromString("2010-12-18T14:11:30.925Z UTC")
 	gb.AddRow(
-		[]haystack.Val{
+		[]Val{
 			datetime2,
 		},
 	)
-	datetime3, _ := haystack.NewDateTimeFromString("2010-12-18T14:11:30.925Z London")
+	datetime3, _ := NewDateTimeFromString("2010-12-18T14:11:30.925Z London")
 	gb.AddRow(
-		[]haystack.Val{
+		[]Val{
 			datetime3,
 		},
 	)
 	gb.AddRow( // 45$
-		[]haystack.Val{
-			haystack.NewNumber(45, "$"),
+		[]Val{
+			NewNumber(45, "$"),
 		},
 	)
 	gb.AddRow( // 33\u00a3
-		[]haystack.Val{
-			haystack.NewNumber(33, "\u00a3"),
+		[]Val{
+			NewNumber(33, "\u00a3"),
 		},
 	)
 	gb.AddRow( // @12cbb08e-0c02ae73
-		[]haystack.Val{
-			haystack.NewRef("12cbb08e-0c02ae73", ""),
+		[]Val{
+			NewRef("12cbb08e-0c02ae73", ""),
 		},
 	)
 	gb.AddRow( // 7.15625E-4kWh/ft\u00b2
-		[]haystack.Val{
-			haystack.NewNumber(7.15625e-4, "kWh/ft\u00b2"),
+		[]Val{
+			NewNumber(7.15625e-4, "kWh/ft\u00b2"),
 		},
 	)
 	gb.AddRow( // R
-		[]haystack.Val{
-			haystack.NewRemove(),
+		[]Val{
+			NewRemove(),
 		},
 	)
 	gb.AddRow( // NA
-		[]haystack.Val{
-			haystack.NewNA(),
+		[]Val{
+			NewNA(),
 		},
 	)
 	expected := gb.ToGrid()
@@ -463,68 +463,68 @@ func TestZincReader_nested(t *testing.T) {
 		"  >>\n" +
 		"\"scalar\", \"simple string\""
 
-	var gb haystack.GridBuilder
-	gb.AddCol("type", map[string]haystack.Val{})
-	gb.AddCol("val", map[string]haystack.Val{})
+	var gb GridBuilder
+	gb.AddCol("type", map[string]Val{})
+	gb.AddCol("val", map[string]Val{})
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewStr("list"),
-			haystack.NewList(
-				[]haystack.Val{
-					haystack.NewNumber(1, ""),
-					haystack.NewNumber(2, ""),
-					haystack.NewNumber(3, ""),
+		[]Val{
+			NewStr("list"),
+			NewList(
+				[]Val{
+					NewNumber(1, ""),
+					NewNumber(2, ""),
+					NewNumber(3, ""),
 				},
 			),
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewStr("dict"),
-			haystack.NewDict(
-				map[string]haystack.Val{
-					"dis": haystack.NewStr("Dict!"),
-					"foo": haystack.NewMarker(),
+		[]Val{
+			NewStr("dict"),
+			NewDict(
+				map[string]Val{
+					"dis": NewStr("Dict!"),
+					"foo": NewMarker(),
 				},
 			),
 		},
 	)
-	var dblNestedGb haystack.GridBuilder
-	dblNestedGb.AddCol("c", map[string]haystack.Val{})
-	dblNestedGb.AddCol("d", map[string]haystack.Val{})
+	var dblNestedGb GridBuilder
+	dblNestedGb.AddCol("c", map[string]Val{})
+	dblNestedGb.AddCol("d", map[string]Val{})
 	dblNestedGb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(5, ""),
-			haystack.NewNumber(6, ""),
+		[]Val{
+			NewNumber(5, ""),
+			NewNumber(6, ""),
 		},
 	)
 	dblNestedGrid := dblNestedGb.ToGrid()
-	var nestedGb haystack.GridBuilder
-	nestedGb.AddCol("a", map[string]haystack.Val{})
-	nestedGb.AddCol("b", map[string]haystack.Val{})
+	var nestedGb GridBuilder
+	nestedGb.AddCol("a", map[string]Val{})
+	nestedGb.AddCol("b", map[string]Val{})
 	nestedGb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(1, ""),
+		[]Val{
+			NewNumber(1, ""),
 			dblNestedGrid,
 		},
 	)
 	nestedGb.AddRow(
-		[]haystack.Val{
-			haystack.NewNumber(3, ""),
-			haystack.NewNumber(4, ""),
+		[]Val{
+			NewNumber(3, ""),
+			NewNumber(4, ""),
 		},
 	)
 	nestedGrid := nestedGb.ToGrid()
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewStr("grid"),
+		[]Val{
+			NewStr("grid"),
 			nestedGrid,
 		},
 	)
 	gb.AddRow(
-		[]haystack.Val{
-			haystack.NewStr("scalar"),
-			haystack.NewStr("simple string"),
+		[]Val{
+			NewStr("scalar"),
+			NewStr("simple string"),
 		},
 	)
 	expected := gb.ToGrid()
@@ -535,12 +535,12 @@ func TestZincReader_nested(t *testing.T) {
 
 // Verifies that the tokenized result has the expected token type and value.
 // Values are matched based on the result of the 'ToZinc' method
-func testZincReaderGrid(t *testing.T, str string, expected haystack.Grid) {
+func testZincReaderGrid(t *testing.T, str string, expected Grid) {
 	var reader ZincReader
 	reader.InitString(str)
 
 	val := reader.ReadVal()
-	grid := val.(haystack.Grid)
+	grid := val.(Grid)
 	testGridEq(t, grid, expected)
 
 	// write grid, read grid, and verify it equals the original
@@ -548,12 +548,12 @@ func testZincReaderGrid(t *testing.T, str string, expected haystack.Grid) {
 	var writtenReader ZincReader
 	writtenReader.InitString(writeStr)
 	writeReadVal := writtenReader.ReadVal()
-	writeReadGrid := writeReadVal.(haystack.Grid)
+	writeReadGrid := writeReadVal.(Grid)
 	testGridEq(t, writeReadGrid, expected)
 }
 
 // Test whether the grids match based on a ToZinc call
-func testGridEq(t *testing.T, actual haystack.Grid, expected haystack.Grid) {
+func testGridEq(t *testing.T, actual Grid, expected Grid) {
 	actualZinc := actual.ToZinc()
 	expectedZinc := expected.ToZinc()
 

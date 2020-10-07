@@ -18,7 +18,7 @@ func TestClient(t *testing.T) {
 		t.Error(openErr)
 	}
 
-	call, callErr := haystackClient.Call("about", haystack.EmptyGrid())
+	call, callErr := haystackClient.Call("about", EmptyGrid())
 	if callErr != nil {
 		fmt.Println(call.ToZinc())
 		t.Error(callErr)
@@ -54,7 +54,7 @@ func TestClient(t *testing.T) {
 		t.Error(readLimitErr)
 	}
 
-	hisRef := readLimit.RowAt(0).Get("id").(haystack.Ref)
+	hisRef := readLimit.RowAt(0).Get("id").(Ref)
 
 	hisRead, hisReadErr := haystackClient.HisRead(hisRef, "yesterday")
 	if hisReadErr != nil {
@@ -62,16 +62,16 @@ func TestClient(t *testing.T) {
 		t.Error(hisReadErr)
 	}
 
-	fromDate := haystack.NewDate(2020, 10, 4)
-	toDate := haystack.NewDate(2020, 10, 5)
+	fromDate := NewDate(2020, 10, 4)
+	toDate := NewDate(2020, 10, 5)
 	hisReadAbsDate, hisReadAbsDateErr := haystackClient.HisReadAbsDate(hisRef, fromDate, toDate)
 	if hisReadAbsDateErr != nil {
 		fmt.Println(hisReadAbsDate.ToZinc())
 		t.Error(hisReadAbsDateErr)
 	}
 
-	fromTs, _ := haystack.NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
-	toTs, _ := haystack.NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
+	fromTs, _ := NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
+	toTs, _ := NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
 	hisReadAbsDateTime, hisReadAbsDateTimeErr := haystackClient.HisReadAbsDateTime(hisRef, fromTs, toTs)
 	if hisReadAbsDateTimeErr != nil {
 		fmt.Println(hisReadAbsDateTime.ToZinc())

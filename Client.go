@@ -22,7 +22,7 @@ type Client struct {
 }
 
 var encoding = base64.RawURLEncoding
-var userAgent = "go"
+var userAgent = "Go-haystack-client"
 
 // NewClient creates a new Client object.
 func NewClient(uri string, username string, password string) *Client {
@@ -73,6 +73,7 @@ func (client *Client) sendHello() (authMsg, error) {
 			"username": encoding.EncodeToString([]byte(client.username)),
 		},
 	}
+	client.prepare(req)
 	req.Header.Add("Authorization", reqAuth.toString())
 	resp, respErr := client.httpClient.Do(req)
 	if respErr != nil {
@@ -114,7 +115,7 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 				"data":           encoding.EncodeToString(out),
 			},
 		}
-
+		client.prepare(req)
 		req.Header.Add("Authorization", reqAuth.toString())
 		resp, _ := client.httpClient.Do(req)
 
@@ -250,7 +251,6 @@ func (client *Client) postString(op string, reqBody string) (string, error) {
 	req, _ := http.NewRequest("post", client.uri+op, reqReader)
 	client.prepare(req)
 	req.Header.Add("Connection", "Close")
-	req.Header.Add("Content-Type", "text/zinc; charset=utf-8") // TODO support more mimeTypes beyond UTF-8 zinc
 	resp, respErr := client.httpClient.Do(req)
 	if respErr != nil {
 		return "", respErr
@@ -267,6 +267,9 @@ func (client *Client) prepare(req *http.Request) {
 	for name, val := range client.authHeaders {
 		req.Header.Add(name, val)
 	}
+	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
+	req.Header.Add("Accept", "text/zinc")
 }
 
 // authMsg models a message in the Haystack authorization header format.

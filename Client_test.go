@@ -4,6 +4,11 @@ import (
 	"testing"
 )
 
+// TODO: Determine why we get "400 Bad Request" on BuildingFit SkySpark instance
+// TODO: Understand/document "x509: certificate signed by unknown authority" - Only happens on linux
+//		- https://bugs.launchpad.net/snappy/+bug/1620755/
+//		- https://github.com/golang/go/issues/12139
+
 func TestClient(t *testing.T) {
 
 	// Test with local SkySpark instance

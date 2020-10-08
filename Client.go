@@ -380,7 +380,7 @@ func NewHTTPError(code int, message string) HTTPError {
 }
 
 func (err HTTPError) Error() string {
-	return "HTTP error: " + string(err.code) + err.message
+	return "HTTP error: " + err.message
 }
 
 // NetworkError occurs when there is a network I/O or connection problem with communication to the server.

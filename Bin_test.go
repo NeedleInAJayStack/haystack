@@ -9,3 +9,11 @@ func TestBin_ToZinc(t *testing.T) {
 		t.Error(binStr)
 	}
 }
+
+func TestBin_ToJSON(t *testing.T) {
+	bin := NewBin("text/plain")
+	binStr := bin.ToJSON()
+	if binStr != "b:text/plain" {
+		t.Error(binStr)
+	}
+}

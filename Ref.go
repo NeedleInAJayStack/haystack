@@ -21,12 +21,21 @@ func (ref Ref) Dis() string {
 	return ref.dis
 }
 
-// ToZinc representes the object as: "@<id> [dis]"
+// ToZinc representes the object as: "@<id> \"[dis]\""
 func (ref Ref) ToZinc() string {
 	result := "@" + ref.id
 	if ref.dis != "" {
 		dis := Str{val: ref.dis}
 		result = result + " " + dis.ToZinc()
+	}
+	return result
+}
+
+// ToJSON representes the object as: "r:<id> [dis]"
+func (ref Ref) ToJSON() string {
+	result := "r:" + ref.id
+	if ref.dis != "" {
+		result = result + " " + ref.dis
 	}
 	return result
 }

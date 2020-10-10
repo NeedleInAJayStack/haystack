@@ -31,3 +31,8 @@ func (xStr XStr) ToZinc() string {
 
 	return result
 }
+
+// ToJSON just copies the Zinc representation
+func (xStr XStr) ToJSON() string {
+	return xStr.ToZinc()
+}

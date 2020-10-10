@@ -20,3 +20,8 @@ func (id Id) String() string {
 func (id Id) ToZinc() string {
 	return id.val
 }
+
+// ToJSON representes the object as: "<val>"
+func (id Id) ToJSON() string {
+	return id.val
+}

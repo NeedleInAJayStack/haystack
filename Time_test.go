@@ -45,26 +45,52 @@ func TestTime_NewTimeFromString(t *testing.T) {
 
 func TestTime_ToZinc(t *testing.T) {
 	timeNoMs := NewTime(23, 7, 10, 0)
-	timeNoMsZinc := timeNoMs.ToZinc()
-	if timeNoMsZinc != "23:07:10" {
-		t.Error(timeNoMsZinc)
+	timeNoMsStr := timeNoMs.ToZinc()
+	if timeNoMsStr != "23:07:10" {
+		t.Error(timeNoMsStr)
 	}
 
 	timeMs := NewTime(23, 7, 10, 957)
-	timeMsZinc := timeMs.ToZinc()
-	if timeMsZinc != "23:07:10.957" {
-		t.Error(timeMsZinc)
+	timeMsStr := timeMs.ToZinc()
+	if timeMsStr != "23:07:10.957" {
+		t.Error(timeMsStr)
 	}
 
 	timeOnesMs := NewTime(23, 7, 10, 2)
-	timeOnesMsZinc := timeOnesMs.ToZinc()
-	if timeOnesMsZinc != "23:07:10.002" {
-		t.Error(timeOnesMsZinc)
+	timeOnesMsStr := timeOnesMs.ToZinc()
+	if timeOnesMsStr != "23:07:10.002" {
+		t.Error(timeOnesMsStr)
 	}
 
 	timeTensMs := NewTime(23, 7, 10, 56)
-	timeTensMsZinc := timeTensMs.ToZinc()
-	if timeTensMsZinc != "23:07:10.056" {
-		t.Error(timeTensMsZinc)
+	timeTensMsStr := timeTensMs.ToZinc()
+	if timeTensMsStr != "23:07:10.056" {
+		t.Error(timeTensMsStr)
+	}
+}
+
+func TestTime_ToJSON(t *testing.T) {
+	timeNoMs := NewTime(23, 7, 10, 0)
+	timeNoMsStr := timeNoMs.ToJSON()
+	if timeNoMsStr != "h:23:07:10" {
+		t.Error(timeNoMsStr)
+	}
+
+	timeMs := NewTime(23, 7, 10, 957)
+	timeMsStr := timeMs.ToJSON()
+	if timeMsStr != "h:23:07:10.957" {
+		t.Error(timeMsStr)
+	}
+
+	timeOnesMs := NewTime(23, 7, 10, 2)
+	timeOnesMsStr := timeOnesMs.ToJSON()
+	if timeOnesMsStr != "h:23:07:10.002" {
+		t.Error(timeOnesMsStr)
+	}
+
+	timeTensMs := NewTime(23, 7, 10, 56)
+	timeTensMsStr := timeTensMs.ToJSON()
+	if timeTensMsStr != "h:23:07:10.056" {
+		t.Error(timeTensMsStr)
 	}
 }

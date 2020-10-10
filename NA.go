@@ -13,3 +13,8 @@ func NewNA() NA {
 func (na NA) ToZinc() string {
 	return "NA"
 }
+
+// ToJSON representes the object as: "z:"
+func (na NA) ToJSON() string {
+	return "z:"
+}

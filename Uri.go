@@ -20,7 +20,12 @@ func (uri Uri) String() string {
 	return uri.val
 }
 
-// ToZinc representes the object as: "`<val>`"
+// ToJSON representes the object as: "u:<val>"
+func (uri Uri) ToJSON() string {
+	return "u:" + uri.val
+}
+
+// ToZinc representes the object as: "`<val>`" with escaped backticks
 func (uri Uri) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)

@@ -14,3 +14,8 @@ func NewBin(mime string) Bin {
 func (bin Bin) ToZinc() string {
 	return "Bin(\"" + bin.mime + "\")"
 }
+
+// ToJSON representes the object as: "b:<mime>"
+func (bin Bin) ToJSON() string {
+	return "b:" + bin.mime
+}

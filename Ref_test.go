@@ -6,14 +6,28 @@ import (
 
 func TestRef_ToZinc(t *testing.T) {
 	refNoDis := NewRef("123-abc", "")
-	refNoDisZinc := refNoDis.ToZinc()
-	if refNoDisZinc != "@123-abc" {
-		t.Error(refNoDisZinc)
+	refNoDisStr := refNoDis.ToZinc()
+	if refNoDisStr != "@123-abc" {
+		t.Error(refNoDisStr)
 	}
 
 	refDis := NewRef("123-abc", "Name")
-	refDisZinc := refDis.ToZinc()
-	if refDisZinc != "@123-abc \"Name\"" {
-		t.Error(refDisZinc)
+	refDisStr := refDis.ToZinc()
+	if refDisStr != "@123-abc \"Name\"" {
+		t.Error(refDisStr)
+	}
+}
+
+func TestRef_ToJSON(t *testing.T) {
+	refNoDis := NewRef("123-abc", "")
+	refNoDisStr := refNoDis.ToJSON()
+	if refNoDisStr != "r:123-abc" {
+		t.Error(refNoDisStr)
+	}
+
+	refDis := NewRef("123-abc", "Name")
+	refDisStr := refDis.ToJSON()
+	if refDisStr != "r:123-abc Name" {
+		t.Error(refDisStr)
 	}
 }

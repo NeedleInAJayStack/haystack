@@ -21,6 +21,15 @@ func (str Str) String() string {
 	return str.val
 }
 
+// ToJSON representes the object as "<val>", or "s:<val>" if val contains a colon
+func (str Str) ToJSON() string {
+	if strings.Contains(str.val, ":") {
+		return "s:" + str.val
+	} else {
+		return str.val
+	}
+}
+
 // ToZinc representes the object as a double-quoted string, with back-slash escapes
 func (str Str) ToZinc() string {
 	builder := new(strings.Builder)

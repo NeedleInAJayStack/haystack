@@ -66,6 +66,11 @@ func (date Date) ToZinc() string {
 	return date.encode()
 }
 
+// ToJSON representes the object as: "d:YYYY-MM-DD"
+func (date Date) ToJSON() string {
+	return "d:" + date.encode()
+}
+
 func (date Date) encode() string {
 	result := ""
 	result = result + fmt.Sprintf("%d", date.year) + "-"

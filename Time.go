@@ -99,9 +99,14 @@ func (time Time) Millis() int {
 	return time.ms
 }
 
-// ToZinc representes the object as: "hh:mm:ss.mmm"
+// ToZinc representes the object as: "hh:mm:ss.FFF"
 func (time Time) ToZinc() string {
 	return time.encode()
+}
+
+// ToJSON representes the object as: "h:hh:mm:ss.FFF"
+func (time Time) ToJSON() string {
+	return "h:"+time.encode()
 }
 
 func (time Time) encode() string {

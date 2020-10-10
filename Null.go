@@ -9,7 +9,12 @@ func NewNull() Null {
 	return Null{}
 }
 
-// ToZinc representes the object as an empty string
+// ToZinc representes the object as "N"
 func (null Null) ToZinc() string {
 	return "N"
+}
+
+// ToJSON representes the object as "null"
+func (null Null) ToJSON() string {
+	return "null"
 }

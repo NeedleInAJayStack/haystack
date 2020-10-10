@@ -172,6 +172,14 @@ func (dateTime DateTime) ToZinc() string {
 	return buf.String()
 }
 
+// ToJSON representes the object as: "t:YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+func (dateTime DateTime) ToJSON() string {
+	buf := strings.Builder{}
+	buf.WriteString("t:")
+	dateTime.encodeTo(&buf)
+	return buf.String()
+}
+
 func (dateTime *DateTime) encodeTo(buf *strings.Builder) {
 	buf.WriteString(dateTime.date.encode())
 	buf.WriteRune('T')

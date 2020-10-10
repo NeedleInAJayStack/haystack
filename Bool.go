@@ -23,3 +23,11 @@ func (b Bool) ToZinc() string {
 	}
 	return "F"
 }
+
+// ToJSON representes the object as: "true" or "false"
+func (b Bool) ToJSON() string {
+	if b.ToBool() {
+		return "true"
+	}
+	return "false"
+}

@@ -38,3 +38,13 @@ func (coord Coord) ToZinc() string {
 
 	return result
 }
+
+// ToJSON representes the object as: "c:<lat>,<lng>"
+func (coord Coord) ToJSON() string {
+	result := "c:"
+	result = result + fmt.Sprintf("%g", coord.lat)
+	result = result + ","
+	result = result + fmt.Sprintf("%g", coord.lng)
+
+	return result
+}

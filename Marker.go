@@ -35,7 +35,7 @@ func (remove Remove) ToZinc() string {
 	return "R"
 }
 
-// MarshalJSON representes the object as: "x:"
+// MarshalJSON representes the object as: "-:"
 func (remove Remove) MarshalJSON() ([]byte, error) {
-	return json.Marshal("x:")
+	return json.Marshal("-:")
 }

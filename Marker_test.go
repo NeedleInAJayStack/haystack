@@ -19,5 +19,5 @@ func TestRemove_ToZinc(t *testing.T) {
 
 func TestRemove_MarshalJSON(t *testing.T) {
 	remove := NewRemove()
-	valTest_MarshalJSON(remove, "\"x:\"", t)
+	valTest_MarshalJSON(remove, "\"-:\"", t)
 }

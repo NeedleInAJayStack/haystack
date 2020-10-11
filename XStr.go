@@ -24,7 +24,7 @@ func (xStr XStr) Val() string {
 	return xStr.val
 }
 
-// ToZinc representes the object as: "<valType>(<val>)"
+// ToZinc representes the object as: <valType>("<val>")
 func (xStr XStr) ToZinc() string {
 	result := xStr.valType
 	result = result + "(\""
@@ -34,7 +34,12 @@ func (xStr XStr) ToZinc() string {
 	return result
 }
 
-// MarshalJSON representes the object as: "<valType>(<val>)"
+// MarshalJSON representes the object as: "x:<valType>:<val>"
 func (xStr XStr) MarshalJSON() ([]byte, error) {
-	return json.Marshal(xStr.ToZinc())
+	result := "x:"
+	result = result + xStr.valType
+	result = result + ":"
+	result = result + xStr.val
+
+	return json.Marshal(result)
 }

@@ -12,7 +12,14 @@ import (
 	"time"
 )
 
-// Client models a client connection to a server using the Haystack API.
+// Client models a client connection to a server using the Haystack API. Example usage:
+// 		haystackClient := NewClient(
+//			"http://server/haystack",
+// 			"test",
+// 			"test",
+// 		)
+// 		openErr := haystackClient.Open()
+// 		sites, readErr := haystackClient.Read("site")
 type Client struct {
 	httpClient  *http.Client
 	uri         string
@@ -182,12 +189,12 @@ func (client *Client) Formats() (Grid, error) {
 	return client.Call("formats", EmptyGrid())
 }
 
-// Read calls the 'read' op.
+// Read calls the 'read' op with a filter and no result limit.
 func (client *Client) Read(filter string) (Grid, error) {
 	return client.ReadLimit(filter, 0)
 }
 
-// ReadLimit calls the 'read' op with a limit on the results.
+// ReadLimit calls the 'read' op with a filter and a result limit.
 func (client *Client) ReadLimit(filter string, limit int) (Grid, error) {
 	var limitVal Val
 	if limit <= 0 {
@@ -202,6 +209,18 @@ func (client *Client) ReadLimit(filter string, limit int) (Grid, error) {
 		NewStr(filter),
 		limitVal,
 	})
+	return client.Call("read", gb.ToGrid())
+}
+
+// ReadByIds calls the 'read' op with the input ids.
+func (client *Client) ReadByIds(ids []Ref) (Grid, error) {
+	var gb GridBuilder
+	gb.AddColNoMeta("id")
+	for _, id := range ids {
+		gb.AddRow([]Val{
+			id,
+		})
+	}
 	return client.Call("read", gb.ToGrid())
 }
 
@@ -237,7 +256,7 @@ func (client *Client) Eval(expr string) (Grid, error) {
 	return client.Call("eval", gb.ToGrid())
 }
 
-// Call calls the given operation.  The request grid is posted to the client URI and the response is parsed as a grid.
+// Call executes the given operation. The request grid is posted to the client URI and the response is parsed as a grid.
 func (client *Client) Call(op string, reqGrid Grid) (Grid, error) {
 	req := reqGrid.ToZinc()
 	resp, err := client.postString(op, req)

@@ -7,6 +7,6 @@ It is very heavily based on the [haystack-java](https://github.com/skyfoundry/ha
 
 TO DO:
 - More Client testing
-- Add JSON encodings for types
-- Add new JSON encodings for types as well: https://bitbucket.org/finproducts/hayson/src/master/
+- Add JSON read support
+- Add new JSON functionality: https://bitbucket.org/finproducts/hayson/src/master/
 - Add usage examples

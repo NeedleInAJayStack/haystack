@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // Marker is the value for a marker tag.
 type Marker struct {
 }
@@ -14,9 +16,9 @@ func (marker Marker) ToZinc() string {
 	return "M"
 }
 
-// ToJSON representes the object as: "m:"
-func (marker Marker) ToJSON() string {
-	return "m:"
+// MarshalJSON representes the object as: "m:"
+func (marker Marker) MarshalJSON() ([]byte, error) {
+	return json.Marshal("m:")
 }
 
 // Remove is the value used to indicate a tag remove.
@@ -33,7 +35,7 @@ func (remove Remove) ToZinc() string {
 	return "R"
 }
 
-// ToJSON representes the object as: "x:"
-func (remove Remove) ToJSON() string {
-	return "x:"
+// MarshalJSON representes the object as: "x:"
+func (remove Remove) MarshalJSON() ([]byte, error) {
+	return json.Marshal("x:")
 }

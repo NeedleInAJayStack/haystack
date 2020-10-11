@@ -4,28 +4,16 @@ import "testing"
 
 func TestStr_ToZinc(t *testing.T) {
 	easy := NewStr("hello world")
-	easyStr := easy.ToZinc()
-	if easyStr != "\"hello world\"" {
-		t.Error(easyStr)
-	}
+	valTest_ToZinc(easy, "\"hello world\"", t)
 
 	hard := NewStr("this 1s A #more \n complex \\one")
-	hardStr := hard.ToZinc()
-	if hardStr != "\"this 1s A #more \\n complex \\\\one\"" {
-		t.Error(hardStr)
-	}
+	valTest_ToZinc(hard, "\"this 1s A #more \\n complex \\\\one\"", t)
 }
 
-func TestStr_ToJSON(t *testing.T) {
+func TestStr_MarshalJSON(t *testing.T) {
 	easy := NewStr("hello world")
-	easyStr := easy.ToJSON()
-	if easyStr != "hello world" {
-		t.Error(easyStr)
-	}
+	valTest_MarshalJSON(easy, "\"hello world\"", t)
 
-	hasColon := NewStr("hello:world")
-	hasColonStr := hasColon.ToJSON()
-	if hasColonStr != "s:hello:world" {
-		t.Error(hasColonStr)
-	}
+	hasColon := NewStr("https://project-haystack.org/")
+	valTest_MarshalJSON(hasColon, "\"s:https://project-haystack.org/\"", t)
 }

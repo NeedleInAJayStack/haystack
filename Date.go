@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -66,9 +67,9 @@ func (date Date) ToZinc() string {
 	return date.encode()
 }
 
-// ToJSON representes the object as: "d:YYYY-MM-DD"
-func (date Date) ToJSON() string {
-	return "d:" + date.encode()
+// MarshalJSON representes the object as: "d:YYYY-MM-DD"
+func (date Date) MarshalJSON() ([]byte, error) {
+	return json.Marshal("d:" + date.encode())
 }
 
 func (date Date) encode() string {

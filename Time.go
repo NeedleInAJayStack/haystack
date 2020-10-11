@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -104,9 +105,9 @@ func (time Time) ToZinc() string {
 	return time.encode()
 }
 
-// ToJSON representes the object as: "h:hh:mm:ss.FFF"
-func (time Time) ToJSON() string {
-	return "h:"+time.encode()
+// MarshalJSON representes the object as: "h:hh:mm:ss.FFF"
+func (time Time) MarshalJSON() ([]byte, error) {
+	return json.Marshal("h:" + time.encode())
 }
 
 func (time Time) encode() string {

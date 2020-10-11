@@ -35,16 +35,10 @@ func TestDate_NewDateFromString(t *testing.T) {
 
 func TestDate_ToZinc(t *testing.T) {
 	date := NewDate(2020, 8, 17)
-	dateStr := date.ToZinc()
-	if dateStr != "2020-08-17" {
-		t.Error(dateStr)
-	}
+	valTest_ToZinc(date, "2020-08-17", t)
 }
 
-func TestDate_ToJSON(t *testing.T) {
+func TestDate_MarshalJSON(t *testing.T) {
 	date := NewDate(2020, 8, 17)
-	dateStr := date.ToJSON()
-	if dateStr != "d:2020-08-17" {
-		t.Error(dateStr)
-	}
+	valTest_MarshalJSON(date, "\"d:2020-08-17\"", t)
 }

@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 )
@@ -39,12 +40,8 @@ func (coord Coord) ToZinc() string {
 	return result
 }
 
-// ToJSON representes the object as: "c:<lat>,<lng>"
-func (coord Coord) ToJSON() string {
-	result := "c:"
-	result = result + fmt.Sprintf("%g", coord.lat)
-	result = result + ","
-	result = result + fmt.Sprintf("%g", coord.lng)
-
-	return result
+// MarshalJSON representes the object as: "c:<lat>,<lng>"
+func (coord Coord) MarshalJSON() ([]byte, error) {
+	result := "c:" + fmt.Sprintf("%g", coord.lat) + "," + fmt.Sprintf("%g", coord.lng)
+	return json.Marshal(result)
 }

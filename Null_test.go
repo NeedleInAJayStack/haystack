@@ -4,16 +4,10 @@ import "testing"
 
 func TestNull_ToZinc(t *testing.T) {
 	null := NewNull()
-	nullStr := null.ToZinc()
-	if nullStr != "N" {
-		t.Error(nullStr)
-	}
+	valTest_ToZinc(null, "N", t)
 }
 
-func TestNull_ToJSON(t *testing.T) {
+func TestNull_MarshalJSON(t *testing.T) {
 	null := NewNull()
-	nullStr := null.ToJSON()
-	if nullStr != "null" {
-		t.Error(nullStr)
-	}
+	valTest_MarshalJSON(null, "null", t)
 }

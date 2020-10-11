@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -21,12 +22,12 @@ func (str Str) String() string {
 	return str.val
 }
 
-// ToJSON representes the object as "<val>", or "s:<val>" if val contains a colon
-func (str Str) ToJSON() string {
+// MarshalJSON representes the object as "<val>", or "s:<val>" if val contains a colon
+func (str Str) MarshalJSON() ([]byte, error) {
 	if strings.Contains(str.val, ":") {
-		return "s:" + str.val
+		return json.Marshal("s:" + str.val)
 	} else {
-		return str.val
+		return json.Marshal(str.val)
 	}
 }
 

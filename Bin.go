@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // Bin models a binary file with a MIME type.
 type Bin struct {
 	mime string
@@ -15,7 +17,7 @@ func (bin Bin) ToZinc() string {
 	return "Bin(\"" + bin.mime + "\")"
 }
 
-// ToJSON representes the object as: "b:<mime>"
-func (bin Bin) ToJSON() string {
-	return "b:" + bin.mime
+// MarshalJSON representes the object as: "b:<mime>"
+func (bin Bin) MarshalJSON() ([]byte, error) {
+	return json.Marshal("b:" + bin.mime)
 }

@@ -6,28 +6,16 @@ import (
 
 func TestRef_ToZinc(t *testing.T) {
 	refNoDis := NewRef("123-abc", "")
-	refNoDisStr := refNoDis.ToZinc()
-	if refNoDisStr != "@123-abc" {
-		t.Error(refNoDisStr)
-	}
+	valTest_ToZinc(refNoDis, "@123-abc", t)
 
 	refDis := NewRef("123-abc", "Name")
-	refDisStr := refDis.ToZinc()
-	if refDisStr != "@123-abc \"Name\"" {
-		t.Error(refDisStr)
-	}
+	valTest_ToZinc(refDis, "@123-abc \"Name\"", t)
 }
 
-func TestRef_ToJSON(t *testing.T) {
+func TestRef_MarshalJSON(t *testing.T) {
 	refNoDis := NewRef("123-abc", "")
-	refNoDisStr := refNoDis.ToJSON()
-	if refNoDisStr != "r:123-abc" {
-		t.Error(refNoDisStr)
-	}
+	valTest_MarshalJSON(refNoDis, "\"r:123-abc\"", t)
 
 	refDis := NewRef("123-abc", "Name")
-	refDisStr := refDis.ToJSON()
-	if refDisStr != "r:123-abc Name" {
-		t.Error(refDisStr)
-	}
+	valTest_MarshalJSON(refDis, "\"r:123-abc Name\"", t)
 }

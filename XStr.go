@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // XStr is an extended string which is a type name and value encoded as a string.
 // It is used as a generic value when an XStr is decoded without any predefined type.
 type XStr struct {
@@ -32,7 +34,7 @@ func (xStr XStr) ToZinc() string {
 	return result
 }
 
-// ToJSON just copies the Zinc representation
-func (xStr XStr) ToJSON() string {
-	return xStr.ToZinc()
+// MarshalJSON representes the object as: "<valType>(<val>)"
+func (xStr XStr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(xStr.ToZinc())
 }

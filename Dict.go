@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"bufio"
+	"encoding/json"
 	"sort"
 	"strings"
 )
@@ -25,6 +26,22 @@ func (dict *Dict) Get(name string) Val {
 	return val
 }
 
+// Set sets the Val for the given name and returns a new Dict.
+func (dict Dict) Set(name string, val Val) Dict {
+	newDict := dict.dup()
+	newDict.items[name] = val
+	return newDict
+}
+
+// dup duplicates the given Dict
+func (dict Dict) dup() Dict {
+	newItems := map[string]Val{}
+	for name, val := range dict.items {
+		newItems[name] = val
+	}
+	return Dict{items: newItems}
+}
+
 // Size returns the number of name/Val pairs.
 func (dict *Dict) Size() int {
 	return len(dict.items)
@@ -33,6 +50,11 @@ func (dict *Dict) Size() int {
 // IsEmpty returns true if there is nothing in the Dict.
 func (dict *Dict) IsEmpty() bool {
 	return len(dict.items) == 0
+}
+
+// MarshalJSON represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
+func (dict Dict) MarshalJSON() ([]byte, error) {
+	return json.Marshal(dict.items)
 }
 
 // ToZinc representes the object as: "{<name1>:<val1> <name2>:<val2> ...}" with the names in alphabetical order.

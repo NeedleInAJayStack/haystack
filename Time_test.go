@@ -45,52 +45,28 @@ func TestTime_NewTimeFromString(t *testing.T) {
 
 func TestTime_ToZinc(t *testing.T) {
 	timeNoMs := NewTime(23, 7, 10, 0)
-	timeNoMsStr := timeNoMs.ToZinc()
-	if timeNoMsStr != "23:07:10" {
-		t.Error(timeNoMsStr)
-	}
+	valTest_ToZinc(timeNoMs, "23:07:10", t)
 
 	timeMs := NewTime(23, 7, 10, 957)
-	timeMsStr := timeMs.ToZinc()
-	if timeMsStr != "23:07:10.957" {
-		t.Error(timeMsStr)
-	}
+	valTest_ToZinc(timeMs, "23:07:10.957", t)
 
 	timeOnesMs := NewTime(23, 7, 10, 2)
-	timeOnesMsStr := timeOnesMs.ToZinc()
-	if timeOnesMsStr != "23:07:10.002" {
-		t.Error(timeOnesMsStr)
-	}
+	valTest_ToZinc(timeOnesMs, "23:07:10.002", t)
 
 	timeTensMs := NewTime(23, 7, 10, 56)
-	timeTensMsStr := timeTensMs.ToZinc()
-	if timeTensMsStr != "23:07:10.056" {
-		t.Error(timeTensMsStr)
-	}
+	valTest_ToZinc(timeTensMs, "23:07:10.056", t)
 }
 
-func TestTime_ToJSON(t *testing.T) {
+func TestTime_MarshalJSON(t *testing.T) {
 	timeNoMs := NewTime(23, 7, 10, 0)
-	timeNoMsStr := timeNoMs.ToJSON()
-	if timeNoMsStr != "h:23:07:10" {
-		t.Error(timeNoMsStr)
-	}
+	valTest_MarshalJSON(timeNoMs, "\"h:23:07:10\"", t)
 
 	timeMs := NewTime(23, 7, 10, 957)
-	timeMsStr := timeMs.ToJSON()
-	if timeMsStr != "h:23:07:10.957" {
-		t.Error(timeMsStr)
-	}
+	valTest_MarshalJSON(timeMs, "\"h:23:07:10.957\"", t)
 
 	timeOnesMs := NewTime(23, 7, 10, 2)
-	timeOnesMsStr := timeOnesMs.ToJSON()
-	if timeOnesMsStr != "h:23:07:10.002" {
-		t.Error(timeOnesMsStr)
-	}
+	valTest_MarshalJSON(timeOnesMs, "\"h:23:07:10.002\"", t)
 
 	timeTensMs := NewTime(23, 7, 10, 56)
-	timeTensMsStr := timeTensMs.ToJSON()
-	if timeTensMsStr != "h:23:07:10.056" {
-		t.Error(timeTensMsStr)
-	}
+	valTest_MarshalJSON(timeTensMs, "\"h:23:07:10.056\"", t)
 }

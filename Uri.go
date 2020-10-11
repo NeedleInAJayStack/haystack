@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"bufio"
+	"encoding/json"
 	"strings"
 )
 
@@ -20,9 +21,9 @@ func (uri Uri) String() string {
 	return uri.val
 }
 
-// ToJSON representes the object as: "u:<val>"
-func (uri Uri) ToJSON() string {
-	return "u:" + uri.val
+// MarshalJSON representes the object as: "u:<val>"
+func (uri Uri) MarshalJSON() ([]byte, error) {
+	return json.Marshal("u:" + uri.val)
 }
 
 // ToZinc representes the object as: "`<val>`" with escaped backticks

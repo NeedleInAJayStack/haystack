@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // Bool models a boolean for true/false tag values.
 type Bool bool
 
@@ -24,10 +26,7 @@ func (b Bool) ToZinc() string {
 	return "F"
 }
 
-// ToJSON representes the object as: "true" or "false"
-func (b Bool) ToJSON() string {
-	if b.ToBool() {
-		return "true"
-	}
-	return "false"
+// MarshalJSON representes the object as: "true" or "false"
+func (b Bool) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.ToBool())
 }

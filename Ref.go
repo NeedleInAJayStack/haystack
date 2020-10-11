@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // Ref wraps a string reference identifier and display name.
 type Ref struct {
 	id  string
@@ -31,11 +33,11 @@ func (ref Ref) ToZinc() string {
 	return result
 }
 
-// ToJSON representes the object as: "r:<id> [dis]"
-func (ref Ref) ToJSON() string {
+// MarshalJSON representes the object as: "r:<id> [dis]"
+func (ref Ref) MarshalJSON() ([]byte, error) {
 	result := "r:" + ref.id
 	if ref.dis != "" {
 		result = result + " " + ref.dis
 	}
-	return result
+	return json.Marshal(result)
 }

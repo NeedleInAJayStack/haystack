@@ -22,16 +22,10 @@ func TestCoord_NewCoord(t *testing.T) {
 
 func TestCoord_ToZinc(t *testing.T) {
 	coord := NewCoord(41.534, 111.478)
-	coordStr := coord.ToZinc()
-	if coordStr != "C(41.534,111.478)" {
-		t.Error(coordStr)
-	}
+	valTest_ToZinc(coord, "C(41.534,111.478)", t)
 }
 
-func TestCoord_ToJSON(t *testing.T) {
+func TestCoord_MarshalJSON(t *testing.T) {
 	coord := NewCoord(41.534, 111.478)
-	coordStr := coord.ToJSON()
-	if coordStr != "c:41.534,111.478" {
-		t.Error(coordStr)
-	}
+	valTest_MarshalJSON(coord, "\"c:41.534,111.478\"", t)
 }

@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // Id models a simple text object, typically a tag name or keyword.
 // It's not used in the tagging model, but is used by the parser and tokenizer.
 type Id struct {
@@ -21,7 +23,7 @@ func (id Id) ToZinc() string {
 	return id.val
 }
 
-// ToJSON representes the object as: "<val>"
-func (id Id) ToJSON() string {
-	return id.val
+// MarshalJSON representes the object as: "<val>"
+func (id Id) MarshalJSON() ([]byte, error) {
+	return json.Marshal(id.val)
 }

@@ -85,44 +85,26 @@ func TestDateTime_NewDateTimeFromString(t *testing.T) {
 
 func TestDateTime_ToZinc(t *testing.T) {
 	utc := dateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC))
-	utcStr := utc.ToZinc()
-	if utcStr != "2020-08-17T23:07:10Z UTC" {
-		t.Error(utcStr)
-	}
+	valTest_ToZinc(utc, "2020-08-17T23:07:10Z UTC", t)
 
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	la := dateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc))
-	laStr := la.ToZinc()
-	if laStr != "2020-08-17T23:07:10-07:00 Los_Angeles" {
-		t.Error(laStr)
-	}
+	valTest_ToZinc(la, "2020-08-17T23:07:10-07:00 Los_Angeles", t)
 
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
 	taipei := dateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc))
-	taipeiStr := taipei.ToZinc()
-	if taipeiStr != "2020-08-17T23:07:10+08:00 Taipei" {
-		t.Error(taipeiStr)
-	}
+	valTest_ToZinc(taipei, "2020-08-17T23:07:10+08:00 Taipei", t)
 }
 
-func TestDateTime_ToJSON(t *testing.T) {
+func TestDateTime_MarshalJSON(t *testing.T) {
 	utc := dateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC))
-	utcStr := utc.ToJSON()
-	if utcStr != "t:2020-08-17T23:07:10Z UTC" {
-		t.Error(utcStr)
-	}
+	valTest_MarshalJSON(utc, "\"t:2020-08-17T23:07:10Z UTC\"", t)
 
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	la := dateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc))
-	laStr := la.ToJSON()
-	if laStr != "t:2020-08-17T23:07:10-07:00 Los_Angeles" {
-		t.Error(laStr)
-	}
+	valTest_MarshalJSON(la, "\"t:2020-08-17T23:07:10-07:00 Los_Angeles\"", t)
 
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
 	taipei := dateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc))
-	taipeiStr := taipei.ToJSON()
-	if taipeiStr != "t:2020-08-17T23:07:10+08:00 Taipei" {
-		t.Error(taipeiStr)
-	}
+	valTest_MarshalJSON(taipei, "\"t:2020-08-17T23:07:10+08:00 Taipei\"", t)
 }

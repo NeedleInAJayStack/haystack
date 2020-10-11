@@ -3,9 +3,6 @@ package haystack
 import "testing"
 
 func TestXStr_ToZinc(t *testing.T) {
-	easy := NewXStr("Str", "hello world")
-	easyStr := easy.ToZinc()
-	if easyStr != "Str(\"hello world\")" {
-		t.Error(easyStr)
-	}
+	xStr := NewXStr("Str", "hello world")
+	valTest_ToZinc(xStr, "Str(\"hello world\")", t)
 }

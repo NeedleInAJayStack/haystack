@@ -4,16 +4,10 @@ import "testing"
 
 func TestBin_ToZinc(t *testing.T) {
 	bin := NewBin("text/plain")
-	binStr := bin.ToZinc()
-	if binStr != "Bin(\"text/plain\")" {
-		t.Error(binStr)
-	}
+	valTest_ToZinc(bin, "Bin(\"text/plain\")", t)
 }
 
-func TestBin_ToJSON(t *testing.T) {
+func TestBin_MarshalJSON(t *testing.T) {
 	bin := NewBin("text/plain")
-	binStr := bin.ToJSON()
-	if binStr != "b:text/plain" {
-		t.Error(binStr)
-	}
+	valTest_MarshalJSON(bin, "\"b:text/plain\"", t)
 }

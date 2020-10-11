@@ -4,32 +4,20 @@ import "testing"
 
 func TestMarker_ToZinc(t *testing.T) {
 	marker := NewMarker()
-	markerZinc := marker.ToZinc()
-	if markerZinc != "M" {
-		t.Error(markerZinc)
-	}
+	valTest_ToZinc(marker, "M", t)
 }
 
-func TestMarker_ToJSON(t *testing.T) {
+func TestMarker_MarshalJSON(t *testing.T) {
 	marker := NewMarker()
-	markerJSON := marker.ToJSON()
-	if markerJSON != "m:" {
-		t.Error(markerJSON)
-	}
+	valTest_MarshalJSON(marker, "\"m:\"", t)
 }
 
 func TestRemove_ToZinc(t *testing.T) {
 	remove := NewRemove()
-	removeZinc := remove.ToZinc()
-	if removeZinc != "R" {
-		t.Error(removeZinc)
-	}
+	valTest_ToZinc(remove, "R", t)
 }
 
-func TestRemove_ToJSON(t *testing.T) {
+func TestRemove_MarshalJSON(t *testing.T) {
 	remove := NewRemove()
-	removeJSON := remove.ToJSON()
-	if removeJSON != "x:" {
-		t.Error(removeJSON)
-	}
+	valTest_MarshalJSON(remove, "\"x:\"", t)
 }

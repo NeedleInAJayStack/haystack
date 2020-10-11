@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 )
@@ -31,9 +32,9 @@ func (number Number) ToZinc() string {
 	return number.encode(false)
 }
 
-// ToJSON representes the object as: "n:<val> [unit]"
-func (number Number) ToJSON() string {
-	return "n:" + number.encode(true)
+// MarshalJSON representes the object as: "n:<val> [unit]"
+func (number Number) MarshalJSON() ([]byte, error) {
+	return json.Marshal("n:" + number.encode(true))
 }
 
 func (number Number) encode(spaceBeforeUnit bool) string {

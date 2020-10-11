@@ -4,16 +4,10 @@ import "testing"
 
 func TestNA_ToZinc(t *testing.T) {
 	na := NewNA()
-	naStr := na.ToZinc()
-	if naStr != "NA" {
-		t.Error(naStr)
-	}
+	valTest_ToZinc(na, "NA", t)
 }
 
-func TestNA_ToJSON(t *testing.T) {
+func TestNA_MarshalJSON(t *testing.T) {
 	na := NewNA()
-	naStr := na.ToJSON()
-	if naStr != "z:" {
-		t.Error(naStr)
-	}
+	valTest_MarshalJSON(na, "\"z:\"", t)
 }

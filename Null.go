@@ -1,5 +1,7 @@
 package haystack
 
+import "encoding/json"
+
 // Null is the value used to indicate a Val with no type.
 type Null struct {
 }
@@ -14,7 +16,7 @@ func (null Null) ToZinc() string {
 	return "N"
 }
 
-// ToJSON representes the object as "null"
-func (null Null) ToJSON() string {
-	return "null"
+// MarshalJSON representes the object as "null"
+func (null Null) MarshalJSON() ([]byte, error) {
+	return json.Marshal(nil)
 }

@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"bufio"
+	"encoding/json"
 	"strings"
 )
 
@@ -13,6 +14,11 @@ type List struct {
 // NewList creates a new List object.
 func NewList(vals []Val) List {
 	return List{vals: vals}
+}
+
+// MarshalJSON represents the object in JSON array format: "[<val1>, <val2>, ...]"
+func (list List) MarshalJSON() ([]byte, error) {
+	return json.Marshal(list.vals)
 }
 
 // ToZinc representes the object as: "[<val1>, <val2>, ...]"

@@ -12,14 +12,7 @@ import (
 	"time"
 )
 
-// Client models a client connection to a server using the Haystack API. Example usage:
-// 		haystackClient := NewClient(
-//			"http://server/haystack",
-// 			"test",
-// 			"test",
-// 		)
-// 		openErr := haystackClient.Open()
-// 		sites, readErr := haystackClient.Read("site")
+// Client models a client connection to a server using the Haystack API.
 type Client struct {
 	httpClient  *http.Client
 	uri         string
@@ -222,6 +215,44 @@ func (client *Client) ReadByIds(ids []Ref) (Grid, error) {
 		})
 	}
 	return client.Call("read", gb.ToGrid())
+}
+
+// Nav calls the 'nav' op to navigate a project for learning and discovery
+func (client *Client) Nav(navId Val) (Grid, error) {
+	var gb GridBuilder
+	gb.AddColNoMeta("navId")
+	gb.AddRow([]Val{
+		navId,
+	})
+	return client.Call("nav", gb.ToGrid())
+}
+
+// PointWriteArray calls the 'pointWrite' op to query the point write priority array for the input id.
+func (client *Client) PointWriteArray(id Ref) (Grid, error) {
+	var gb GridBuilder
+	gb.AddColNoMeta("id")
+	gb.AddRow([]Val{
+		id,
+	})
+	return client.Call("pointWrite", gb.ToGrid())
+}
+
+// PointWrite calls the 'pointWrite' op to write the val to the given point.
+func (client *Client) PointWrite(id Ref, level int, val Val, who string, duration Number) (Grid, error) {
+	var gb GridBuilder
+	gb.AddColNoMeta("id")
+	gb.AddColNoMeta("level")
+	gb.AddColNoMeta("val")
+	gb.AddColNoMeta("who")
+	gb.AddColNoMeta("duration")
+	gb.AddRow([]Val{
+		id,
+		NewNumber(float64(level), ""),
+		val,
+		NewStr(who),
+		duration,
+	})
+	return client.Call("pointWrite", gb.ToGrid())
 }
 
 // HisReadAbsDate calls the 'hisRead' op with an input absolute Date range.

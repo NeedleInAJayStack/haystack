@@ -11,7 +11,5 @@ TO DO:
     - watchUnsub
     - watchPoll
     - pointWrite
-    - hisWrite
-    - invokeAction
 - Add JSON unmarshal support
 - Add new JSON functionality: https://bitbucket.org/finproducts/hayson/src/master/

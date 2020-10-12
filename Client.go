@@ -248,6 +248,32 @@ func (client *Client) HisRead(id Ref, rangeString string) (Grid, error) {
 	return client.Call("hisRead", gb.ToGrid())
 }
 
+// HisWrite calls the 'hisWrite' op with the given id and Dicts of history items. Only the "ts" and "val" fields from
+// the history items are included.
+func (client *Client) HisWrite(id Ref, hisItems []Dict) (Grid, error) {
+	var gb GridBuilder
+	gb.AddMetaVal("id", id)
+	gb.AddColNoMeta("ts")
+	gb.AddColNoMeta("val")
+	gb.AddRowDicts(hisItems)
+	return client.Call("hisWrite", gb.ToGrid())
+}
+
+// InvokeAction calls the 'invokeAction' op with the given id, action name, and arguments.
+func (client *Client) InvokeAction(id Ref, action string, args map[string]Val) (Grid, error) {
+	var gb GridBuilder
+	gb.AddMetaVal("id", id)
+	gb.AddMetaVal("action", NewStr(action))
+
+	rowVals := []Val{}
+	for name, val := range args {
+		gb.AddColNoMeta(name)
+		rowVals = append(rowVals, val)
+	}
+	gb.AddRow(rowVals)
+	return client.Call("invokeAction", gb.ToGrid())
+}
+
 // Eval calls the 'eval' op to evaluate a vendor specific expression.
 func (client *Client) Eval(expr string) (Grid, error) {
 	var gb GridBuilder

@@ -6,6 +6,11 @@ package haystack
 //		- https://bugs.launchpad.net/snappy/+bug/1620755/
 //		- https://github.com/golang/go/issues/12139
 
+// Uncomment the code below to test the client. The following are required:
+// - A SkySpark instance running on the local machine at port 8080
+// - A project named 'demo' on the instance (ideally a generated demo project)
+// - A login with the username "test" and password "test"
+
 // func TestClient(t *testing.T) {
 
 // 	// Test with local SkySpark instance

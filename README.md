@@ -3,14 +3,37 @@
 - License: Academic Free License version 3.0
 
 This package is a Go implementation of the Haystack API as defined in the [Project Haystack Documentation](https://project-haystack.org/doc).
-It is based on the [haystack-java](https://github.com/skyfoundry/haystack-java) package.
+It is based on the [haystack-java](https://github.com/skyfoundry/haystack-java) package, with adjustments for compatibility with the Go API
+and conventions. Currently, it implements the following:
 
-TO DO:
+- A Haystack Client
+- The Haystack type system
+- Zinc encoding and decoding for all types
+- JSON encoding for all types
+
+## How To Use
+This package can be used by importing `gitlab.com/NeedleInAJayStack/haystack` (as is the norm in Go). Here is an example that uses the client:
+    import "gitlab.com/NeedleInAJayStack/haystack"
+
+	client := haystack.NewClient(
+    	"http://server/haystack",
+		"test",
+		"test",
+	)
+	openErr := client.Open()
+	sites, readErr := client.Read("site")
+
+## Future Efforts
+These are enhancement ideas, in no particular order. Feel free to help if interested
+
 - Add Client ops:
     - watchSub
     - watchUnsub
     - watchPoll
-    - pointWrite
 - Add JSON unmarshal support
 - Add new JSON functionality: https://bitbucket.org/finproducts/hayson/src/master/
+- Add Haystack server support
 - Optimize pointer usage
+
+## Contributing
+Contributions are absolutely welcome! To contribute, please create a branch, commit your changes, and make a pull request

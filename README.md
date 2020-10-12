@@ -8,11 +8,12 @@ and conventions. Currently, it implements the following:
 
 - A Haystack Client
 - The Haystack type system
-- Zinc encoding and decoding for all types
-- JSON encoding for all types
+- Zinc encoding and decoding
+- JSON encoding
 
 ## How To Use
 This package can be used by importing `gitlab.com/NeedleInAJayStack/haystack` (as is the norm in Go). Here is an example that uses the client:
+
     import "gitlab.com/NeedleInAJayStack/haystack"
 
 	client := haystack.NewClient(
@@ -24,7 +25,7 @@ This package can be used by importing `gitlab.com/NeedleInAJayStack/haystack` (a
 	sites, readErr := client.Read("site")
 
 ## Future Efforts
-These are enhancement ideas, in no particular order. Feel free to help if interested
+These are enhancement ideas, in no particular order.
 
 - Add Client ops:
     - watchSub
@@ -36,4 +37,4 @@ These are enhancement ideas, in no particular order. Feel free to help if intere
 - Optimize pointer usage
 
 ## Contributing
-Contributions are absolutely welcome! To contribute, please create a branch, commit your changes, and make a pull request
+Contributions are absolutely welcome! To contribute, please create a branch, commit your changes, and make a pull request.

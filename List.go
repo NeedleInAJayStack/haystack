@@ -16,6 +16,16 @@ func NewList(vals []Val) List {
 	return List{vals: vals}
 }
 
+// Get returns the val at the given index
+func (list List) Get(index int) Val {
+	return list.vals[index]
+}
+
+// Size returns the number of vals in the list
+func (list List) Size() int {
+	return len(list.vals)
+}
+
 // MarshalJSON represents the object in JSON array format: "[<val1>, <val2>, ...]"
 func (list List) MarshalJSON() ([]byte, error) {
 	return json.Marshal(list.vals)

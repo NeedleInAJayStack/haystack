@@ -13,3 +13,4 @@ TO DO:
     - pointWrite
 - Add JSON unmarshal support
 - Add new JSON functionality: https://bitbucket.org/finproducts/hayson/src/master/
+- Optimize pointer usage

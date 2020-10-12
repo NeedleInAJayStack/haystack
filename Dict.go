@@ -26,10 +26,26 @@ func (dict *Dict) Get(name string) Val {
 	return val
 }
 
+// Names returns the key names for the given dict.
+func (dict *Dict) Names() []string {
+	names := []string{}
+	for name, _ := range dict.items {
+		names = append(names, name)
+	}
+	return names
+}
+
 // Set sets the Val for the given name and returns a new Dict.
 func (dict Dict) Set(name string, val Val) Dict {
+	return dict.SetAll(map[string]Val{name: val})
+}
+
+// SetAll sets all the values in the input map and returns a new Dict.
+func (dict Dict) SetAll(set map[string]Val) Dict {
 	newDict := dict.dup()
-	newDict.items[name] = val
+	for name, val := range set {
+		newDict.items[name] = val
+	}
 	return newDict
 }
 
@@ -73,10 +89,7 @@ func (dict Dict) WriteZincTo(buf *bufio.Writer, brackets bool) {
 		buf.WriteString("{")
 	}
 
-	var names []string
-	for name := range dict.items {
-		names = append(names, name)
-	}
+	names := dict.Names()
 	sort.Strings(names)
 	for idx, name := range names {
 		if idx != 0 {

@@ -24,19 +24,25 @@ func (gb *GridBuilder) AddMeta(meta map[string]Val) {
 	}
 }
 
+// AddMetaDict adds or replaces the meta keys with the inputs.
+func (gb *GridBuilder) AddMetaDict(meta Dict) {
+	gb.AddMeta(meta.items)
+}
+
 // AddMeta adds or replaces the meta keys with the inputs.
 func (gb *GridBuilder) AddMetaVal(name string, val Val) {
 	gb.meta[name] = val
 }
 
-// SetMeta erases any existing meta and replaces it with the input map.
+// SetMeta erases any existing meta and replaces it with the input mappings.
 func (gb *GridBuilder) SetMeta(meta map[string]Val) {
-	gb.meta = meta
+	gb.meta = map[string]Val{} // Empty meta values
+	gb.AddMeta(meta)
 }
 
 // SetMetaDict erases any existing meta and replaces it with the input Dict.
 func (gb *GridBuilder) SetMetaDict(meta Dict) {
-	gb.meta = meta.items
+	gb.SetMeta(meta.items)
 }
 
 // AddCol adds a column with the given name and meta map.
@@ -55,6 +61,22 @@ func (gb *GridBuilder) AddColDict(name string, meta Dict) {
 	newCol := Col{index: index, name: name, meta: meta}
 	// TODO check that the name doesn't duplicate
 	gb.cols = append(gb.cols, newCol)
+}
+
+// AddColMeta adds the metadata to an existing column with the given name.
+func (gb *GridBuilder) AddColMeta(name string, meta map[string]Val) {
+	col := gb.getCol(name)
+	col.meta = col.meta.SetAll(meta)
+}
+
+// AddColMetaVal adds the metadata name and value to an existing column with the given name.
+func (gb *GridBuilder) AddColMetaVal(colName string, metaName string, metaVal Val) {
+	gb.AddColMeta(colName, map[string]Val{metaName: metaVal})
+}
+
+// AddColMetaDict adds the metadata Dict to an existing column with the given name.
+func (gb *GridBuilder) AddColMetaDict(name string, meta Dict) {
+	gb.AddColMeta(name, meta.items)
 }
 
 // AddRow adds a row with the input values, according to the column order.
@@ -82,4 +104,19 @@ func (gb *GridBuilder) AddRowDicts(rows []Dict) {
 	for _, row := range rows {
 		gb.AddRowDict(row)
 	}
+}
+
+func (gb *GridBuilder) getCol(colName string) Col {
+	var matchCol Col
+	match := false
+	for _, col := range gb.cols {
+		if col.name == colName {
+			matchCol = col
+			match = true
+		}
+	}
+	if !match {
+		return matchCol
+	}
+	panic("Col with name not found: " + colName)
 }

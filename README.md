@@ -14,15 +14,31 @@ and conventions. Currently, it implements the following:
 ## How To Use
 This package can be used by importing `gitlab.com/NeedleInAJayStack/haystack` (as is the norm in Go). Here is an example that uses the client:
 
-    import "gitlab.com/NeedleInAJayStack/haystack"
+    package main
 
-	client := haystack.NewClient(
-    	"http://server/haystack",
-		"test",
-		"test",
+	import (
+		"fmt"
+
+		"gitlab.com/NeedleInAJayStack/haystack"
 	)
-	openErr := client.Open()
-	sites, readErr := client.Read("site")
+
+	func main() {
+		client := haystack.NewClient(
+			// INSERT YOUR URL AND CREDENTIALS
+			"http://server/haystack",
+			"username",
+			"password",
+		)
+		openErr := client.Open()
+		if openErr != nil {
+			fmt.Println(openErr)
+		}
+		sites, readErr := client.Read("site")
+		if readErr != nil {
+			fmt.Println(readErr)
+		}
+		fmt.Println(sites.ToZinc())
+	}
 
 ## Future Efforts
 These are enhancement ideas, in no particular order.

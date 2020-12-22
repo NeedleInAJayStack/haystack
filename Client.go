@@ -76,18 +76,6 @@ func (client *Client) sendHello() (authMsg, error) {
 	client.prepare(req)
 	req.Header.Add("Authorization", reqAuth.toString())
 
-	// TODO delete me
-	// fmt.Println(req.URL.String())
-	// for key, vals := range req.Header {
-	// 	fmt.Print(key)
-	// 	fmt.Print(": ")
-	// 	for _, val := range vals {
-	// 		fmt.Print(val)
-	// 		fmt.Print(", ")
-	// 	}
-	// 	fmt.Println(" ")
-	// }
-
 	resp, respErr := client.httpClient.Do(req)
 	if respErr != nil {
 		return authMsg{}, respErr

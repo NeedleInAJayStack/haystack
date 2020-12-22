@@ -70,3 +70,17 @@ func TestTime_MarshalJSON(t *testing.T) {
 	timeTensMs := NewTime(23, 7, 10, 56)
 	valTest_MarshalJSON(timeTensMs, "\"h:23:07:10.056\"", t)
 }
+
+func TestTime_MarshalHAYSON(t *testing.T) {
+	timeNoMs := NewTime(23, 7, 10, 0)
+	valTest_MarshalHAYSON(timeNoMs, "{\"_kind\":\"time\",\"val\":\"23:07:10\"}", t)
+
+	timeMs := NewTime(23, 7, 10, 957)
+	valTest_MarshalHAYSON(timeMs, "{\"_kind\":\"time\",\"val\":\"23:07:10.957\"}", t)
+
+	timeOnesMs := NewTime(23, 7, 10, 2)
+	valTest_MarshalHAYSON(timeOnesMs, "{\"_kind\":\"time\",\"val\":\"23:07:10.002\"}", t)
+
+	timeTensMs := NewTime(23, 7, 10, 56)
+	valTest_MarshalHAYSON(timeTensMs, "{\"_kind\":\"time\",\"val\":\"23:07:10.056\"}", t)
+}

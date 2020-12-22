@@ -20,3 +20,8 @@ func (na NA) ToZinc() string {
 func (na NA) MarshalJSON() ([]byte, error) {
 	return json.Marshal("z:")
 }
+
+// MarshalHAYSON representes the object as: "{\"_kind\":\"na\"}"
+func (na NA) MarshalHAYSON() ([]byte, error) {
+	return []byte("{\"_kind\":\"na\"}"), nil
+}

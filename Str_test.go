@@ -17,3 +17,11 @@ func TestStr_MarshalJSON(t *testing.T) {
 	hasColon := NewStr("https://project-haystack.org/")
 	valTest_MarshalJSON(hasColon, "\"s:https://project-haystack.org/\"", t)
 }
+
+func TestStr_MarshalHAYSON(t *testing.T) {
+	easy := NewStr("hello world")
+	valTest_MarshalHAYSON(easy, "\"hello world\"", t)
+
+	hasColon := NewStr("https://project-haystack.org/")
+	valTest_MarshalHAYSON(hasColon, "\"https://project-haystack.org/\"", t)
+}

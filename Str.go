@@ -31,6 +31,11 @@ func (str Str) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// MarshalHAYSON representes the object as "<val>"
+func (str Str) MarshalHAYSON() ([]byte, error) {
+	return json.Marshal(str.val)
+}
+
 // ToZinc representes the object as a double-quoted string, with back-slash escapes
 func (str Str) ToZinc() string {
 	builder := new(strings.Builder)

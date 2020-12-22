@@ -7,3 +7,7 @@ type Val interface {
 	ToZinc() string
 	json.Marshaler
 }
+
+type HaysonMarshaller interface {
+	MarshalHAYSON() ([]byte, error)
+}

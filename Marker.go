@@ -21,6 +21,11 @@ func (marker Marker) MarshalJSON() ([]byte, error) {
 	return json.Marshal("m:")
 }
 
+// MarshalHAYSON representes the object as: "{\"_kind\":\"marker\"}"
+func (marker Marker) MarshalHAYSON() ([]byte, error) {
+	return []byte("{\"_kind\":\"marker\"}"), nil
+}
+
 // Remove is the value used to indicate a tag remove.
 type Remove struct {
 }
@@ -38,4 +43,9 @@ func (remove Remove) ToZinc() string {
 // MarshalJSON representes the object as: "-:"
 func (remove Remove) MarshalJSON() ([]byte, error) {
 	return json.Marshal("-:")
+}
+
+// MarshalHAYSON representes the object as: "{\"_kind\":\"remove\"}"
+func (remove Remove) MarshalHAYSON() ([]byte, error) {
+	return []byte("{\"_kind\":\"remove\"}"), nil
 }

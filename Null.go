@@ -20,3 +20,8 @@ func (null Null) ToZinc() string {
 func (null Null) MarshalJSON() ([]byte, error) {
 	return json.Marshal(nil)
 }
+
+// MarshalHAYSON representes the object as "null"
+func (null Null) MarshalHAYSON() ([]byte, error) {
+	return json.Marshal(nil)
+}

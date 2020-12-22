@@ -26,6 +26,11 @@ func (uri Uri) MarshalJSON() ([]byte, error) {
 	return json.Marshal("u:" + uri.val)
 }
 
+// MarshalHAYSON representes the object as: "{\"_kind\":\"uri\",\"val\":\"<val>\"}"
+func (uri Uri) MarshalHAYSON() ([]byte, error) {
+	return []byte("{\"_kind\":\"uri\",\"val\":\"" + uri.val + "\"}"), nil
+}
+
 // ToZinc representes the object as: "`<val>`" with escaped backticks
 func (uri Uri) ToZinc() string {
 	builder := new(strings.Builder)

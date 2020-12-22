@@ -32,3 +32,17 @@ func TestNumber_MarshalJSON(t *testing.T) {
 	nan := NewNumber(math.NaN(), "")
 	valTest_MarshalJSON(nan, "\"n:NaN\"", t)
 }
+
+func TestNumber_MarshalHAYSON(t *testing.T) {
+	number := NewNumber(100.457, "kWh")
+	valTest_MarshalHAYSON(number, "{\"_kind\":\"number\",\"val\":100.457,\"unit\":\"kWh\"}", t)
+
+	inf := NewNumber(math.Inf(1), "")
+	valTest_MarshalHAYSON(inf, "{\"_kind\":\"number\",\"val\":\"INF\"}", t)
+
+	negInf := NewNumber(math.Inf(-1), "")
+	valTest_MarshalHAYSON(negInf, "{\"_kind\":\"number\",\"val\":\"-INF\"}", t)
+
+	nan := NewNumber(math.NaN(), "")
+	valTest_MarshalHAYSON(nan, "{\"_kind\":\"number\",\"val\":\"NaN\"}", t)
+}

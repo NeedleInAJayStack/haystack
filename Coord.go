@@ -47,8 +47,8 @@ func (coord Coord) MarshalJSON() ([]byte, error) {
 	return json.Marshal(result)
 }
 
-// MarshalHAYSON representes the object as: "{\"_kind\":\"coord\",\"lat\":<lat>,\"lng\":<lng>}"
-func (coord Coord) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{\"_kind\":\"coord\",\"lat\":<lat>,\"lng\":<lng>}"
+func (coord Coord) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"coord\",\"lat\":")
 	builder.WriteString(fmt.Sprintf("%g", coord.lat))

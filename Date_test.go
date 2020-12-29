@@ -43,7 +43,7 @@ func TestDate_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(date, "\"d:2020-08-17\"", t)
 }
 
-func TestDate_MarshalHAYSON(t *testing.T) {
+func TestDate_MarshalHayson(t *testing.T) {
 	date := NewDate(2020, 8, 17)
-	valTest_MarshalHAYSON(date, "{\"_kind\":\"date\",\"val\":\"2020-08-17\"}", t)
+	valTest_MarshalHayson(date, "{\"_kind\":\"date\",\"val\":\"2020-08-17\"}", t)
 }

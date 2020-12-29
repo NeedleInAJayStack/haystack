@@ -12,9 +12,9 @@ func TestMarker_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(marker, "\"m:\"", t)
 }
 
-func TestMarker_MarshalHAYSON(t *testing.T) {
+func TestMarker_MarshalHayson(t *testing.T) {
 	marker := NewMarker()
-	valTest_MarshalHAYSON(marker, "{\"_kind\":\"marker\"}", t)
+	valTest_MarshalHayson(marker, "{\"_kind\":\"marker\"}", t)
 }
 
 func TestRemove_ToZinc(t *testing.T) {
@@ -27,7 +27,7 @@ func TestRemove_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(remove, "\"-:\"", t)
 }
 
-func TestRemove_MarshalHAYSON(t *testing.T) {
+func TestRemove_MarshalHayson(t *testing.T) {
 	remove := NewRemove()
-	valTest_MarshalHAYSON(remove, "{\"_kind\":\"remove\"}", t)
+	valTest_MarshalHayson(remove, "{\"_kind\":\"remove\"}", t)
 }

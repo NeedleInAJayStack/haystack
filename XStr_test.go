@@ -14,5 +14,5 @@ func TestXStr_MarhsalJSON(t *testing.T) {
 
 func TestXStr_MarhsalHAYSON(t *testing.T) {
 	xStr := NewXStr("Str", "hello world")
-	valTest_MarshalHAYSON(xStr, "{\"_kind\":\"xstr\",\"type\":\"Str\",\"val\":\"hello world\"}", t)
+	valTest_MarshalHayson(xStr, "{\"_kind\":\"xstr\",\"type\":\"Str\",\"val\":\"hello world\"}", t)
 }

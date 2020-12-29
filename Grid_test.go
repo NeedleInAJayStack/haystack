@@ -148,6 +148,79 @@ func TestGrid_MarshalJSON_nested(t *testing.T) {
 	valTest_MarshalJSON(grid, json, t)
 }
 
+func TestGrid_MarshalHayson(t *testing.T) {
+	grid := newGridSimple()
+	// Remember all dicts are alphabetical.
+	json := "{" +
+		"\"_kind\":\"grid\"," +
+		"\"meta\":{\"_kind\":\"dict\",\"dis\":\"Site Energy Summary\",\"ver\":\"3.0\"}," +
+		"\"cols\":[" +
+		"{\"_kind\":\"dict\",\"dis\":\"Sites\",\"name\":\"siteName\"}," +
+		"{\"_kind\":\"dict\",\"dis\":\"Value\",\"name\":\"val\"}" +
+		"]," +
+		"\"rows\":[" +
+		"{\"_kind\":\"dict\",\"siteName\":\"Site 1\",\"val\":{\"_kind\":\"number\",\"val\":356.214,\"unit\":\"kW\"}}," +
+		"{\"_kind\":\"dict\",\"siteName\":\"Site 2\",\"val\":{\"_kind\":\"number\",\"val\":463.028,\"unit\":\"kW\"}}" +
+		"]" +
+		"}"
+	valTest_MarshalHayson(grid, json, t)
+}
+
+func TestGrid_MarshalHayson_empty(t *testing.T) {
+	grid := EmptyGrid()
+	json := "{" +
+		"\"_kind\":\"grid\"," +
+		"\"meta\":{\"_kind\":\"dict\",\"ver\":\"3.0\"}," +
+		"\"cols\":[]," +
+		"\"rows\":[]" +
+		"}"
+	valTest_MarshalHayson(grid, json, t)
+}
+
+func TestGrid_MarshalHayson_nested(t *testing.T) {
+	grid := newGridNested()
+	// I tried to make it easier to see, but the go formatting is making it hard. See raw value below and use a formatter if needed
+	// {"_kind":"grid","meta":{"_kind":"dict","ver":"3.0"},"cols":[{"_kind":"dict","name":"type"},{"_kind":"dict","name":"val"}],"rows":[{"_kind":"dict","type":"list","val":[{"_kind":"number","val":1},{"_kind":"number","val":2},{"_kind":"number","val":3}]},{"_kind":"dict","type":"dict","val":{"_kind":"dict","dis":"Dict!","foo":{"_kind":"marker"}}},{"_kind":"dict","type":"grid","val":{"_kind":"grid","meta":{"_kind":"dict","ver":"3.0"},"cols":[{"_kind":"dict","name":"a"},{"_kind":"dict","name":"b"}],"rows":[{"_kind":"dict","a":{"_kind":"number","val":1},"b":{"_kind":"grid","meta":{"_kind":"dict","ver":"3.0"},"cols":[{"_kind":"dict","name":"c"},{"_kind":"dict","name":"d"}],"rows":[{"_kind":"dict","c":{"_kind":"number","val":5},"d":{"_kind":"number","val":6}}]}},{"_kind":"dict","a":{"_kind":"number","val":3},"b":{"_kind":"number","val":4}}]}},{"_kind":"dict","type":"scalar","val":"simple string"}]}
+	json := "{" +
+		"\"_kind\":\"grid\"," +
+		"\"meta\":{\"_kind\":\"dict\",\"ver\":\"3.0\"}," +
+		"\"cols\":[" +
+		"{\"_kind\":\"dict\",\"name\":\"type\"}," +
+		"{\"_kind\":\"dict\",\"name\":\"val\"}" +
+		"]," +
+		"\"rows\":[" +
+		"{\"_kind\":\"dict\",\"type\":\"list\",\"val\":[{\"_kind\":\"number\",\"val\":1},{\"_kind\":\"number\",\"val\":2},{\"_kind\":\"number\",\"val\":3}]}," +
+		"{\"_kind\":\"dict\",\"type\":\"dict\",\"val\":{\"_kind\":\"dict\",\"dis\":\"Dict!\",\"foo\":{\"_kind\":\"marker\"}}}," +
+		"{\"_kind\":\"dict\",\"type\":\"grid\",\"val\":{" + // Start nested 1
+		"\"_kind\":\"grid\"," +
+		"\"meta\":{\"_kind\":\"dict\",\"ver\":\"3.0\"}," +
+		"\"cols\":[" +
+		"{\"_kind\":\"dict\",\"name\":\"a\"}," +
+		"{\"_kind\":\"dict\",\"name\":\"b\"}" +
+		"]," +
+		"\"rows\":[" +
+		"{\"_kind\":\"dict\",\"a\":{\"_kind\":\"number\",\"val\":1},\"b\":{" + // Start nested 2
+		"\"_kind\":\"grid\"," +
+		"\"meta\":{\"_kind\":\"dict\",\"ver\":\"3.0\"}," +
+		"\"cols\":[" +
+		"{\"_kind\":\"dict\",\"name\":\"c\"}," +
+		"{\"_kind\":\"dict\",\"name\":\"d\"}" +
+		"]," +
+		"\"rows\":[" +
+		"{\"_kind\":\"dict\",\"c\":{\"_kind\":\"number\",\"val\":5},\"d\":{\"_kind\":\"number\",\"val\":6}}" +
+		"]" +
+		"}" + // End nested 2
+		"}," +
+		"{\"_kind\":\"dict\",\"a\":{\"_kind\":\"number\",\"val\":3},\"b\":{\"_kind\":\"number\",\"val\":4}}" +
+		"]" +
+		"}" + // End nested 1
+		"}," +
+		"{\"_kind\":\"dict\",\"type\":\"scalar\",\"val\":\"simple string\"}" +
+		"]" +
+		"}"
+	valTest_MarshalHayson(grid, json, t)
+}
+
 // Zinc representation:
 // 		ver:"3.0" dis:"Site Energy Summary"
 // 		siteName dis:"Sites", val dis:"Value"

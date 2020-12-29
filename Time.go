@@ -110,8 +110,8 @@ func (time Time) MarshalJSON() ([]byte, error) {
 	return json.Marshal("h:" + time.encode())
 }
 
-// MarshalHAYSON representes the object as: "{\"_kind\":\"time\",\"val\":\"hh:mm:ss.FFF\""}"
-func (time Time) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{\"_kind\":\"time\",\"val\":\"hh:mm:ss.FFF\""}"
+func (time Time) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"time\",\"val\":\"" + time.encode() + "\"}"), nil
 }
 

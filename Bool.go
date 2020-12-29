@@ -31,7 +31,7 @@ func (b Bool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }
 
-// MarshalHAYSON is the same as MarshalJSON
-func (b Bool) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson is the same as MarshalJSON
+func (b Bool) MarshalHayson() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }

@@ -6,8 +6,9 @@ import "encoding/json"
 type Val interface {
 	ToZinc() string
 	json.Marshaler
+	HaysonMarshaller
 }
 
 type HaysonMarshaller interface {
-	MarshalHAYSON() ([]byte, error)
+	MarshalHayson() ([]byte, error)
 }

@@ -181,8 +181,8 @@ func (dateTime DateTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(buf.String())
 }
 
-// MarshalHAYSON representes the object as: "{\"_kind\":\"dateTime\",\"val\":\"YYYY-MM-DD'T'hh:mm:ss.FFFz\",\"tz\":\"zzzz\"}"
-func (dateTime DateTime) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{\"_kind\":\"dateTime\",\"val\":\"YYYY-MM-DD'T'hh:mm:ss.FFFz\",\"tz\":\"zzzz\"}"
+func (dateTime DateTime) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
 	buf.WriteString("{\"_kind\":\"dateTime\",\"val\":\"")
 	dateTime.encodeTo(&buf, false)

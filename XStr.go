@@ -47,8 +47,8 @@ func (xStr XStr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(result)
 }
 
-// MarshalHAYSON representes the object as: "{\"_kind\":\"xstr\",\"type\":\"<valType>\",\"val\":\"<val>\"}"
-func (xStr XStr) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{\"_kind\":\"xstr\",\"type\":\"<valType>\",\"val\":\"<val>\"}"
+func (xStr XStr) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"xstr\",\"type\":\"")
 	builder.WriteString(xStr.valType)

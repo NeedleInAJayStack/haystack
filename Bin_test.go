@@ -12,7 +12,7 @@ func TestBin_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(bin, "\"b:text/plain\"", t)
 }
 
-func TestBin_MarshalHAYSON(t *testing.T) {
+func TestBin_MarshalHayson(t *testing.T) {
 	bin := NewBin("text/plain")
-	valTest_MarshalHAYSON(bin, "{\"_kind\":\"bin\",\"mime\":\"text/plain\"}", t)
+	valTest_MarshalHayson(bin, "{\"_kind\":\"bin\",\"mime\":\"text/plain\"}", t)
 }

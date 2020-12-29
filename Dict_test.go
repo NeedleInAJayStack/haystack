@@ -142,6 +142,17 @@ func TestDict_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(dict, "{\"area\":\"n:35000 ft²\",\"dis\":\"Building\",\"site\":\"m:\"}", t)
 }
 
+func TestDict_MarshalHayson(t *testing.T) {
+	dict := NewDict(
+		map[string]Val{
+			"dis":  NewStr("Building"),
+			"site": NewMarker(),
+			"area": NewNumber(35000.0, "ft²"),
+		},
+	)
+	valTest_MarshalHayson(dict, "{\"_kind\":\"dict\",\"area\":{\"_kind\":\"number\",\"val\":35000,\"unit\":\"ft²\"},\"dis\":\"Building\",\"site\":{\"_kind\":\"marker\"}}", t)
+}
+
 func TestDict_ToZinc(t *testing.T) {
 	dict := NewDict(
 		map[string]Val{

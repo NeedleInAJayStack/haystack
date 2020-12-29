@@ -28,8 +28,8 @@ func valTest_MarshalJSON(val Val, json string, t *testing.T) {
 	}
 }
 
-func valTest_MarshalHAYSON(val HaysonMarshaller, hayson string, t *testing.T) {
-	valBytes, marshalErr := val.MarshalHAYSON()
+func valTest_MarshalHayson(val HaysonMarshaller, hayson string, t *testing.T) {
+	valBytes, marshalErr := val.MarshalHayson()
 	if marshalErr != nil {
 		t.Error(marshalErr)
 	}

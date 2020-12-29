@@ -12,7 +12,7 @@ func TestUri_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(uri, "\"u:http://www.project-haystack.org\"", t)
 }
 
-func TestUri_MarshalHAYSON(t *testing.T) {
+func TestUri_MarshalHayson(t *testing.T) {
 	uri := NewUri("http://www.project-haystack.org")
-	valTest_MarshalHAYSON(uri, "{\"_kind\":\"uri\",\"val\":\"http://www.project-haystack.org\"}", t)
+	valTest_MarshalHayson(uri, "{\"_kind\":\"uri\",\"val\":\"http://www.project-haystack.org\"}", t)
 }

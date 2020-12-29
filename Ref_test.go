@@ -20,10 +20,10 @@ func TestRef_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(refDis, "\"r:123-abc Name\"", t)
 }
 
-func TestRef_MarshalHAYSON(t *testing.T) {
+func TestRef_MarshalHayson(t *testing.T) {
 	refNoDis := NewRef("123-abc", "")
-	valTest_MarshalHAYSON(refNoDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\"}", t)
+	valTest_MarshalHayson(refNoDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\"}", t)
 
 	refDis := NewRef("123-abc", "Name")
-	valTest_MarshalHAYSON(refDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\",\"dis\":\"Name\"}", t)
+	valTest_MarshalHayson(refDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\",\"dis\":\"Name\"}", t)
 }

@@ -31,8 +31,8 @@ func (str Str) MarshalJSON() ([]byte, error) {
 	}
 }
 
-// MarshalHAYSON representes the object as "<val>"
-func (str Str) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as "<val>"
+func (str Str) MarshalHayson() ([]byte, error) {
 	return json.Marshal(str.val)
 }
 

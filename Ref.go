@@ -45,8 +45,8 @@ func (ref Ref) MarshalJSON() ([]byte, error) {
 	return json.Marshal(result)
 }
 
-// MarshalHAYSON representes the object as: "{"_kind":"ref","val":<id>,["dis":<dis>]}"
-func (ref Ref) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{"_kind":"ref","val":<id>,["dis":<dis>]}"
+func (ref Ref) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
 
 	buf.WriteString("{\"_kind\":\"ref\",\"val\":\"")

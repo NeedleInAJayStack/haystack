@@ -21,8 +21,8 @@ func (marker Marker) MarshalJSON() ([]byte, error) {
 	return json.Marshal("m:")
 }
 
-// MarshalHAYSON representes the object as: "{\"_kind\":\"marker\"}"
-func (marker Marker) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{\"_kind\":\"marker\"}"
+func (marker Marker) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"marker\"}"), nil
 }
 
@@ -45,7 +45,7 @@ func (remove Remove) MarshalJSON() ([]byte, error) {
 	return json.Marshal("-:")
 }
 
-// MarshalHAYSON representes the object as: "{\"_kind\":\"remove\"}"
-func (remove Remove) MarshalHAYSON() ([]byte, error) {
+// MarshalHayson representes the object as: "{\"_kind\":\"remove\"}"
+func (remove Remove) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"remove\"}"), nil
 }

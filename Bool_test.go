@@ -12,7 +12,7 @@ func TestBool_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(FALSE, "false", t)
 }
 
-func TestBool_MarshalHAYSON(t *testing.T) {
-	valTest_MarshalHAYSON(TRUE, "true", t)
-	valTest_MarshalHAYSON(FALSE, "false", t)
+func TestBool_MarshalHayson(t *testing.T) {
+	valTest_MarshalHayson(TRUE, "true", t)
+	valTest_MarshalHayson(FALSE, "false", t)
 }

@@ -47,8 +47,7 @@ These are enhancement ideas, in no particular order.
     - watchSub
     - watchUnsub
     - watchPoll
-- Add JSON/Hayson unmarshal support
-- Add new JSON functionality: https://bitbucket.org/finproducts/hayson/src/master/
+- Add JSON/Hayson unmarshalling support
 - Add Haystack server support
 - Optimize pointer usage
 

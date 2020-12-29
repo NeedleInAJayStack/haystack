@@ -38,7 +38,7 @@ func (number Number) MarshalJSON() ([]byte, error) {
 	return json.Marshal("n:" + number.encode(true))
 }
 
-// MarshalHayson representes the object as: "{"_kind":"ref","val":<id>,["dis":<dis>]}"
+// MarshalHayson representes the object as: "{"_kind":"number","val":<val>,["unit":<unit>]}"
 func (number Number) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
 

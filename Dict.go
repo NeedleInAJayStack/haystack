@@ -73,7 +73,8 @@ func (dict Dict) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dict.items)
 }
 
-// MarshalHayson represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
+// MarshalHayson represents the object in JSON object format: "{"_kind":"dict", "<name1>":<val1>, "<name2>":<val2> ...}"
+// The optional "_kind" is always included.
 func (dict Dict) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"dict\"")

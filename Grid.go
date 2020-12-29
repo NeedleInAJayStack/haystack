@@ -94,7 +94,7 @@ func (grid Grid) MarshalJSON() ([]byte, error) {
 	// return json.Marshal(jsonGrid)
 }
 
-// MarshalHayson represents the object in a special JSON object format. See https://project-haystack.org/doc/Json#grid
+// MarshalHayson represents the object in a special JSON object format. See https://bitbucket.org/finproducts/hayson/src/master/spec.md
 func (grid Grid) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
 

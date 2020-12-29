@@ -19,3 +19,11 @@ func TestRef_MarshalJSON(t *testing.T) {
 	refDis := NewRef("123-abc", "Name")
 	valTest_MarshalJSON(refDis, "\"r:123-abc Name\"", t)
 }
+
+func TestRef_MarshalHayson(t *testing.T) {
+	refNoDis := NewRef("123-abc", "")
+	valTest_MarshalHayson(refNoDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\"}", t)
+
+	refDis := NewRef("123-abc", "Name")
+	valTest_MarshalHayson(refDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\",\"dis\":\"Name\"}", t)
+}

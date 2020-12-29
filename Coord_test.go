@@ -29,3 +29,8 @@ func TestCoord_MarshalJSON(t *testing.T) {
 	coord := NewCoord(41.534, 111.478)
 	valTest_MarshalJSON(coord, "\"c:41.534,111.478\"", t)
 }
+
+func TestCoord_MarshalHayson(t *testing.T) {
+	coord := NewCoord(41.534, 111.478)
+	valTest_MarshalHayson(coord, "{\"_kind\":\"coord\",\"lat\":41.534,\"lng\":111.478}", t)
+}

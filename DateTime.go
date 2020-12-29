@@ -169,7 +169,7 @@ func (dateTime DateTime) TzOffset() int {
 // ToZinc representes the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func (dateTime DateTime) ToZinc() string {
 	buf := strings.Builder{}
-	dateTime.encodeTo(&buf)
+	dateTime.encodeTo(&buf, true)
 	return buf.String()
 }
 
@@ -177,11 +177,22 @@ func (dateTime DateTime) ToZinc() string {
 func (dateTime DateTime) MarshalJSON() ([]byte, error) {
 	buf := strings.Builder{}
 	buf.WriteString("t:")
-	dateTime.encodeTo(&buf)
+	dateTime.encodeTo(&buf, true)
 	return json.Marshal(buf.String())
 }
 
-func (dateTime *DateTime) encodeTo(buf *strings.Builder) {
+// MarshalHayson representes the object as: "{\"_kind\":\"dateTime\",\"val\":\"YYYY-MM-DD'T'hh:mm:ss.FFFz\",\"tz\":\"zzzz\"}"
+func (dateTime DateTime) MarshalHayson() ([]byte, error) {
+	buf := strings.Builder{}
+	buf.WriteString("{\"_kind\":\"dateTime\",\"val\":\"")
+	dateTime.encodeTo(&buf, false)
+	buf.WriteString("\",\"tz\":\"")
+	buf.WriteString(dateTime.tz)
+	buf.WriteString("\"}")
+	return []byte(buf.String()), nil
+}
+
+func (dateTime *DateTime) encodeTo(buf *strings.Builder, includeTz bool) {
 	buf.WriteString(dateTime.date.encode())
 	buf.WriteRune('T')
 	buf.WriteString(dateTime.time.encode())
@@ -209,6 +220,8 @@ func (dateTime *DateTime) encodeTo(buf *strings.Builder) {
 		}
 		buf.WriteString(fmt.Sprintf("%d", min))
 	}
-	buf.WriteRune(' ')
-	buf.WriteString(dateTime.tz)
+	if includeTz {
+		buf.WriteRune(' ')
+		buf.WriteString(dateTime.tz)
+	}
 }

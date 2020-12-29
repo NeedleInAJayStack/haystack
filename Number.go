@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 )
 
 // Number wraps a 64-bit floating point number and unit name.
@@ -35,6 +36,29 @@ func (number Number) ToZinc() string {
 // MarshalJSON representes the object as: "n:<val> [unit]"
 func (number Number) MarshalJSON() ([]byte, error) {
 	return json.Marshal("n:" + number.encode(true))
+}
+
+// MarshalHayson representes the object as: "{"_kind":"number","val":<val>,["unit":<unit>]}"
+func (number Number) MarshalHayson() ([]byte, error) {
+	buf := strings.Builder{}
+
+	buf.WriteString("{\"_kind\":\"number\",\"val\":")
+	if math.IsInf(number.val, 1) {
+		buf.WriteString("\"INF\"")
+	} else if math.IsInf(number.val, -1) {
+		buf.WriteString("\"-INF\"")
+	} else if math.IsNaN(number.val) {
+		buf.WriteString("\"NaN\"")
+	} else {
+		buf.WriteString(fmt.Sprintf("%g", number.val))
+	}
+	if number.unit != "" {
+		buf.WriteString(",\"unit\":\"")
+		buf.WriteString(number.unit)
+		buf.WriteString("\"")
+	}
+	buf.WriteString("}")
+	return []byte(buf.String()), nil
 }
 
 func (number Number) encode(spaceBeforeUnit bool) string {

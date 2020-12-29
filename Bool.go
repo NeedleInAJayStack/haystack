@@ -30,3 +30,8 @@ func (b Bool) ToZinc() string {
 func (b Bool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }
+
+// MarshalHayson is the same as MarshalJSON
+func (b Bool) MarshalHayson() ([]byte, error) {
+	return json.Marshal(b.ToBool())
+}

@@ -11,3 +11,8 @@ func TestNull_MarshalJSON(t *testing.T) {
 	null := NewNull()
 	valTest_MarshalJSON(null, "null", t)
 }
+
+func TestNull_MarshalHayson(t *testing.T) {
+	null := NewNull()
+	valTest_MarshalHayson(null, "null", t)
+}

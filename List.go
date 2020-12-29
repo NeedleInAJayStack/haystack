@@ -31,6 +31,24 @@ func (list List) MarshalJSON() ([]byte, error) {
 	return json.Marshal(list.vals)
 }
 
+// MarshalHayson represents the object in JSON array format: "[<val1>, <val2>, ...]"
+func (list List) MarshalHayson() ([]byte, error) {
+	builder := new(strings.Builder)
+	builder.WriteString("[")
+	for idx, val := range list.vals {
+		if idx != 0 {
+			builder.WriteString(",")
+		}
+		valHayson, valErr := val.MarshalHayson()
+		if valErr != nil {
+			return []byte{}, valErr
+		}
+		builder.Write(valHayson)
+	}
+	builder.WriteString("]")
+	return []byte(builder.String()), nil
+}
+
 // ToZinc representes the object as: "[<val1>, <val2>, ...]"
 func (list List) ToZinc() string {
 	builder := new(strings.Builder)

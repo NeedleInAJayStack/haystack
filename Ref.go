@@ -1,6 +1,9 @@
 package haystack
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // Ref wraps a string reference identifier and display name.
 type Ref struct {
@@ -40,4 +43,20 @@ func (ref Ref) MarshalJSON() ([]byte, error) {
 		result = result + " " + ref.dis
 	}
 	return json.Marshal(result)
+}
+
+// MarshalHayson representes the object as: "{"_kind":"ref","val":<id>,["dis":<dis>]}"
+func (ref Ref) MarshalHayson() ([]byte, error) {
+	buf := strings.Builder{}
+
+	buf.WriteString("{\"_kind\":\"ref\",\"val\":\"")
+	buf.WriteString(ref.id)
+	buf.WriteString("\"")
+	if ref.dis != "" {
+		buf.WriteString(",\"dis\":\"")
+		buf.WriteString(ref.dis)
+		buf.WriteString("\"")
+	}
+	buf.WriteString("}")
+	return []byte(buf.String()), nil
 }

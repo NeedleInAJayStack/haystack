@@ -69,21 +69,21 @@ func (grid Grid) MarshalJSON() ([]byte, error) {
 	if metaErr != nil {
 		return []byte{}, metaErr
 	}
-	buf.WriteString(string(metaJson))
+	buf.Write(metaJson)
 
 	buf.WriteString(",\"cols\":")
 	colsJson, colsErr := json.Marshal(grid.cols)
 	if colsErr != nil {
 		return []byte{}, colsErr
 	}
-	buf.WriteString(string(colsJson))
+	buf.Write(colsJson)
 
 	buf.WriteString(",\"rows\":")
 	rowsJson, rowsErr := json.Marshal(grid.rows)
 	if rowsErr != nil {
 		return []byte{}, rowsErr
 	}
-	buf.WriteString(string(rowsJson))
+	buf.Write(rowsJson)
 
 	buf.WriteString("}")
 
@@ -92,6 +92,48 @@ func (grid Grid) MarshalJSON() ([]byte, error) {
 	// We can just marshal the struct here because of the struct type handling of json.Marshal along with the fact
 	// that all fields of this struct are haystack standard and all the nested objects have a MarshalJSON method.
 	// return json.Marshal(jsonGrid)
+}
+
+// MarshalHayson represents the object in a special JSON object format. See https://bitbucket.org/finproducts/hayson/src/master/spec.md
+func (grid Grid) MarshalHayson() ([]byte, error) {
+	buf := strings.Builder{}
+
+	buf.WriteString("{\"_kind\":\"grid\",\"meta\":")
+	newMeta := grid.meta.Set("ver", NewStr("3.0")) // Add in version
+	metaBytes, metaErr := newMeta.MarshalHayson()
+	if metaErr != nil {
+		return []byte{}, metaErr
+	}
+	buf.Write(metaBytes)
+
+	buf.WriteString(",\"cols\":[")
+	for idx, col := range grid.cols {
+		if idx != 0 {
+			buf.WriteString(",")
+		}
+		colHayson, colErr := col.MarshalHayson()
+		if colErr != nil {
+			return []byte{}, colErr
+		}
+		buf.Write(colHayson)
+	}
+	buf.WriteString("]")
+
+	buf.WriteString(",\"rows\":[")
+	for idx, row := range grid.rows {
+		if idx != 0 {
+			buf.WriteString(",")
+		}
+		rowHayson, rowErr := row.MarshalHayson()
+		if rowErr != nil {
+			return []byte{}, rowErr
+		}
+		buf.Write(rowHayson)
+	}
+	buf.WriteString("]")
+	buf.WriteString("}")
+
+	return []byte(buf.String()), nil
 }
 
 // ToZinc representes the object as:
@@ -167,7 +209,14 @@ func (col *Col) Meta() Dict {
 // "{"name":"<name>", "<field1>":<val1> ...}"
 func (col *Col) MarshalJSON() ([]byte, error) {
 	newMeta := col.meta.Set("name", NewStr(col.name))
-	return json.Marshal(newMeta)
+	return newMeta.MarshalJSON()
+}
+
+// MarshalHayson represents the object in JSON object format with a required name field and the column metadata:
+// "{"name":"<name>", "<field1>":<val1> ...}"
+func (col *Col) MarshalHayson() ([]byte, error) {
+	newMeta := col.meta.Set("name", NewStr(col.name))
+	return newMeta.MarshalHayson()
 }
 
 // WriteZincTo appends the Writer with the Col representation: <name> <meta>
@@ -197,7 +246,13 @@ func (row *Row) ToDict() Dict {
 // MarshalJSON represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
 func (row *Row) MarshalJSON() ([]byte, error) {
 	// Use Dict.MarshalJSON to enforce alphabetical order for easier testing.
-	return json.Marshal(row.ToDict())
+	return row.ToDict().MarshalJSON()
+}
+
+// MarshalHayson represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
+func (row *Row) MarshalHayson() ([]byte, error) {
+	// Use Dict.MarshalHayson to enforce alphabetical order for easier testing.
+	return row.ToDict().MarshalHayson()
 }
 
 // WriteZincTo appends the Writer with the Row representation: <val1>, <val2>, ... Cols sets ordering

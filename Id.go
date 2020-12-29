@@ -27,3 +27,8 @@ func (id Id) ToZinc() string {
 func (id Id) MarshalJSON() ([]byte, error) {
 	return json.Marshal(id.val)
 }
+
+// MarshalHayson representes the object as: "<val>"
+func (id Id) MarshalHayson() ([]byte, error) {
+	return json.Marshal(id.val)
+}

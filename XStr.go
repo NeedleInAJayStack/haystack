@@ -1,6 +1,9 @@
 package haystack
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // XStr is an extended string which is a type name and value encoded as a string.
 // It is used as a generic value when an XStr is decoded without any predefined type.
@@ -42,4 +45,15 @@ func (xStr XStr) MarshalJSON() ([]byte, error) {
 	result = result + xStr.val
 
 	return json.Marshal(result)
+}
+
+// MarshalHayson representes the object as: "{\"_kind\":\"xstr\",\"type\":\"<valType>\",\"val\":\"<val>\"}"
+func (xStr XStr) MarshalHayson() ([]byte, error) {
+	builder := new(strings.Builder)
+	builder.WriteString("{\"_kind\":\"xstr\",\"type\":\"")
+	builder.WriteString(xStr.valType)
+	builder.WriteString("\",\"val\":\"")
+	builder.WriteString(xStr.val)
+	builder.WriteString("\"}")
+	return []byte(builder.String()), nil
 }

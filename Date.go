@@ -72,6 +72,11 @@ func (date Date) MarshalJSON() ([]byte, error) {
 	return json.Marshal("d:" + date.encode())
 }
 
+// MarshalHayson representes the object as: "{\"_kind\":\"date\",\"val\":\"YYYY-MM-DD\""}"
+func (date Date) MarshalHayson() ([]byte, error) {
+	return []byte("{\"_kind\":\"date\",\"val\":\"" + date.encode() + "\"}"), nil
+}
+
 func (date Date) encode() string {
 	result := ""
 	result = result + fmt.Sprintf("%d", date.year) + "-"

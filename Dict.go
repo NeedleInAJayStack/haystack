@@ -73,6 +73,30 @@ func (dict Dict) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dict.items)
 }
 
+// MarshalHayson represents the object in JSON object format: "{"_kind":"dict", "<name1>":<val1>, "<name2>":<val2> ...}"
+// The optional "_kind" is always included.
+func (dict Dict) MarshalHayson() ([]byte, error) {
+	builder := new(strings.Builder)
+	builder.WriteString("{\"_kind\":\"dict\"")
+
+	names := dict.Names()
+	sort.Strings(names)
+	for _, name := range names {
+		builder.WriteString(",\"")
+		builder.WriteString(name)
+		builder.WriteString("\":")
+
+		val := dict.items[name]
+		valHayson, valErr := val.MarshalHayson()
+		if valErr != nil {
+			return []byte{}, valErr
+		}
+		builder.Write(valHayson)
+	}
+	builder.WriteString("}")
+	return []byte(builder.String()), nil
+}
+
 // ToZinc representes the object as: "{<name1>:<val1> <name2>:<val2> ...}" with the names in alphabetical order.
 // Markers don't require a val.
 func (dict Dict) ToZinc() string {

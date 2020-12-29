@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 )
 
 // Coord models a geographic coordinate as latitude and longitude
@@ -44,4 +45,15 @@ func (coord Coord) ToZinc() string {
 func (coord Coord) MarshalJSON() ([]byte, error) {
 	result := "c:" + fmt.Sprintf("%g", coord.lat) + "," + fmt.Sprintf("%g", coord.lng)
 	return json.Marshal(result)
+}
+
+// MarshalHayson representes the object as: "{\"_kind\":\"coord\",\"lat\":<lat>,\"lng\":<lng>}"
+func (coord Coord) MarshalHayson() ([]byte, error) {
+	builder := new(strings.Builder)
+	builder.WriteString("{\"_kind\":\"coord\",\"lat\":")
+	builder.WriteString(fmt.Sprintf("%g", coord.lat))
+	builder.WriteString(",\"lng\":")
+	builder.WriteString(fmt.Sprintf("%g", coord.lng))
+	builder.WriteString("}")
+	return []byte(builder.String()), nil
 }

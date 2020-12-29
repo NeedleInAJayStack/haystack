@@ -11,3 +11,8 @@ func TestBin_MarshalJSON(t *testing.T) {
 	bin := NewBin("text/plain")
 	valTest_MarshalJSON(bin, "\"b:text/plain\"", t)
 }
+
+func TestBin_MarshalHayson(t *testing.T) {
+	bin := NewBin("text/plain")
+	valTest_MarshalHayson(bin, "{\"_kind\":\"bin\",\"mime\":\"text/plain\"}", t)
+}

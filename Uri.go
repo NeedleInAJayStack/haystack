@@ -3,6 +3,7 @@ package haystack
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"strings"
 )
 
@@ -24,6 +25,25 @@ func (uri Uri) String() string {
 // MarshalJSON representes the object as: "u:<val>"
 func (uri Uri) MarshalJSON() ([]byte, error) {
 	return json.Marshal("u:" + uri.val)
+}
+
+// UnmarshalJSON interprets the json value: "u:<val>"
+func (uri *Uri) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "u:") {
+		return errors.New("Input value does not begin with u:")
+	}
+	val := jsonStr[2:len(jsonStr)]
+
+	*uri = Uri{
+		val: val,
+	}
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"uri\",\"val\":\"<val>\"}"

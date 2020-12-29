@@ -31,6 +31,22 @@ func (b Bool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }
 
+// UnmarshalJSON interprets the json value: "true" or "false"
+func (b *Bool) UnmarshalJSON(buf []byte) error {
+	var boolVal bool
+	err := json.Unmarshal(buf, &boolVal)
+	if err != nil {
+		return err
+	}
+
+	if boolVal {
+		*b = TRUE
+	} else {
+		*b = FALSE
+	}
+	return nil
+}
+
 // MarshalHayson is the same as MarshalJSON
 func (b Bool) MarshalHayson() ([]byte, error) {
 	return json.Marshal(b.ToBool())

@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 )
 
@@ -23,6 +24,25 @@ func (bin Bin) ToZinc() string {
 // MarshalJSON representes the object as: "b:<mime>"
 func (bin Bin) MarshalJSON() ([]byte, error) {
 	return json.Marshal("b:" + bin.mime)
+}
+
+// UnmarshalJSON interprets the json value: "u:<val>"
+func (bin *Bin) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "b:") {
+		return errors.New("Input value does not begin with b:")
+	}
+	mime := jsonStr[2:len(jsonStr)]
+
+	*bin = Bin{
+		mime: mime,
+	}
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"bin\",\"mime\":\"<mime>\"}"

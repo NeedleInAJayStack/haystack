@@ -77,7 +77,7 @@ func (number *Number) UnmarshalJSON(buf []byte) error {
 
 func numberFromJSON(jsonStr string) (*Number, error) {
 	if !strings.HasPrefix(jsonStr, "n:") {
-		return nil, errors.New("Input value does not begin with n:")
+		return nil, errors.New("Input value does not begin with 'n:'")
 	}
 	numberStr := jsonStr[2:len(jsonStr)]
 

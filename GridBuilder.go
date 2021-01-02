@@ -7,6 +7,7 @@ type GridBuilder struct {
 	rows []Row
 }
 
+// NewGridBuilder creates a GridBuilder object that can be used to generate complex grids
 func NewGridBuilder() *GridBuilder {
 	return &GridBuilder{
 		meta: map[string]Val{},
@@ -37,7 +38,7 @@ func (gb *GridBuilder) AddMetaDict(meta *Dict) {
 	gb.AddMeta(meta.items)
 }
 
-// AddMeta adds or replaces the meta keys with the inputs.
+// AddMetaVal adds or replaces the given key with the input value.
 func (gb *GridBuilder) AddMetaVal(name string, val Val) {
 	gb.meta[name] = val
 }
@@ -66,7 +67,7 @@ func (gb *GridBuilder) AddColNoMeta(name string) {
 // AddColDict adds a column with the given name and meta Dict.
 func (gb *GridBuilder) AddColDict(name string, meta *Dict) {
 	index := len(gb.cols)
-	newCol := NewCol(index, name, meta)
+	newCol := newCol(index, name, meta)
 	// TODO check that the name doesn't duplicate
 	gb.cols = append(gb.cols, newCol)
 }

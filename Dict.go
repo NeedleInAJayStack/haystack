@@ -34,7 +34,7 @@ func (dict *Dict) Get(name string) Val {
 // Names returns the key names for the given dict.
 func (dict *Dict) Names() []string {
 	names := []string{}
-	for name, _ := range dict.items {
+	for name := range dict.items {
 		names = append(names, name)
 	}
 	return names

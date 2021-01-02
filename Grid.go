@@ -70,25 +70,25 @@ func (grid *Grid) MarshalJSON() ([]byte, error) {
 
 	buf.WriteString("{\"meta\":")
 	newMeta := grid.meta.Set("ver", NewStr("3.0")) // Add in version
-	metaJson, metaErr := json.Marshal(newMeta)
+	metaJSON, metaErr := json.Marshal(newMeta)
 	if metaErr != nil {
 		return []byte{}, metaErr
 	}
-	buf.Write(metaJson)
+	buf.Write(metaJSON)
 
 	buf.WriteString(",\"cols\":")
-	colsJson, colsErr := json.Marshal(grid.cols)
+	colsJSON, colsErr := json.Marshal(grid.cols)
 	if colsErr != nil {
 		return []byte{}, colsErr
 	}
-	buf.Write(colsJson)
+	buf.Write(colsJSON)
 
 	buf.WriteString(",\"rows\":")
-	rowsJson, rowsErr := json.Marshal(grid.rows)
+	rowsJSON, rowsErr := json.Marshal(grid.rows)
 	if rowsErr != nil {
 		return []byte{}, rowsErr
 	}
-	buf.Write(rowsJson)
+	buf.Write(rowsJSON)
 
 	buf.WriteString("}")
 
@@ -252,7 +252,7 @@ type Col struct {
 	meta  *Dict
 }
 
-func NewCol(index int, name string, meta *Dict) Col {
+func newCol(index int, name string, meta *Dict) Col {
 	return Col{
 		index: index,
 		name:  name,

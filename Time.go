@@ -120,7 +120,7 @@ func (time *Time) UnmarshalJSON(buf []byte) error {
 
 func timeFromJSON(jsonStr string) (*Time, error) {
 	if !strings.HasPrefix(jsonStr, "h:") {
-		return nil, errors.New("Input value does not begin with h:")
+		return nil, errors.New("Input value does not begin with 'h:'")
 	}
 	timeStr := jsonStr[2:len(jsonStr)]
 
@@ -159,9 +159,9 @@ func (time *Time) toIso() string {
 	return result
 }
 
-func (time1 *Time) equals(time2 *Time) bool {
-	return time1.hour == time2.hour &&
-		time1.min == time2.min &&
-		time1.sec == time2.sec &&
-		time1.ms == time2.ms
+func (time *Time) equals(otherTime *Time) bool {
+	return time.hour == otherTime.hour &&
+		time.min == otherTime.min &&
+		time.sec == otherTime.sec &&
+		time.ms == otherTime.ms
 }

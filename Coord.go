@@ -64,7 +64,7 @@ func (coord *Coord) UnmarshalJSON(buf []byte) error {
 
 func coordFromJSON(jsonStr string) (*Coord, error) {
 	if !strings.HasPrefix(jsonStr, "c:") {
-		return nil, errors.New("Input value does not begin with c:")
+		return nil, errors.New("Input value does not begin with 'c:'")
 	}
 	coordSplit := strings.Split(jsonStr[2:len(jsonStr)], ",")
 

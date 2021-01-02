@@ -63,7 +63,7 @@ func (xStr *XStr) UnmarshalJSON(buf []byte) error {
 
 func xStrFromJSON(jsonStr string) (*XStr, error) {
 	if !strings.HasPrefix(jsonStr, "x:") {
-		return nil, errors.New("Input value does not begin with x:")
+		return nil, errors.New("Input value does not begin with 'x:'")
 	}
 	jsonSplit := strings.Split(jsonStr[2:len(jsonStr)], ":")
 

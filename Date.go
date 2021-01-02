@@ -84,7 +84,7 @@ func (date *Date) UnmarshalJSON(buf []byte) error {
 
 func dateFromJSON(jsonStr string) (*Date, error) {
 	if !strings.HasPrefix(jsonStr, "d:") {
-		return nil, errors.New("Input value does not begin with d:")
+		return nil, errors.New("Input value does not begin with 'd:'")
 	}
 	dateStr := jsonStr[2:len(jsonStr)]
 
@@ -114,8 +114,8 @@ func (date *Date) toIso() string {
 	return result
 }
 
-func (date1 *Date) equals(date2 *Date) bool {
-	return date1.year == date2.year &&
-		date1.month == date2.month &&
-		date1.day == date2.day
+func (date *Date) equals(otherDate *Date) bool {
+	return date.year == otherDate.year &&
+		date.month == otherDate.month &&
+		date.day == otherDate.day
 }

@@ -28,7 +28,7 @@ func NewDateTime(date *Date, time *Time, tzOffset int, tz string) *DateTime {
 	}
 }
 
-// NewDateTime creates a new DateTime object. The values are not validated for correctness.
+// NewDateTimeRaw creates a new DateTime object. The values are not validated for correctness.
 func NewDateTimeRaw(year int, month int, day int, hour int, min int, sec int, ms int, tzOffset int, tz string) *DateTime {
 	date := NewDate(year, month, day)
 	time := NewTime(hour, min, sec, ms)
@@ -192,7 +192,7 @@ func (dateTime *DateTime) UnmarshalJSON(buf []byte) error {
 
 func dateTimeFromJSON(jsonStr string) (*DateTime, error) {
 	if !strings.HasPrefix(jsonStr, "t:") {
-		return nil, errors.New("Input value does not begin with t:")
+		return nil, errors.New("Input value does not begin with 't:'")
 	}
 	dateTimeStr := jsonStr[2:len(jsonStr)]
 

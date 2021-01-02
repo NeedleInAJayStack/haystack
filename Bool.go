@@ -48,9 +48,8 @@ func (b *Bool) UnmarshalJSON(buf []byte) error {
 func boolFromJSON(jsonBool bool) (*Bool, error) {
 	if jsonBool {
 		return NewBool(true), nil
-	} else {
-		return NewBool(false), nil
 	}
+	return NewBool(false), nil
 }
 
 // MarshalHayson is the same as MarshalJSON

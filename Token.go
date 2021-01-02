@@ -1,14 +1,16 @@
 package haystack
 
+// Models a Zinc token. See https://project-haystack.org/doc/Zinc
 type Token int
 
 const (
 	// Special tokens
+
 	DEF Token = iota
 	EOF
 
 	// Literals
-	literal_begin
+	literalBegin
 	ID
 	NUMBER
 	STR
@@ -17,10 +19,10 @@ const (
 	DATE
 	TIME
 	DATETIME
-	literal_end
+	literalEnd
 
 	// Syntax
-	syntax_begin
+	syntaxBegin
 	COLON
 	COMMA
 	SEMICOLON
@@ -44,7 +46,7 @@ const (
 	ASSIGN
 	BANG
 	NL
-	syntax_end
+	syntaxEnd
 )
 
 var tokens = [...]string{
@@ -93,10 +95,12 @@ func (tok Token) String() string {
 	return s
 }
 
+// IsLiteral determines whether the token is an object literal
 func (tok Token) IsLiteral() bool {
-	return literal_begin < tok && tok < literal_end
+	return literalBegin < tok && tok < literalEnd
 }
 
+// IsSyntax determines whether the token is syntax punctuation
 func (tok Token) IsSyntax() bool {
-	return syntax_begin < tok && tok < syntax_end
+	return syntaxBegin < tok && tok < syntaxEnd
 }

@@ -6,6 +6,7 @@ import (
 	"unicode"
 )
 
+// ZincReader reads Zinc strings into Haystack Vals
 type ZincReader struct {
 	tokenizer Tokenizer
 
@@ -18,10 +19,12 @@ type ZincReader struct {
 	// peekLine int
 }
 
+// InitString initializes with a specific string
 func (reader *ZincReader) InitString(str string) {
 	reader.Init(strings.NewReader(str))
 }
 
+// Init initializes by wrapping the input reader
 func (reader *ZincReader) Init(in *strings.Reader) {
 	reader.tokenizer = Tokenizer{}
 	reader.tokenizer.Init(in)
@@ -30,6 +33,7 @@ func (reader *ZincReader) Init(in *strings.Reader) {
 	reader.consume()
 }
 
+// ReadVal proceeds through the next Val and returns it
 func (reader *ZincReader) ReadVal() Val {
 	var val Val
 

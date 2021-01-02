@@ -15,6 +15,7 @@ type Val interface {
 	MarshalHayson() ([]byte, error)
 }
 
+// ValFromJSON converts a standard unmarshalled JSON object into the correct Haystack Val object
 func ValFromJSON(jsonObj interface{}) (Val, error) {
 	switch typedObj := jsonObj.(type) {
 	case nil:

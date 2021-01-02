@@ -60,15 +60,12 @@ func (gb *GridBuilder) AddCol(name string, meta map[string]Val) {
 
 // AddColNoMeta adds a column with the given name and empty meta.
 func (gb *GridBuilder) AddColNoMeta(name string) {
-	gb.AddColDict(name, NewDict(map[string]Val{}))
+	gb.AddColDict(name, EmptyDict())
 }
 
 // AddColDict adds a column with the given name and meta Dict.
 func (gb *GridBuilder) AddColDict(name string, meta *Dict) {
 	index := len(gb.cols)
-	if meta == nil { // protect against nil dict inputs
-		meta = NewDict(map[string]Val{})
-	}
 	newCol := NewCol(index, name, meta)
 	// TODO check that the name doesn't duplicate
 	gb.cols = append(gb.cols, newCol)

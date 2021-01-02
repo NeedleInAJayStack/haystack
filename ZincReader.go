@@ -232,7 +232,7 @@ func (reader *ZincReader) parseGrid() *Grid {
 		numCols = numCols + 1
 		name := reader.consumeTagName()
 
-		var colMeta *Dict
+		colMeta := EmptyDict()
 		if reader.cur == ID {
 			colMeta = reader.parseDict()
 		}

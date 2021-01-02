@@ -17,6 +17,11 @@ func NewDict(items map[string]Val) *Dict {
 	return &Dict{items: items}
 }
 
+// EmptyDict creates a new Dict object.
+func EmptyDict() *Dict {
+	return NewDict(map[string]Val{})
+}
+
 // Get returns the Val of the given name. If the name is not found, Null is returned.
 func (dict *Dict) Get(name string) Val {
 	val := dict.items[name]

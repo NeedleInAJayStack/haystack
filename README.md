@@ -47,9 +47,8 @@ These are enhancement ideas, in no particular order.
     - watchSub
     - watchUnsub
     - watchPoll
-- Add JSON/Hayson unmarshalling support
+- Add Hayson unmarshalling support
 - Add Haystack server support
-- Optimize pointer usage
 
 ## Contributing
 Contributions are absolutely welcome! To contribute, please create a branch, commit your changes, and make a pull request.

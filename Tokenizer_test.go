@@ -76,7 +76,7 @@ func TestTokenizer_testDateTime(t *testing.T) {
 	)
 	// TODO: extract tzOffset from timezone name (go has no tz lookup)
 	// testTokenizerSingle(t, "2010-12-18T14:11:30.924Z London", DATETIME,
-	//	 NewDateTime(2010, 12, 18, 14, 11, 30, 924, 0, "London"),
+	// 	NewDateTimeRaw(2010, 12, 18, 14, 11, 30, 924, 0, "London"),
 	// )
 	testTokenizerSingle(t, "2010-03-01T23:55:00.013-05:00 GMT+5", DATETIME,
 		NewDateTimeRaw(2010, 3, 1, 23, 55, 00, 13, -18000, "GMT+5"),

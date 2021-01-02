@@ -36,7 +36,13 @@ func valTest_UnmarshalJSON(input string, val Val, expectedZinc string, t *testin
 	if unmarshalErr != nil {
 		t.Error(unmarshalErr)
 	}
-	actualZinc := Val(val).ToZinc()
+	// We must add this because UnmarshalJSON([]byte("null")) is implemented as a no-op
+	// meaning our Null unmarshaller doesn't work and we get nil.
+	// See https://golang.org/pkg/encoding/json/#Unmarshal
+	if val == nil {
+		val = NewNull()
+	}
+	actualZinc := val.ToZinc()
 	if actualZinc != expectedZinc {
 		t.Error(actualZinc + " != " + expectedZinc)
 	}

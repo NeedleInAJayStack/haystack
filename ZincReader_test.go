@@ -445,7 +445,6 @@ func TestZincReader_meta(t *testing.T) {
 	testZincReaderGrid(t, input, expected)
 }
 
-// TODO improve support for writing nested grids
 func TestZincReader_nested(t *testing.T) {
 	input := "ver:\"3.0\"\n" +
 		"type, val\n" +

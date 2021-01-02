@@ -25,6 +25,8 @@ func (null *Null) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON interprets the json value: "null"
+// NOTE THAT THIS DOESN'T WORK with json.Unmarshal because Unmarshallers implement UnmarshalJSON([]byte("null")) as a no-op,
+// meaning that we always short-circuit and get nil instead of NewNull(). See https://golang.org/pkg/encoding/json/#Unmarshal
 func (null *Null) UnmarshalJSON(buf []byte) error {
 	var jsonNull interface{}
 	err := json.Unmarshal(buf, &jsonNull)

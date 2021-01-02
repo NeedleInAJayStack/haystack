@@ -185,18 +185,22 @@ func (dateTime *DateTime) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newDateTime, newErr := dateTimeFromJSON(jsonStr)
+	*dateTime = *newDateTime
+	return newErr
+}
+
+func dateTimeFromJSON(jsonStr string) (*DateTime, error) {
 	if !strings.HasPrefix(jsonStr, "t:") {
-		return errors.New("Input value does not begin with t:")
+		return nil, errors.New("Input value does not begin with t:")
 	}
 	dateTimeStr := jsonStr[2:len(jsonStr)]
 
 	parseDateTime, parseErr := NewDateTimeFromString(dateTimeStr)
 	if parseErr != nil {
-		return parseErr
+		return nil, parseErr
 	}
-	*dateTime = *parseDateTime
-
-	return nil
+	return parseDateTime, nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"dateTime\",\"val\":\"YYYY-MM-DD'T'hh:mm:ss.FFFz\",\"tz\":\"zzzz\"}"

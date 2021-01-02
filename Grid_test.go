@@ -97,6 +97,27 @@ func TestGrid_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(grid, json, t)
 }
 
+func TestGrid_UnmarshalJSON(t *testing.T) {
+	grid := EmptyGrid()
+	// Remember all dicts are alphabetical.
+	json := "{" +
+		"\"meta\":{\"dis\":\"Site Energy Summary\",\"ver\":\"3.0\"}," +
+		"\"cols\":[" +
+		"{\"dis\":\"Sites\",\"name\":\"siteName\"}," +
+		"{\"dis\":\"Value\",\"name\":\"val\"}" +
+		"]," +
+		"\"rows\":[" +
+		"{\"siteName\":\"Site 1\",\"val\":\"n:356.214 kW\"}," +
+		"{\"siteName\":\"Site 2\",\"val\":\"n:463.028 kW\"}" +
+		"]" +
+		"}"
+	zinc := "ver:\"3.0\" dis:\"Site Energy Summary\"\n" +
+		"siteName dis:\"Sites\", val dis:\"Value\"\n" +
+		"\"Site 1\", 356.214kW\n" +
+		"\"Site 2\", 463.028kW"
+	valTest_UnmarshalJSON(json, grid, zinc, t)
+}
+
 func TestGrid_MarshalJSON_empty(t *testing.T) {
 	grid := EmptyGrid()
 	json := "{" +

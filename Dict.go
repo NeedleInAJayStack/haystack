@@ -86,16 +86,22 @@ func (dict *Dict) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
-	// TODO finish implementation
+	newDict, newErr := dictFromJSON(jsonMap)
+	*dict = *newDict
+	return newErr
+}
 
-	// for key, value := range jsonMap {
-	// }
+func dictFromJSON(jsonMap map[string]interface{}) (*Dict, error) {
+	items := map[string]Val{}
+	for jsonKey, jsonVal := range jsonMap {
+		val, err := ValFromJSON(jsonVal)
+		if err != nil {
+			return nil, err
+		}
+		items[jsonKey] = val
+	}
 
-	dict = NewDict(
-		map[string]Val{},
-	)
-
-	return nil
+	return NewDict(items), nil
 }
 
 // MarshalHayson represents the object in JSON object format: "{"_kind":"dict", "<name1>":<val1>, "<name2>":<val2> ...}"

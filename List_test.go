@@ -28,6 +28,17 @@ func TestList_Size(t *testing.T) {
 	}
 }
 
+func TestList_ToZinc(t *testing.T) {
+	list := NewList(
+		[]Val{
+			NewNumber(5.5, ""),
+			NewTime(23, 7, 10, 0),
+			NewRef("null", ""),
+		},
+	)
+	valTest_ToZinc(list, "[5.5, 23:07:10, @null]", t)
+}
+
 func TestList_MarshalJSON(t *testing.T) {
 	list := NewList(
 		[]Val{
@@ -39,6 +50,11 @@ func TestList_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(list, "[\"n:5.5\",\"h:23:07:10\",\"r:null\"]", t)
 }
 
+func TestList_UnmarshalJSON(t *testing.T) {
+	list := NewList([]Val{})
+	valTest_UnmarshalJSON("[\"n:5.5\",\"h:23:07:10\",\"r:null\"]", list, "[5.5, 23:07:10, @null]", t)
+}
+
 func TestList_MarshalHayson(t *testing.T) {
 	list := NewList(
 		[]Val{
@@ -48,15 +64,4 @@ func TestList_MarshalHayson(t *testing.T) {
 		},
 	)
 	valTest_MarshalHayson(list, "[{\"_kind\":\"number\",\"val\":5.5},{\"_kind\":\"time\",\"val\":\"23:07:10\"},{\"_kind\":\"ref\",\"val\":\"null\"}]", t)
-}
-
-func TestList_ToZinc(t *testing.T) {
-	list := NewList(
-		[]Val{
-			NewNumber(5.5, ""),
-			NewTime(23, 7, 10, 0),
-			NewRef("null", ""),
-		},
-	)
-	valTest_ToZinc(list, "[5.5, 23:07:10, @null]", t)
 }

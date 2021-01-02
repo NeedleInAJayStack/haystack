@@ -70,18 +70,18 @@ func (number *Number) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newNumber, newErr := numberFromJSON(jsonStr)
+	*number = *newNumber
+	return newErr
+}
+
+func numberFromJSON(jsonStr string) (*Number, error) {
 	if !strings.HasPrefix(jsonStr, "n:") {
-		return errors.New("Input value does not begin with n:")
+		return nil, errors.New("Input value does not begin with n:")
 	}
 	numberStr := jsonStr[2:len(jsonStr)]
 
-	parseNumber, parseErr := newNumberFromStr(numberStr)
-	if parseErr != nil {
-		return parseErr
-	}
-	*number = *parseNumber
-
-	return nil
+	return newNumberFromStr(numberStr)
 }
 
 // MarshalHayson representes the object as: "{"_kind":"number","val":<val>,["unit":<unit>]}"

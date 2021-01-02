@@ -54,21 +54,25 @@ func (ref *Ref) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newRef, newErr := refFromJSON(jsonStr)
+	*ref = *newRef
+	return newErr
+}
+
+func refFromJSON(jsonStr string) (*Ref, error) {
 	if !strings.HasPrefix(jsonStr, "r:") {
-		return errors.New("Input value does not begin with r:")
+		return nil, errors.New("Input value does not begin with r:")
 	}
 	refStr := jsonStr[2:len(jsonStr)]
 	firstSpaceIndex := strings.Index(refStr, " ")
 
 	if firstSpaceIndex == -1 {
-		*ref = *NewRef(refStr, "")
+		return NewRef(refStr, ""), nil
 	} else {
 		id := refStr[0:firstSpaceIndex]
 		dis := refStr[firstSpaceIndex+1 : len(refStr)]
-		*ref = *NewRef(id, dis)
+		return NewRef(id, dis), nil
 	}
-
-	return nil
 }
 
 // MarshalHayson representes the object as: "{"_kind":"ref","val":<id>,["dis":<dis>]}"

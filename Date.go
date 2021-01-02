@@ -77,18 +77,22 @@ func (date *Date) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newDate, newErr := dateFromJSON(jsonStr)
+	*date = *newDate
+	return newErr
+}
+
+func dateFromJSON(jsonStr string) (*Date, error) {
 	if !strings.HasPrefix(jsonStr, "d:") {
-		return errors.New("Input value does not begin with d:")
+		return nil, errors.New("Input value does not begin with d:")
 	}
 	dateStr := jsonStr[2:len(jsonStr)]
 
 	parseDate, parseErr := NewDateFromIso(dateStr)
 	if parseErr != nil {
-		return parseErr
+		return nil, parseErr
 	}
-	*date = *parseDate
-
-	return nil
+	return parseDate, nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"date\",\"val\":\"YYYY-MM-DD\""}"

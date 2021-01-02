@@ -21,21 +21,18 @@ func TestCoord_NewCoord(t *testing.T) {
 }
 
 func TestCoord_ToZinc(t *testing.T) {
-	coord := NewCoord(41.534, 111.478)
-	valTest_ToZinc(coord, "C(41.534,111.478)", t)
+	valTest_ToZinc(NewCoord(41.534, 111.478), "C(41.534,111.478)", t)
 }
 
 func TestCoord_MarshalJSON(t *testing.T) {
-	coord := NewCoord(41.534, 111.478)
-	valTest_MarshalJSON(coord, "\"c:41.534,111.478\"", t)
+	valTest_MarshalJSON(NewCoord(41.534, 111.478), "\"c:41.534,111.478\"", t)
 }
 
 func TestCoord_UnmarshalJSON(t *testing.T) {
-	val := NewCoord(0.0, 0.0)
+	val := NewCoord(0, 0)
 	valTest_UnmarshalJSON("\"c:41.534,111.478\"", val, "C(41.534,111.478)", t)
 }
 
 func TestCoord_MarshalHayson(t *testing.T) {
-	coord := NewCoord(41.534, 111.478)
-	valTest_MarshalHayson(coord, "{\"_kind\":\"coord\",\"lat\":41.534,\"lng\":111.478}", t)
+	valTest_MarshalHayson(NewCoord(41.534, 111.478), "{\"_kind\":\"coord\",\"lat\":41.534,\"lng\":111.478}", t)
 }

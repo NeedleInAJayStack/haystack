@@ -3,6 +3,7 @@ package haystack
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"strings"
 )
 
@@ -106,14 +107,48 @@ func (grid *Grid) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
-	// TODO finish implementation
+	newGrid, newErr := gridFromJSON(jsonMap)
+	*grid = *newGrid
+	return newErr
+}
 
-	// for key, value := range jsonMap {
-	// }
+func gridFromJSON(jsonMap map[string]interface{}) (*Grid, error) {
+	gb := NewGridBuilder()
 
-	*grid = *EmptyGrid()
+	if jsonMap["meta"] == nil || jsonMap["cols"] == nil || jsonMap["rows"] == nil {
+		return nil, errors.New("Input object does not contain keys: meta, cols, or rows")
+	}
 
-	return nil
+	metaMap := jsonMap["meta"].(map[string]interface{})
+	delete(metaMap, "ver")
+	meta, metaErr := dictFromJSON(metaMap)
+	if metaErr != nil {
+		return nil, metaErr
+	}
+	gb.AddMetaDict(meta)
+
+	for _, jsonCol := range jsonMap["cols"].([]interface{}) {
+		jsonColMap := jsonCol.(map[string]interface{})
+
+		name := jsonColMap["name"].(string)
+		delete(jsonColMap, "name")
+		colMeta, colMetaErr := dictFromJSON(jsonColMap)
+		if colMetaErr != nil {
+			return nil, colMetaErr
+		}
+		gb.AddColDict(name, colMeta)
+	}
+
+	for _, jsonRow := range jsonMap["rows"].([]interface{}) {
+		jsonRowMap := jsonRow.(map[string]interface{})
+		row, rowErr := dictFromJSON(jsonRowMap)
+		if rowErr != nil {
+			return nil, rowErr
+		}
+		gb.AddRowDict(row)
+	}
+
+	return gb.ToGrid(), nil
 }
 
 // MarshalHayson represents the object in a special JSON object format. See https://bitbucket.org/finproducts/hayson/src/master/spec.md

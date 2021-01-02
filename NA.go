@@ -33,13 +33,16 @@ func (na *NA) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newNA, newErr := naFromJSON(jsonStr)
+	*na = *newNA
+	return newErr
+}
+
+func naFromJSON(jsonStr string) (*NA, error) {
 	if !strings.HasPrefix(jsonStr, "z:") {
-		return errors.New("Input value does not begin with z:")
+		return nil, errors.New("Input value does not begin with z:")
 	}
-
-	*na = *NewNA()
-
-	return nil
+	return NewNA(), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"na\"}"

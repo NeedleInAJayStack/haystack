@@ -33,7 +33,7 @@ func (gb *GridBuilder) AddMeta(meta map[string]Val) {
 }
 
 // AddMetaDict adds or replaces the meta keys with the inputs.
-func (gb *GridBuilder) AddMetaDict(meta Dict) {
+func (gb *GridBuilder) AddMetaDict(meta *Dict) {
 	gb.AddMeta(meta.items)
 }
 

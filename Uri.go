@@ -35,14 +35,18 @@ func (uri *Uri) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newUri, newErr := uriFromJSON(jsonStr)
+	*uri = *newUri
+	return newErr
+}
+
+func uriFromJSON(jsonStr string) (*Uri, error) {
 	if !strings.HasPrefix(jsonStr, "u:") {
-		return errors.New("Input value does not begin with u:")
+		return nil, errors.New("Input value does not begin with u:")
 	}
 	val := jsonStr[2:len(jsonStr)]
 
-	*uri = *NewUri(val)
-
-	return nil
+	return NewUri(val), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"uri\",\"val\":\"<val>\"}"

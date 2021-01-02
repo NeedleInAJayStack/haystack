@@ -34,13 +34,17 @@ func (bin *Bin) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newBin, newErr := binFromJSON(jsonStr)
+	*bin = *newBin
+	return newErr
+}
+
+func binFromJSON(jsonStr string) (*Bin, error) {
 	if !strings.HasPrefix(jsonStr, "b:") {
-		return errors.New("Input value does not begin with b:")
+		return nil, errors.New("Input value does not begin with b:")
 	}
 	mime := jsonStr[2:len(jsonStr)]
-
-	*bin = *NewBin(mime)
-	return nil
+	return NewBin(mime), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"bin\",\"mime\":\"<mime>\"}"

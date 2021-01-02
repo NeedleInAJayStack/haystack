@@ -34,18 +34,23 @@ func (b *Bool) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON interprets the json value: "true" or "false"
 func (b *Bool) UnmarshalJSON(buf []byte) error {
-	var boolVal bool
-	err := json.Unmarshal(buf, &boolVal)
+	var jsonBool bool
+	err := json.Unmarshal(buf, &jsonBool)
 	if err != nil {
 		return err
 	}
 
-	if boolVal {
-		*b = *NewBool(true)
+	newBool, newErr := boolFromJSON(jsonBool)
+	*b = *newBool
+	return newErr
+}
+
+func boolFromJSON(jsonBool bool) (*Bool, error) {
+	if jsonBool {
+		return NewBool(true), nil
 	} else {
-		*b = *NewBool(false)
+		return NewBool(false), nil
 	}
-	return nil
 }
 
 // MarshalHayson is the same as MarshalJSON

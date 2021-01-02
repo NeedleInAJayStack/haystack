@@ -39,13 +39,17 @@ func (str *Str) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newStr, newErr := strFromJSON(jsonStr)
+	*str = *newStr
+	return newErr
+}
+
+func strFromJSON(jsonStr string) (*Str, error) {
 	if strings.HasPrefix(jsonStr, "s:") {
 		jsonStr = jsonStr[2:len(jsonStr)]
 	}
 
-	*str = *NewStr(jsonStr)
-
-	return nil
+	return NewStr(jsonStr), nil
 }
 
 // MarshalHayson representes the object as "<val>"

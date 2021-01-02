@@ -33,13 +33,16 @@ func (marker *Marker) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newMarker, newErr := markerFromJSON(jsonStr)
+	*marker = *newMarker
+	return newErr
+}
+
+func markerFromJSON(jsonStr string) (*Marker, error) {
 	if !strings.HasPrefix(jsonStr, "m:") {
-		return errors.New("Input value does not begin with m:")
+		return nil, errors.New("Input value does not begin with m:")
 	}
-
-	*marker = *NewMarker()
-
-	return nil
+	return NewMarker(), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"marker\"}"
@@ -66,7 +69,7 @@ func (remove *Remove) MarshalJSON() ([]byte, error) {
 	return json.Marshal("-:")
 }
 
-// UnmarshalJSON interprets the json value: "m:"
+// UnmarshalJSON interprets the json value: "-:"
 func (remove *Remove) UnmarshalJSON(buf []byte) error {
 	var jsonStr string
 	err := json.Unmarshal(buf, &jsonStr)
@@ -74,13 +77,16 @@ func (remove *Remove) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newRemove, newErr := removeFromJSON(jsonStr)
+	*remove = *newRemove
+	return newErr
+}
+
+func removeFromJSON(jsonStr string) (*Remove, error) {
 	if !strings.HasPrefix(jsonStr, "-:") {
-		return errors.New("Input value does not begin with -:")
+		return nil, errors.New("Input value does not begin with -:")
 	}
-
-	*remove = *NewRemove()
-
-	return nil
+	return NewRemove(), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"remove\"}"

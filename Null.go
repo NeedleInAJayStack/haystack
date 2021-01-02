@@ -32,13 +32,16 @@ func (null *Null) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newNull, newErr := nullFromJSON(jsonNull)
+	*null = *newNull
+	return newErr
+}
+
+func nullFromJSON(jsonNull interface{}) (*Null, error) {
 	if jsonNull != nil {
-		return errors.New("json value was not unmarshalled as nil")
+		return nil, errors.New("json value was not unmarshalled as nil")
 	}
-
-	*null = *NewNull()
-
-	return nil
+	return NewNull(), nil
 }
 
 // MarshalHayson representes the object as "null"

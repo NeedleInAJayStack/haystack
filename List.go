@@ -39,16 +39,22 @@ func (list *List) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
-	// TODO finish implementation
+	newList, newErr := listFromJSON(jsonList)
+	*list = *newList
+	return newErr
+}
 
-	// for value := range jsonList {
-	// }
+func listFromJSON(jsonList []interface{}) (*List, error) {
+	items := []Val{}
+	for _, jsonVal := range jsonList {
+		val, err := ValFromJSON(jsonVal)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, val)
+	}
 
-	list = NewList(
-		[]Val{},
-	)
-
-	return nil
+	return NewList(items), nil
 }
 
 // MarshalHayson represents the object in JSON array format: "[<val1>, <val2>, ...]"

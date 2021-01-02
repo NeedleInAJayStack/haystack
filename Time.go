@@ -113,18 +113,18 @@ func (time *Time) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newTime, newErr := timeFromJSON(jsonStr)
+	*time = *newTime
+	return newErr
+}
+
+func timeFromJSON(jsonStr string) (*Time, error) {
 	if !strings.HasPrefix(jsonStr, "h:") {
-		return errors.New("Input value does not begin with h:")
+		return nil, errors.New("Input value does not begin with h:")
 	}
 	timeStr := jsonStr[2:len(jsonStr)]
 
-	parseTime, parseErr := NewTimeFromIso(timeStr)
-	if parseErr != nil {
-		return parseErr
-	}
-	*time = *parseTime
-
-	return nil
+	return NewTimeFromIso(timeStr)
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"time\",\"val\":\"hh:mm:ss[.mmm]\""}"

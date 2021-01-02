@@ -57,23 +57,26 @@ func (coord *Coord) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
+	newCoord, newErr := coordFromJSON(jsonStr)
+	*coord = *newCoord
+	return newErr
+}
+
+func coordFromJSON(jsonStr string) (*Coord, error) {
 	if !strings.HasPrefix(jsonStr, "c:") {
-		return errors.New("Input value does not begin with c:")
+		return nil, errors.New("Input value does not begin with c:")
 	}
 	coordSplit := strings.Split(jsonStr[2:len(jsonStr)], ",")
 
 	lat, latErr := strconv.ParseFloat(coordSplit[0], 64)
 	if latErr != nil {
-		return latErr
+		return nil, latErr
 	}
 	lng, lngErr := strconv.ParseFloat(coordSplit[1], 64)
 	if lngErr != nil {
-		return lngErr
+		return nil, lngErr
 	}
-
-	*coord = *NewCoord(lat, lng)
-
-	return nil
+	return NewCoord(lat, lng), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"coord\",\"lat\":<lat>,\"lng\":<lng>}"

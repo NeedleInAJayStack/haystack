@@ -101,8 +101,8 @@ func TestGrid_MarshalJSON_empty(t *testing.T) {
 	grid := EmptyGrid()
 	json := "{" +
 		"\"meta\":{\"ver\":\"3.0\"}," +
-		"\"cols\":null," + // Empty lists are marshaled as null
-		"\"rows\":null" +
+		"\"cols\":[]," + // Empty lists are marshaled as null
+		"\"rows\":[]" +
 		"}"
 	valTest_MarshalJSON(grid, json, t)
 }
@@ -226,8 +226,8 @@ func TestGrid_MarshalHayson_nested(t *testing.T) {
 // 		siteName dis:"Sites", val dis:"Value"
 // 		"Site 1", 356.214kW
 // 		"Site 2", 463.028kW
-func newGridSimple() Grid {
-	var gb GridBuilder
+func newGridSimple() *Grid {
+	gb := NewGridBuilder()
 	gb.SetMeta(
 		map[string]Val{
 			"dis": NewStr("Site Energy Summary"),
@@ -276,8 +276,8 @@ func newGridSimple() Grid {
 //   3, 4
 //   >>
 // "scalar", "simple string"
-func newGridNested() Grid {
-	var gb GridBuilder
+func newGridNested() *Grid {
+	gb := NewGridBuilder()
 	gb.AddCol("type", map[string]Val{})
 	gb.AddCol("val", map[string]Val{})
 	gb.AddRow(

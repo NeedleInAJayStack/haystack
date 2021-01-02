@@ -15,7 +15,7 @@ func TestStr_MarshalJSON(t *testing.T) {
 }
 
 func TestStr_UnmarshalJSON(t *testing.T) {
-	var val Str
+	val := NewStr("")
 	valTest_UnmarshalJSON("\"s:https://project-haystack.org/\"", val, "\"https://project-haystack.org/\"", t)
 }
 

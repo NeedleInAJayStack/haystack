@@ -1,23 +1,27 @@
 package haystack
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+	"strings"
+)
 
 // NA is the value used to indicate not available.
 type NA struct {
 }
 
 // NewNA creates a new NA object.
-func NewNA() NA {
-	return NA{}
+func NewNA() *NA {
+	return &NA{}
 }
 
 // ToZinc representes the object as: "NA"
-func (na NA) ToZinc() string {
+func (na *NA) ToZinc() string {
 	return "NA"
 }
 
 // MarshalJSON representes the object as: "z:"
-func (na NA) MarshalJSON() ([]byte, error) {
+func (na *NA) MarshalJSON() ([]byte, error) {
 	return json.Marshal("z:")
 }
 
@@ -33,12 +37,12 @@ func (na *NA) UnmarshalJSON(buf []byte) error {
 		return errors.New("Input value does not begin with z:")
 	}
 
-	*na = NA{}
+	*na = *NewNA()
 
 	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"na\"}"
-func (na NA) MarshalHayson() ([]byte, error) {
+func (na *NA) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"na\"}"), nil
 }

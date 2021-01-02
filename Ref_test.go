@@ -15,10 +15,10 @@ func TestRef_MarshalJSON(t *testing.T) {
 }
 
 func TestRef_UnmarshalJSON(t *testing.T) {
-	var refNoDis Ref
+	refNoDis := NewRef("", "")
 	valTest_UnmarshalJSON("\"r:123-abc\"", refNoDis, "@123-abc", t)
-	var refDis Ref
-	valTest_UnmarshalJSON("\"r:123-abc Name\"", refNoDis, "@123-abc \"Name\"", t)
+	refDis := NewRef("", "")
+	valTest_UnmarshalJSON("\"r:123-abc Name\"", refDis, "@123-abc \"Name\"", t)
 }
 
 func TestRef_MarshalHayson(t *testing.T) {

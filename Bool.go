@@ -3,23 +3,24 @@ package haystack
 import "encoding/json"
 
 // Bool models a boolean for true/false tag values.
-type Bool bool
+type Bool struct {
+	val bool
+}
 
-const (
-	TRUE  Bool = true
-	FALSE Bool = false
-)
+// NewBool creates a new Bool object.
+func NewBool(val bool) *Bool {
+	return &Bool{
+		val: val,
+	}
+}
 
 // ToBool returns the value of this object as a Go bool
-func (b Bool) ToBool() bool {
-	if b == TRUE {
-		return true
-	}
-	return false
+func (b *Bool) ToBool() bool {
+	return b.val
 }
 
 // ToZinc representes the object as: "T" or "F"
-func (b Bool) ToZinc() string {
+func (b *Bool) ToZinc() string {
 	if b.ToBool() {
 		return "T"
 	}
@@ -27,7 +28,7 @@ func (b Bool) ToZinc() string {
 }
 
 // MarshalJSON representes the object as: "true" or "false"
-func (b Bool) MarshalJSON() ([]byte, error) {
+func (b *Bool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }
 
@@ -40,14 +41,14 @@ func (b *Bool) UnmarshalJSON(buf []byte) error {
 	}
 
 	if boolVal {
-		*b = TRUE
+		*b = *NewBool(true)
 	} else {
-		*b = FALSE
+		*b = *NewBool(false)
 	}
 	return nil
 }
 
 // MarshalHayson is the same as MarshalJSON
-func (b Bool) MarshalHayson() ([]byte, error) {
+func (b *Bool) MarshalHayson() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }

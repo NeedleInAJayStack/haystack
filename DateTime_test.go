@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func TestDateTime_NewDateTime(t *testing.T) {
-	utc := NewDateTime(2020, 8, 17, 23, 07, 10, 0, 0, "UTC")
+func TestDateTime_NewDateTimeRaw(t *testing.T) {
+	utc := NewDateTimeRaw(2020, 8, 17, 23, 07, 10, 0, 0, "UTC")
 	if utc.date.year != 2020 {
 		t.Error(utc.date.year)
 	}
@@ -102,11 +102,11 @@ func TestDateTime_MarshalJSON(t *testing.T) {
 }
 
 func TestDateTime_UnmarshalJSON(t *testing.T) {
-	var utc Date
+	utc := dateTimeDef()
 	valTest_UnmarshalJSON("\"t:2020-08-17T23:07:10Z UTC\"", utc, "2020-08-17T23:07:10Z UTC", t)
-	var la Date
+	la := dateTimeDef()
 	valTest_UnmarshalJSON("\"t:2020-08-17T23:07:10-07:00 Los_Angeles\"", la, "2020-08-17T23:07:10-07:00 Los_Angeles", t)
-	var taipei Date
+	taipei := dateTimeDef()
 	valTest_UnmarshalJSON("\"t:2020-08-17T23:07:10+08:00 Taipei\"", taipei, "2020-08-17T23:07:10+08:00 Taipei", t)
 }
 

@@ -14,22 +14,22 @@ type XStr struct {
 }
 
 // NewXStr creates a new XStr object.
-func NewXStr(valType string, val string) XStr {
-	return XStr{valType: valType, val: val}
+func NewXStr(valType string, val string) *XStr {
+	return &XStr{valType: valType, val: val}
 }
 
 // Type returns the XStr object type
-func (xStr XStr) Type() string {
+func (xStr *XStr) Type() string {
 	return xStr.valType
 }
 
 // Val returns the XStr object value
-func (xStr XStr) Val() string {
+func (xStr *XStr) Val() string {
 	return xStr.val
 }
 
 // ToZinc representes the object as: <valType>("<val>")
-func (xStr XStr) ToZinc() string {
+func (xStr *XStr) ToZinc() string {
 	result := xStr.valType
 	result = result + "(\""
 	result = result + xStr.val
@@ -39,7 +39,7 @@ func (xStr XStr) ToZinc() string {
 }
 
 // MarshalJSON representes the object as: "x:<valType>:<val>"
-func (xStr XStr) MarshalJSON() ([]byte, error) {
+func (xStr *XStr) MarshalJSON() ([]byte, error) {
 	result := "x:"
 	result = result + xStr.valType
 	result = result + ":"
@@ -61,15 +61,13 @@ func (xStr *XStr) UnmarshalJSON(buf []byte) error {
 	}
 	jsonSplit := strings.Split(jsonStr[2:len(jsonStr)], ":")
 
-	*xStr = XStr{
-		valType: jsonSplit[0],
-		val:     jsonSplit[1],
-	}
+	*xStr = *NewXStr(jsonSplit[0], jsonSplit[1])
+
 	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"xstr\",\"type\":\"<valType>\",\"val\":\"<val>\"}"
-func (xStr XStr) MarshalHayson() ([]byte, error) {
+func (xStr *XStr) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"xstr\",\"type\":\"")
 	builder.WriteString(xStr.valType)

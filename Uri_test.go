@@ -15,7 +15,7 @@ func TestUri_MarshalJSON(t *testing.T) {
 }
 
 func TestUri_UnmarshalJSON(t *testing.T) {
-	var val Uri
+	val := &Uri{}
 	valTest_UnmarshalJSON("\"u:http://www.project-haystack.org\"", val, "`http://www.project-haystack.org`", t)
 }
 

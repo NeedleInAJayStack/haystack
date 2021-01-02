@@ -7,16 +7,16 @@ func TestTime_equals(t *testing.T) {
 	time2 := NewTime(23, 7, 10, 957)
 	time3 := NewTime(0, 0, 0, 0)
 
-	if !time1.equals(&time1) {
+	if !time1.equals(time1) {
 		t.Error("The same object doesn't equal itself")
 	}
-	if !time1.equals(&time2) {
+	if !time1.equals(time2) {
 		t.Error("Equivalent objects doesn't equal itself")
 	}
-	if !time2.equals(&time1) {
+	if !time2.equals(time1) {
 		t.Error("Ordering matters")
 	}
-	if time1.equals(&time3) {
+	if time1.equals(time3) {
 		t.Error("Non-equivalent objects are equal")
 	}
 }
@@ -28,7 +28,7 @@ func TestTime_NewTimeFromIso(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !expNoMs.equals(&timeNoMs) {
+	if !expNoMs.equals(timeNoMs) {
 		t.Error(timeNoMs)
 	}
 
@@ -38,7 +38,7 @@ func TestTime_NewTimeFromIso(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !expMs.equals(&timeMs) {
+	if !expMs.equals(timeMs) {
 		t.Error(timeMs)
 	}
 }
@@ -58,13 +58,13 @@ func TestTime_MarshalJSON(t *testing.T) {
 }
 
 func TestTime_UnmarshalJSON(t *testing.T) {
-	var noMs Date
+	noMs := NewTime(0, 0, 0, 0)
 	valTest_UnmarshalJSON("\"h:23:07:10\"", noMs, "23:07:10", t)
-	var oneMs Date
+	oneMs := NewTime(0, 0, 0, 0)
 	valTest_UnmarshalJSON("\"h:23:07:10.002\"", oneMs, "23:07:10.002", t)
-	var tenMs Date
+	tenMs := NewTime(0, 0, 0, 0)
 	valTest_UnmarshalJSON("\"h:23:07:10.056\"", tenMs, "23:07:10.056", t)
-	var hundredMs Date
+	hundredMs := NewTime(0, 0, 0, 0)
 	valTest_UnmarshalJSON("\"h:23:07:10.957\"", hundredMs, "23:07:10.957", t)
 }
 

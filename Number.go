@@ -16,22 +16,23 @@ type Number struct {
 }
 
 // NewNumber creates a new Number. For unitless numbers, use an empty string unit: ""
-func NewNumber(val float64, unit string) Number {
-	return Number{val: val, unit: unit}
+func NewNumber(val float64, unit string) *Number {
+	return &Number{val: val, unit: unit}
 }
 
 // newNumberFromStr creates a new number from a string. The string representation must have a space between the number and unit
-func newNumberFromStr(str string) (Number, error) {
+func newNumberFromStr(str string) (*Number, error) {
 	if str == "INF" {
 		return NewNumber(math.Inf(1), ""), nil
 	} else if str == "-INF" {
 		return NewNumber(math.Inf(-1), ""), nil
 	} else if str == "NaN" {
-		return NewNumber(math.NaN, ""), nil
+		return NewNumber(math.NaN(), ""), nil
 	} else {
+		numberSplit := strings.Split(str, " ")
 		val, valErr := strconv.ParseFloat(numberSplit[0], 64)
 		if valErr != nil {
-			return nil, valErr
+			return NewNumber(0.0, ""), valErr
 		}
 		unit := ""
 		if len(numberSplit) > 1 {
@@ -42,22 +43,22 @@ func newNumberFromStr(str string) (Number, error) {
 }
 
 // Float returns the numerical value
-func (number Number) Float() float64 {
+func (number *Number) Float() float64 {
 	return number.val
 }
 
 // Unit returns the unit symbol
-func (number Number) Unit() string {
+func (number *Number) Unit() string {
 	return number.unit
 }
 
 // ToZinc representes the object as: "<val>[unit]"
-func (number Number) ToZinc() string {
+func (number *Number) ToZinc() string {
 	return number.toStr(false)
 }
 
 // MarshalJSON representes the object as: "n:<val> [unit]"
-func (number Number) MarshalJSON() ([]byte, error) {
+func (number *Number) MarshalJSON() ([]byte, error) {
 	return json.Marshal("n:" + number.toStr(true))
 }
 
@@ -78,13 +79,13 @@ func (number *Number) UnmarshalJSON(buf []byte) error {
 	if parseErr != nil {
 		return parseErr
 	}
-	*number = parseNumber
+	*number = *parseNumber
 
 	return nil
 }
 
 // MarshalHayson representes the object as: "{"_kind":"number","val":<val>,["unit":<unit>]}"
-func (number Number) MarshalHayson() ([]byte, error) {
+func (number *Number) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
 
 	buf.WriteString("{\"_kind\":\"number\",\"val\":")
@@ -106,7 +107,7 @@ func (number Number) MarshalHayson() ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
-func (number Number) toStr(spaceBeforeUnit bool) string {
+func (number *Number) toStr(spaceBeforeUnit bool) string {
 	if math.IsInf(number.val, 1) {
 		return "INF"
 	} else if math.IsInf(number.val, -1) {

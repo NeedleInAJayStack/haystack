@@ -152,38 +152,38 @@ func (client *Client) openScram(handshakeToken string, hashName string) error {
 }
 
 // About calls the 'about' op.
-func (client *Client) About() (Dict, error) {
+func (client *Client) About() (*Dict, error) {
 	result, err := client.Call("about", EmptyGrid())
 	if err != nil {
-		return Dict{}, err
+		return &Dict{}, err
 	}
 	return result.RowAt(0).ToDict(), nil
 }
 
 // Ops calls the 'ops' op.
-func (client *Client) Ops() (Grid, error) {
+func (client *Client) Ops() (*Grid, error) {
 	return client.Call("ops", EmptyGrid())
 }
 
 // Formats calls the 'formats' op.
-func (client *Client) Formats() (Grid, error) {
+func (client *Client) Formats() (*Grid, error) {
 	return client.Call("formats", EmptyGrid())
 }
 
 // Read calls the 'read' op with a filter and no result limit.
-func (client *Client) Read(filter string) (Grid, error) {
+func (client *Client) Read(filter string) (*Grid, error) {
 	return client.ReadLimit(filter, 0)
 }
 
 // ReadLimit calls the 'read' op with a filter and a result limit.
-func (client *Client) ReadLimit(filter string, limit int) (Grid, error) {
+func (client *Client) ReadLimit(filter string, limit int) (*Grid, error) {
 	var limitVal Val
 	if limit <= 0 {
 		limitVal = NewNull()
 	} else {
 		limitVal = NewNumber(float64(limit), "")
 	}
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("filter")
 	gb.AddColNoMeta("limit")
 	gb.AddRow([]Val{
@@ -194,8 +194,8 @@ func (client *Client) ReadLimit(filter string, limit int) (Grid, error) {
 }
 
 // ReadByIds calls the 'read' op with the input ids.
-func (client *Client) ReadByIds(ids []Ref) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) ReadByIds(ids []*Ref) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("id")
 	for _, id := range ids {
 		gb.AddRow([]Val{
@@ -206,8 +206,8 @@ func (client *Client) ReadByIds(ids []Ref) (Grid, error) {
 }
 
 // Nav calls the 'nav' op to navigate a project for learning and discovery
-func (client *Client) Nav(navId Val) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) Nav(navId Val) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("navId")
 	gb.AddRow([]Val{
 		navId,
@@ -216,8 +216,8 @@ func (client *Client) Nav(navId Val) (Grid, error) {
 }
 
 // PointWriteArray calls the 'pointWrite' op to query the point write priority array for the input id.
-func (client *Client) PointWriteArray(id Ref) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) PointWriteArray(id *Ref) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("id")
 	gb.AddRow([]Val{
 		id,
@@ -226,8 +226,8 @@ func (client *Client) PointWriteArray(id Ref) (Grid, error) {
 }
 
 // PointWrite calls the 'pointWrite' op to write the val to the given point.
-func (client *Client) PointWrite(id Ref, level int, val Val, who string, duration Number) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) PointWrite(id *Ref, level int, val Val, who string, duration *Number) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("id")
 	gb.AddColNoMeta("level")
 	gb.AddColNoMeta("val")
@@ -244,20 +244,20 @@ func (client *Client) PointWrite(id Ref, level int, val Val, who string, duratio
 }
 
 // HisReadAbsDate calls the 'hisRead' op with an input absolute Date range.
-func (client *Client) HisReadAbsDate(id Ref, from Date, to Date) (Grid, error) {
+func (client *Client) HisReadAbsDate(id *Ref, from Date, to Date) (*Grid, error) {
 	rangeString := from.ToZinc() + "," + to.ToZinc()
 	return client.HisRead(id, rangeString)
 }
 
 // HisReadAbsDateTime calls the 'hisRead' op with an input absolute DateTime range.
-func (client *Client) HisReadAbsDateTime(id Ref, from DateTime, to DateTime) (Grid, error) {
+func (client *Client) HisReadAbsDateTime(id *Ref, from DateTime, to DateTime) (*Grid, error) {
 	rangeString := from.ToZinc() + "," + to.ToZinc()
 	return client.HisRead(id, rangeString)
 }
 
 // HisRead calls the 'hisRead' op with the given range string. See Haystack API docs for accepted rangeString values.
-func (client *Client) HisRead(id Ref, rangeString string) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) HisRead(id *Ref, rangeString string) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("id")
 	gb.AddColNoMeta("range")
 	gb.AddRow([]Val{
@@ -269,8 +269,8 @@ func (client *Client) HisRead(id Ref, rangeString string) (Grid, error) {
 
 // HisWrite calls the 'hisWrite' op with the given id and Dicts of history items. Only the "ts" and "val" fields from
 // the history items are included.
-func (client *Client) HisWrite(id Ref, hisItems []Dict) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) HisWrite(id *Ref, hisItems []*Dict) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddMetaVal("id", id)
 	gb.AddColNoMeta("ts")
 	gb.AddColNoMeta("val")
@@ -279,8 +279,8 @@ func (client *Client) HisWrite(id Ref, hisItems []Dict) (Grid, error) {
 }
 
 // InvokeAction calls the 'invokeAction' op with the given id, action name, and arguments.
-func (client *Client) InvokeAction(id Ref, action string, args map[string]Val) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) InvokeAction(id *Ref, action string, args map[string]Val) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddMetaVal("id", id)
 	gb.AddMetaVal("action", NewStr(action))
 
@@ -294,15 +294,15 @@ func (client *Client) InvokeAction(id Ref, action string, args map[string]Val) (
 }
 
 // Eval calls the 'eval' op to evaluate a vendor specific expression.
-func (client *Client) Eval(expr string) (Grid, error) {
-	var gb GridBuilder
+func (client *Client) Eval(expr string) (*Grid, error) {
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("expr")
 	gb.AddRow([]Val{NewStr(expr)})
 	return client.Call("eval", gb.ToGrid())
 }
 
 // Call executes the given operation. The request grid is posted to the client URI and the response is parsed as a grid.
-func (client *Client) Call(op string, reqGrid Grid) (Grid, error) {
+func (client *Client) Call(op string, reqGrid *Grid) (*Grid, error) {
 	req := reqGrid.ToZinc()
 	resp, err := client.postString(op, req)
 	if err != nil {
@@ -313,7 +313,7 @@ func (client *Client) Call(op string, reqGrid Grid) (Grid, error) {
 	reader.InitString(resp)
 	val := reader.ReadVal()
 	switch val := val.(type) {
-	case Grid:
+	case *Grid:
 		if val.Meta().Get("err") != NewNull() {
 			return EmptyGrid(), NewCallError(val)
 		}
@@ -427,18 +427,18 @@ func (err AuthError) Error() string {
 // CallError occurs when communication is successful, and a Grid is returned, but the grid has an err
 // tag indicating a server side error.
 type CallError struct {
-	grid Grid
+	grid *Grid
 }
 
 // NewCallError creates a new CallError object.
-func NewCallError(grid Grid) CallError {
+func NewCallError(grid *Grid) CallError {
 	return CallError{grid: grid}
 }
 
 func (err CallError) Error() string {
 	dis := err.grid.Meta().Get("dis")
 	switch val := dis.(type) {
-	case Str:
+	case *Str:
 		return "Call error: " + val.String()
 	default:
 		return "Call error: Server side error"

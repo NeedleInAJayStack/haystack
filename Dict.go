@@ -13,8 +13,8 @@ type Dict struct {
 }
 
 // NewDict creates a new Dict object.
-func NewDict(items map[string]Val) Dict {
-	return Dict{items: items}
+func NewDict(items map[string]Val) *Dict {
+	return &Dict{items: items}
 }
 
 // Get returns the Val of the given name. If the name is not found, Null is returned.
@@ -36,12 +36,12 @@ func (dict *Dict) Names() []string {
 }
 
 // Set sets the Val for the given name and returns a new Dict.
-func (dict Dict) Set(name string, val Val) Dict {
+func (dict *Dict) Set(name string, val Val) *Dict {
 	return dict.SetAll(map[string]Val{name: val})
 }
 
 // SetAll sets all the values in the input map and returns a new Dict.
-func (dict Dict) SetAll(set map[string]Val) Dict {
+func (dict *Dict) SetAll(set map[string]Val) *Dict {
 	newDict := dict.dup()
 	for name, val := range set {
 		newDict.items[name] = val
@@ -50,12 +50,12 @@ func (dict Dict) SetAll(set map[string]Val) Dict {
 }
 
 // dup duplicates the given Dict
-func (dict Dict) dup() Dict {
+func (dict *Dict) dup() *Dict {
 	newItems := map[string]Val{}
 	for name, val := range dict.items {
 		newItems[name] = val
 	}
-	return Dict{items: newItems}
+	return &Dict{items: newItems}
 }
 
 // Size returns the number of name/Val pairs.
@@ -69,7 +69,7 @@ func (dict *Dict) IsEmpty() bool {
 }
 
 // MarshalJSON represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
-func (dict Dict) MarshalJSON() ([]byte, error) {
+func (dict *Dict) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dict.items)
 }
 
@@ -86,7 +86,7 @@ func (dict *Dict) UnmarshalJSON(buf []byte) error {
 	// for key, value := range jsonMap {
 	// }
 
-	*dict = NewDict(
+	dict = NewDict(
 		map[string]Val{},
 	)
 
@@ -95,7 +95,7 @@ func (dict *Dict) UnmarshalJSON(buf []byte) error {
 
 // MarshalHayson represents the object in JSON object format: "{"_kind":"dict", "<name1>":<val1>, "<name2>":<val2> ...}"
 // The optional "_kind" is always included.
-func (dict Dict) MarshalHayson() ([]byte, error) {
+func (dict *Dict) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"dict\"")
 
@@ -119,7 +119,7 @@ func (dict Dict) MarshalHayson() ([]byte, error) {
 
 // ToZinc representes the object as: "{<name1>:<val1> <name2>:<val2> ...}" with the names in alphabetical order.
 // Markers don't require a val.
-func (dict Dict) ToZinc() string {
+func (dict *Dict) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)
 	dict.WriteZincTo(out, true)
@@ -128,7 +128,7 @@ func (dict Dict) ToZinc() string {
 }
 
 // WriteZincTo appends the Writer with the Dict zinc representation.
-func (dict Dict) WriteZincTo(buf *bufio.Writer, brackets bool) {
+func (dict *Dict) WriteZincTo(buf *bufio.Writer, brackets bool) {
 	if brackets {
 		buf.WriteString("{")
 	}
@@ -143,9 +143,9 @@ func (dict Dict) WriteZincTo(buf *bufio.Writer, brackets bool) {
 
 		val := dict.items[name]
 		switch val := val.(type) {
-		case Grid:
+		case *Grid:
 			val.WriteZincTo(buf, 1)
-		case Marker:
+		case *Marker:
 			break
 		default:
 			buf.WriteString(":" + val.ToZinc())

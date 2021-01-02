@@ -7,16 +7,16 @@ func TestDate_equals(t *testing.T) {
 	date2 := NewDate(2020, 8, 17)
 	date3 := NewDate(0, 0, 0)
 
-	if !date1.equals(&date1) {
+	if !date1.equals(date1) {
 		t.Error("The same object doesn't equal itself")
 	}
-	if !date1.equals(&date2) {
+	if !date1.equals(date2) {
 		t.Error("Equivalent objects doesn't equal itself")
 	}
-	if !date2.equals(&date1) {
+	if !date2.equals(date1) {
 		t.Error("Ordering matters")
 	}
-	if date1.equals(&date3) {
+	if date1.equals(date3) {
 		t.Error("Non-equivalent objects are equal")
 	}
 }
@@ -28,7 +28,7 @@ func TestDate_NewDateFromIso(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !exp.equals(&date) {
+	if !exp.equals(date) {
 		t.Error(date)
 	}
 }
@@ -42,7 +42,7 @@ func TestDate_MarshalJSON(t *testing.T) {
 }
 
 func TestDate_UnmarshalJSON(t *testing.T) {
-	var val Date
+	val := NewDate(0, 0, 0)
 	valTest_UnmarshalJSON("\"d:2020-08-17\"", val, "2020-08-17", t)
 }
 

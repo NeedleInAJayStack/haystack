@@ -8,19 +8,23 @@ import (
 
 // Grid is a two dimension data structure of cols and rows.
 type Grid struct {
-	meta Dict
+	meta *Dict
 	cols []Col
 	rows []Row
 }
 
 // EmptyGrid creates an empty grid.
-func EmptyGrid() Grid {
-	return Grid{}
+func EmptyGrid() *Grid {
+	return &Grid{
+		meta: &Dict{},
+		cols: []Col{},
+		rows: []Row{},
+	}
 }
 
 // Meta returns the grid-level metadata
 func (grid *Grid) Meta() *Dict {
-	return &grid.meta
+	return grid.meta
 }
 
 // ColCount returns the count of columns
@@ -60,7 +64,7 @@ func (grid *Grid) RowAt(index int) *Row {
 }
 
 // MarshalJSON represents the object in a special JSON object format. See https://project-haystack.org/doc/Json#grid
-func (grid Grid) MarshalJSON() ([]byte, error) {
+func (grid *Grid) MarshalJSON() ([]byte, error) {
 	buf := strings.Builder{}
 
 	buf.WriteString("{\"meta\":")
@@ -107,7 +111,7 @@ func (grid *Grid) UnmarshalJSON(buf []byte) error {
 	// for key, value := range jsonMap {
 	// }
 
-	*grid = EmptyGrid()
+	*grid = *EmptyGrid()
 
 	return nil
 }
@@ -160,7 +164,7 @@ func (grid Grid) MarshalHayson() ([]byte, error) {
 //     <row1>
 //     <row2>
 //     ...
-func (grid Grid) ToZinc() string {
+func (grid *Grid) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)
 	grid.WriteZincTo(out, 0)
@@ -210,7 +214,15 @@ func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 type Col struct {
 	index int
 	name  string
-	meta  Dict
+	meta  *Dict
+}
+
+func NewCol(index int, name string, meta *Dict) Col {
+	return Col{
+		index: index,
+		name:  name,
+		meta:  meta,
+	}
 }
 
 // Name returns the string name
@@ -219,7 +231,7 @@ func (col *Col) Name() string {
 }
 
 // Meta returns the column-level metadata
-func (col *Col) Meta() Dict {
+func (col *Col) Meta() *Dict {
 	return col.meta
 }
 
@@ -257,8 +269,8 @@ func (row *Row) Get(name string) Val {
 }
 
 // ToDict returns the values in a Dict format
-func (row *Row) ToDict() Dict {
-	return Dict{items: row.items}
+func (row *Row) ToDict() *Dict {
+	return &Dict{items: row.items}
 }
 
 // MarshalJSON represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
@@ -281,7 +293,7 @@ func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col, indentSize int) {
 		}
 		val := row.items[col.name]
 		switch val := val.(type) {
-		case Grid:
+		case *Grid:
 			indentSize = indentSize + 1
 			buf.WriteString("<<\n")
 			val.WriteZincTo(buf, indentSize)
@@ -289,13 +301,13 @@ func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col, indentSize int) {
 			writeIndent(buf, indentSize)
 			buf.WriteString(">>")
 			indentSize = indentSize - 1
-		case List:
+		case *List:
 			val.WriteZincTo(buf)
-		case Dict:
+		case *Dict:
 			val.WriteZincTo(buf, true)
-		case Str:
+		case *Str:
 			val.WriteZincTo(buf)
-		case Uri:
+		case *Uri:
 			val.WriteZincTo(buf)
 		default:
 			buf.WriteString(val.ToZinc())

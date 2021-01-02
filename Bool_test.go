@@ -5,21 +5,21 @@ import (
 )
 
 func TestBool_ToZinc(t *testing.T) {
-	valTest_ToZinc(TRUE, "T", t)
-	valTest_ToZinc(FALSE, "F", t)
+	valTest_ToZinc(NewBool(true), "T", t)
+	valTest_ToZinc(NewBool(false), "F", t)
 }
 
 func TestBool_MarshalJSON(t *testing.T) {
-	valTest_MarshalJSON(TRUE, "true", t)
-	valTest_MarshalJSON(FALSE, "false", t)
+	valTest_MarshalJSON(NewBool(true), "true", t)
+	valTest_MarshalJSON(NewBool(false), "false", t)
 }
 
 func TestBool_UnmarshalJSON(t *testing.T) {
-	var val Bool
+	val := NewBool(false)
 	valTest_UnmarshalJSON("true", val, "T", t)
 }
 
 func TestBool_MarshalHayson(t *testing.T) {
-	valTest_MarshalHayson(TRUE, "true", t)
-	valTest_MarshalHayson(FALSE, "false", t)
+	valTest_MarshalHayson(NewBool(true), "true", t)
+	valTest_MarshalHayson(NewBool(false), "false", t)
 }

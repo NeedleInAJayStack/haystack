@@ -15,7 +15,7 @@ func TestBin_MarshalJSON(t *testing.T) {
 }
 
 func TestBin_UnmarshalJSON(t *testing.T) {
-	var val Bin
+	val := NewBin("")
 	valTest_UnmarshalJSON("\"b:text/plain\"", val, "Bin(\"text/plain\")", t)
 }
 

@@ -10,17 +10,17 @@ type Null struct {
 }
 
 // NewNull creates a new Null object.
-func NewNull() Null {
-	return Null{}
+func NewNull() *Null {
+	return &Null{}
 }
 
 // ToZinc representes the object as "N"
-func (null Null) ToZinc() string {
+func (null *Null) ToZinc() string {
 	return "N"
 }
 
 // MarshalJSON representes the object as "null"
-func (null Null) MarshalJSON() ([]byte, error) {
+func (null *Null) MarshalJSON() ([]byte, error) {
 	return json.Marshal(nil)
 }
 
@@ -36,12 +36,12 @@ func (null *Null) UnmarshalJSON(buf []byte) error {
 		return errors.New("json value was not unmarshalled as nil")
 	}
 
-	*null = Null{}
+	*null = *NewNull()
 
 	return nil
 }
 
 // MarshalHayson representes the object as "null"
-func (null Null) MarshalHayson() ([]byte, error) {
+func (null *Null) MarshalHayson() ([]byte, error) {
 	return json.Marshal(nil)
 }

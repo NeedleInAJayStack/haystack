@@ -31,7 +31,7 @@ func TestCoord_MarshalJSON(t *testing.T) {
 }
 
 func TestCoord_UnmarshalJSON(t *testing.T) {
-	var val Coord
+	val := NewCoord(0.0, 0.0)
 	valTest_UnmarshalJSON("\"c:41.534,111.478\"", val, "C(41.534,111.478)", t)
 }
 

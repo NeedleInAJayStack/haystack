@@ -5,7 +5,7 @@ import (
 )
 
 func TestGridBuilder_ToGrid(t *testing.T) {
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddColNoMeta("col1")
 	gb.AddRow([]Val{
 		NewStr("val1"),

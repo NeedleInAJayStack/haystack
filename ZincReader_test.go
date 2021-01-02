@@ -10,7 +10,7 @@ func TestZincReader_empty(t *testing.T) {
 		"a nullmetatag:N, b markermetatag\n" +
 		""
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.SetMeta(
 		map[string]Val{
 			"tag": NewNull(),
@@ -36,7 +36,7 @@ func TestZincReader_singleColEmpty(t *testing.T) {
 		"fooBar33\n" +
 		"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol(
 		"fooBar33",
 		map[string]Val{},
@@ -50,7 +50,7 @@ func TestZincReader_singleCol(t *testing.T) {
 		"\"val\"\n" +
 		"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.SetMeta(
 		map[string]Val{
 			"tag": NewMarker(),
@@ -75,7 +75,7 @@ func TestZincReader_singleColNull(t *testing.T) {
 		"N\n" +
 		"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol(
 		"val",
 		map[string]Val{},
@@ -95,7 +95,7 @@ func TestZincReader_doubleCol(t *testing.T) {
 		"3,4\n" +
 		"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol(
 		"a",
 		map[string]Val{},
@@ -132,15 +132,15 @@ func TestZincReader_large(t *testing.T) {
 		"C(12,-34),C(0.123,-0.789),C(84.5,-77.45),C(-90,180)\n" +
 		"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol("a", map[string]Val{})
 	gb.AddCol("b", map[string]Val{})
 	gb.AddCol("c", map[string]Val{})
 	gb.AddCol("d", map[string]Val{})
 	gb.AddRow( // T,    F,      N,   -99
 		[]Val{
-			TRUE,
-			FALSE,
+			NewBool(true),
+			NewBool(false),
 			NewNull(),
 			NewNumber(-99.0, ""),
 		},
@@ -216,7 +216,7 @@ func TestZincReader_escapes(t *testing.T) {
 		"`file \\#2`\n" +
 		"\"$15\"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol("foo", map[string]Val{})
 	gb.AddRow(
 		[]Val{
@@ -249,7 +249,7 @@ func TestZincReader_numbers(t *testing.T) {
 		"5kWh/ft\u00b2,-15kWh/m\u00b2\n" +
 		"123e+12kJ/kg_dry,74\u0394\u00b0F\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol("a", map[string]Val{})
 	gb.AddCol("b", map[string]Val{})
 	gb.AddRow(
@@ -290,7 +290,7 @@ func TestZincReader_nulls(t *testing.T) {
 		"14,,\n" +
 		"\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol("a", map[string]Val{})
 	gb.AddCol("b", map[string]Val{})
 	gb.AddCol("c", map[string]Val{})
@@ -344,7 +344,7 @@ func TestZincReader_datetimes(t *testing.T) {
 		"a,b\n" +
 		"2010-03-01T23:55:00.013-05:00 GMT+5,2010-03-01T23:55:00.013+10:00 GMT-10\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol("a", map[string]Val{})
 	gb.AddCol("b", map[string]Val{})
 	datetime1, _ := NewDateTimeFromString("2010-03-01T23:55:00.013-05:00 GMT+5")
@@ -373,7 +373,7 @@ func TestZincReader_meta(t *testing.T) {
 		"R\n" +
 		"NA\n"
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	metaDt1, _ := NewDateTimeFromString("2009-02-03T04:05:06Z")
 	metaDt2, _ := NewDateTimeFromString("2010-02-03T04:05:06Z UTC")
 	metaDt3, _ := NewDateTimeFromString("2009-12-03T04:05:06Z London")
@@ -463,7 +463,7 @@ func TestZincReader_nested(t *testing.T) {
 		"  >>\n" +
 		"\"scalar\", \"simple string\""
 
-	var gb GridBuilder
+	gb := NewGridBuilder()
 	gb.AddCol("type", map[string]Val{})
 	gb.AddCol("val", map[string]Val{})
 	gb.AddRow(
@@ -535,12 +535,12 @@ func TestZincReader_nested(t *testing.T) {
 
 // Verifies that the tokenized result has the expected token type and value.
 // Values are matched based on the result of the 'ToZinc' method
-func testZincReaderGrid(t *testing.T, str string, expected Grid) {
+func testZincReaderGrid(t *testing.T, str string, expected *Grid) {
 	var reader ZincReader
 	reader.InitString(str)
 
 	val := reader.ReadVal()
-	grid := val.(Grid)
+	grid := val.(*Grid)
 	testGridEq(t, grid, expected)
 
 	// write grid, read grid, and verify it equals the original
@@ -548,12 +548,12 @@ func testZincReaderGrid(t *testing.T, str string, expected Grid) {
 	var writtenReader ZincReader
 	writtenReader.InitString(writeStr)
 	writeReadVal := writtenReader.ReadVal()
-	writeReadGrid := writeReadVal.(Grid)
+	writeReadGrid := writeReadVal.(*Grid)
 	testGridEq(t, writeReadGrid, expected)
 }
 
 // Test whether the grids match based on a ToZinc call
-func testGridEq(t *testing.T, actual Grid, expected Grid) {
+func testGridEq(t *testing.T, actual *Grid, expected *Grid) {
 	actualZinc := actual.ToZinc()
 	expectedZinc := expected.ToZinc()
 

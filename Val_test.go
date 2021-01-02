@@ -36,7 +36,7 @@ func valTest_UnmarshalJSON(input string, val Val, expectedZinc string, t *testin
 	if unmarshalErr != nil {
 		t.Error(unmarshalErr)
 	}
-	actualZinc := val.ToZinc()
+	actualZinc := Val(val).ToZinc()
 	if actualZinc != expectedZinc {
 		t.Error(actualZinc + " != " + expectedZinc)
 	}

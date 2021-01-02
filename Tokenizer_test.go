@@ -63,26 +63,26 @@ func TestTokenizer_testTime(t *testing.T) {
 }
 func TestTokenizer_testDateTime(t *testing.T) {
 	testTokenizerSingle(t, "2016-01-13T09:51:33-05:00 New_York", DATETIME,
-		NewDateTime(2016, 1, 13, 9, 51, 33, 0, -18000, "New_York"),
+		NewDateTimeRaw(2016, 1, 13, 9, 51, 33, 0, -18000, "New_York"),
 	)
 	testTokenizerSingle(t, "2016-01-13T09:51:33.353-05:00 New_York", DATETIME,
-		NewDateTime(2016, 1, 13, 9, 51, 33, 353, -18000, "New_York"),
+		NewDateTimeRaw(2016, 1, 13, 9, 51, 33, 353, -18000, "New_York"),
 	)
 	testTokenizerSingle(t, "2010-12-18T14:11:30.924Z", DATETIME,
-		NewDateTime(2010, 12, 18, 14, 11, 30, 924, 0, "UTC"),
+		NewDateTimeRaw(2010, 12, 18, 14, 11, 30, 924, 0, "UTC"),
 	)
 	testTokenizerSingle(t, "2010-12-18T14:11:30.924Z UTC", DATETIME,
-		NewDateTime(2010, 12, 18, 14, 11, 30, 924, 0, "UTC"),
+		NewDateTimeRaw(2010, 12, 18, 14, 11, 30, 924, 0, "UTC"),
 	)
 	// TODO: extract tzOffset from timezone name (go has no tz lookup)
 	// testTokenizerSingle(t, "2010-12-18T14:11:30.924Z London", DATETIME,
 	//	 NewDateTime(2010, 12, 18, 14, 11, 30, 924, 0, "London"),
 	// )
 	testTokenizerSingle(t, "2010-03-01T23:55:00.013-05:00 GMT+5", DATETIME,
-		NewDateTime(2010, 3, 1, 23, 55, 00, 13, -18000, "GMT+5"),
+		NewDateTimeRaw(2010, 3, 1, 23, 55, 00, 13, -18000, "GMT+5"),
 	)
 	testTokenizerSingle(t, "2010-03-01T23:55:00.013+10:00 GMT-10 ", DATETIME,
-		NewDateTime(2010, 3, 1, 23, 55, 00, 13, 36000, "GMT-10"),
+		NewDateTimeRaw(2010, 3, 1, 23, 55, 00, 13, 36000, "GMT-10"),
 	)
 }
 func TestTokenizer_testRef(t *testing.T) {

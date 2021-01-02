@@ -9,22 +9,22 @@ type Id struct {
 }
 
 // NewId creates a new Id object.
-func NewId(val string) Id {
-	return Id{val: val}
+func NewId(val string) *Id {
+	return &Id{val: val}
 }
 
 // String returns the value of the string.
-func (id Id) String() string {
+func (id *Id) String() string {
 	return id.val
 }
 
 // ToZinc representes the object as: "<val>"
-func (id Id) ToZinc() string {
+func (id *Id) ToZinc() string {
 	return id.val
 }
 
 // MarshalJSON representes the object as: "<val>"
-func (id Id) MarshalJSON() ([]byte, error) {
+func (id *Id) MarshalJSON() ([]byte, error) {
 	return json.Marshal(id.val)
 }
 
@@ -36,12 +36,12 @@ func (id *Id) UnmarshalJSON(buf []byte) error {
 		return err
 	}
 
-	*id = NewId(jsonStr)
+	*id = *NewId(jsonStr)
 
 	return nil
 }
 
 // MarshalHayson representes the object as: "<val>"
-func (id Id) MarshalHayson() ([]byte, error) {
+func (id *Id) MarshalHayson() ([]byte, error) {
 	return json.Marshal(id.val)
 }

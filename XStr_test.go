@@ -15,7 +15,7 @@ func TestXStr_MarhsalJSON(t *testing.T) {
 }
 
 func TestXStr_UnmarshalJSON(t *testing.T) {
-	var val Uri
+	val := &XStr{}
 	valTest_UnmarshalJSON("\"x:Str:hello world\"", val, "Str(\"hello world\")", t)
 }
 

@@ -3,21 +3,18 @@ package haystack
 import "testing"
 
 func TestNA_ToZinc(t *testing.T) {
-	na := NewNA()
-	valTest_ToZinc(na, "NA", t)
+	valTest_ToZinc(NewNA(), "NA", t)
 }
 
 func TestNA_MarshalJSON(t *testing.T) {
-	na := NewNA()
-	valTest_MarshalJSON(na, "\"z:\"", t)
+	valTest_MarshalJSON(NewNA(), "\"z:\"", t)
 }
 
 func TestNA_UnmarshalJSON(t *testing.T) {
-	var val NA
+	val := NewNA()
 	valTest_UnmarshalJSON("\"z:\"", val, "NA", t)
 }
 
 func TestNA_MarshalHayson(t *testing.T) {
-	na := NewNA()
-	valTest_MarshalHayson(na, "{\"_kind\":\"na\"}", t)
+	valTest_MarshalHayson(NewNA(), "{\"_kind\":\"na\"}", t)
 }

@@ -12,17 +12,27 @@ import (
 
 // DateTime models a timestamp with a specific timezone.
 type DateTime struct {
-	date     Date
-	time     Time
+	date     *Date
+	time     *Time
 	tzOffset int    // offset in seconds from UTC
 	tz       string // IANA database city name
 }
 
 // NewDateTime creates a new DateTime object. The values are not validated for correctness.
-func NewDateTime(year int, month int, day int, hour int, min int, sec int, ms int, tzOffset int, tz string) DateTime {
+func NewDateTime(date *Date, time *Time, tzOffset int, tz string) *DateTime {
+	return &DateTime{
+		date:     date,
+		time:     time,
+		tzOffset: tzOffset,
+		tz:       tz,
+	}
+}
+
+// NewDateTime creates a new DateTime object. The values are not validated for correctness.
+func NewDateTimeRaw(year int, month int, day int, hour int, min int, sec int, ms int, tzOffset int, tz string) *DateTime {
 	date := NewDate(year, month, day)
 	time := NewTime(hour, min, sec, ms)
-	return DateTime{
+	return &DateTime{
 		date:     date,
 		time:     time,
 		tzOffset: tzOffset,
@@ -31,7 +41,7 @@ func NewDateTime(year int, month int, day int, hour int, min int, sec int, ms in
 }
 
 // NewDateTimeFromString creates a DateTime object from a string in the format: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
-func NewDateTimeFromString(str string) (DateTime, error) {
+func NewDateTimeFromString(str string) (*DateTime, error) {
 	var input scanner.Scanner
 	input.Init(strings.NewReader(str))
 	curRune := input.Next()
@@ -102,26 +112,21 @@ func NewDateTimeFromString(str string) (DateTime, error) {
 	}
 	// Otherwise it's UTC
 
-	return DateTime{
-		date:     date,
-		time:     time,
-		tz:       tz,
-		tzOffset: tzOffset,
-	}, nil
+	return NewDateTime(date, time, tzOffset, tz), nil
 }
 
-func newDateTimeFromGo(goTime time.Time) DateTime {
-	hDate := Date{
-		year:  goTime.Year(),
-		month: int(goTime.Month()),
-		day:   goTime.Day(),
-	}
-	hTime := Time{
-		hour: goTime.Hour(),
-		min:  goTime.Minute(),
-		sec:  goTime.Second(),
-		ms:   goTime.Nanosecond() / 1000,
-	}
+func newDateTimeFromGo(goTime time.Time) *DateTime {
+	hDate := NewDate(
+		goTime.Year(),
+		int(goTime.Month()),
+		goTime.Day(),
+	)
+	hTime := NewTime(
+		goTime.Hour(),
+		goTime.Minute(),
+		goTime.Second(),
+		goTime.Nanosecond()/1000,
+	)
 	location := goTime.Location()
 	hTz := "UTC"
 	if location != time.UTC {
@@ -130,52 +135,42 @@ func newDateTimeFromGo(goTime time.Time) DateTime {
 	}
 	_, hTzOffset := goTime.Zone()
 
-	return DateTime{
-		date:     hDate,
-		time:     hTime,
-		tz:       hTz,
-		tzOffset: hTzOffset,
-	}
+	return NewDateTime(hDate, hTime, hTzOffset, hTz)
 }
 
-func dateTimeDef() DateTime {
-	return DateTime{
-		date:     Date{},
-		time:     Time{},
-		tz:       "UTC",
-		tzOffset: 0,
-	}
+func dateTimeDef() *DateTime {
+	return NewDateTime(&Date{}, &Time{}, 0, "UTC")
 }
 
 // Date returns the date of the object.
-func (dateTime DateTime) Date() Date {
+func (dateTime *DateTime) Date() *Date {
 	return dateTime.date
 }
 
 // Time returns the date of the object.
-func (dateTime DateTime) Time() Time {
+func (dateTime *DateTime) Time() *Time {
 	return dateTime.time
 }
 
 // Tz returns the timezone of the object.
-func (dateTime DateTime) Tz() string {
+func (dateTime *DateTime) Tz() string {
 	return dateTime.tz
 }
 
 // TzOffset returns the timezone offset of the object.
-func (dateTime DateTime) TzOffset() int {
+func (dateTime *DateTime) TzOffset() int {
 	return dateTime.tzOffset
 }
 
 // ToZinc representes the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
-func (dateTime DateTime) ToZinc() string {
+func (dateTime *DateTime) ToZinc() string {
 	buf := strings.Builder{}
 	dateTime.encodeTo(&buf, true)
 	return buf.String()
 }
 
 // MarshalJSON representes the object as: "t:YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
-func (dateTime DateTime) MarshalJSON() ([]byte, error) {
+func (dateTime *DateTime) MarshalJSON() ([]byte, error) {
 	buf := strings.Builder{}
 	buf.WriteString("t:")
 	dateTime.encodeTo(&buf, true)
@@ -195,17 +190,17 @@ func (dateTime *DateTime) UnmarshalJSON(buf []byte) error {
 	}
 	dateTimeStr := jsonStr[2:len(jsonStr)]
 
-	parseDateTime, parseErr := NewDateTimeFromStr(dateTimeStr)
+	parseDateTime, parseErr := NewDateTimeFromString(dateTimeStr)
 	if parseErr != nil {
 		return parseErr
 	}
-	*dateTime = parseDateTime
+	*dateTime = *parseDateTime
 
 	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"dateTime\",\"val\":\"YYYY-MM-DD'T'hh:mm:ss.FFFz\",\"tz\":\"zzzz\"}"
-func (dateTime DateTime) MarshalHayson() ([]byte, error) {
+func (dateTime *DateTime) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
 	buf.WriteString("{\"_kind\":\"dateTime\",\"val\":\"")
 	dateTime.encodeTo(&buf, false)

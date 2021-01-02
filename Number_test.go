@@ -22,15 +22,15 @@ func TestNumber_MarshalJSON(t *testing.T) {
 }
 
 func TestNumber_UnmarshalJSON(t *testing.T) {
-	var number Number
+	number := NewNumber(0, "")
 	valTest_UnmarshalJSON("\"n:100.457\"", number, "100.457", t)
-	var numberUnit Number
+	numberUnit := NewNumber(0, "")
 	valTest_UnmarshalJSON("\"n:100.457 kWh\"", numberUnit, "100.457kWh", t)
-	var inf Number
+	inf := NewNumber(0, "")
 	valTest_UnmarshalJSON("\"n:INF\"", inf, "INF", t)
-	var negInf Number
+	negInf := NewNumber(0, "")
 	valTest_UnmarshalJSON("\"n:-INF\"", negInf, "-INF", t)
-	var nan Number
+	nan := NewNumber(0, "")
 	valTest_UnmarshalJSON("\"n:NaN\"", nan, "NaN", t)
 }
 

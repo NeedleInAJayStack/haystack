@@ -13,17 +13,17 @@ type Str struct {
 }
 
 // NewStr creates a new Str object
-func NewStr(val string) Str {
-	return Str{val: val}
+func NewStr(val string) *Str {
+	return &Str{val: val}
 }
 
 // String returns the object's value directly as a Go string
-func (str Str) String() string {
+func (str *Str) String() string {
 	return str.val
 }
 
 // MarshalJSON representes the object as "<val>", or "s:<val>" if val contains a colon
-func (str Str) MarshalJSON() ([]byte, error) {
+func (str *Str) MarshalJSON() ([]byte, error) {
 	if strings.Contains(str.val, ":") {
 		return json.Marshal("s:" + str.val)
 	} else {
@@ -43,19 +43,18 @@ func (str *Str) UnmarshalJSON(buf []byte) error {
 		jsonStr = jsonStr[2:len(jsonStr)]
 	}
 
-	*str = Str{
-		val: jsonStr,
-	}
+	*str = *NewStr(jsonStr)
+
 	return nil
 }
 
 // MarshalHayson representes the object as "<val>"
-func (str Str) MarshalHayson() ([]byte, error) {
+func (str *Str) MarshalHayson() ([]byte, error) {
 	return json.Marshal(str.val)
 }
 
 // ToZinc representes the object as a double-quoted string, with back-slash escapes
-func (str Str) ToZinc() string {
+func (str *Str) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)
 	str.WriteZincTo(out)
@@ -64,7 +63,7 @@ func (str Str) ToZinc() string {
 }
 
 // WriteZincTo writes the object as a double-quoted string, with back-slash escapes to the given writer
-func (str Str) WriteZincTo(buf *bufio.Writer) {
+func (str *Str) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteRune('"')
 
 	for i := 0; i < len(str.val); i++ {

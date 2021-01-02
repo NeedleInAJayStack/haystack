@@ -1,5 +1,5 @@
 - Author: Jay Herron
-- Version: 0.0.0
+- Version: 0.0.1
 - License: Academic Free License version 3.0
 
 This package is a Go implementation of the Haystack API as defined in the [Project Haystack Documentation](https://project-haystack.org/doc).
@@ -52,3 +52,13 @@ These are enhancement ideas, in no particular order.
 
 ## Contributing
 Contributions are absolutely welcome! To contribute, please create a branch, commit your changes, and make a pull request.
+
+## Release Notes
+
+### v0.0.1
+- Adds JSON unmarshalling support
+- Adds Hayson marshalling support
+- Adjusts all Vals to be pointer-based
+
+### v0.0.0
+- Initial Release

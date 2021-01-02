@@ -73,6 +73,26 @@ func (dict Dict) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dict.items)
 }
 
+// UnmarshalJSON interprets the json object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
+func (dict *Dict) UnmarshalJSON(buf []byte) error {
+	var jsonMap map[string]interface{}
+	err := json.Unmarshal(buf, &jsonMap)
+	if err != nil {
+		return err
+	}
+
+	// TODO finish implementation
+
+	// for key, value := range jsonMap {
+	// }
+
+	*dict = NewDict(
+		map[string]Val{},
+	)
+
+	return nil
+}
+
 // MarshalHayson represents the object in JSON object format: "{"_kind":"dict", "<name1>":<val1>, "<name2>":<val2> ...}"
 // The optional "_kind" is always included.
 func (dict Dict) MarshalHayson() ([]byte, error) {

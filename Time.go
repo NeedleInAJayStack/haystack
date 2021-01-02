@@ -26,8 +26,8 @@ func NewTime(hour int, min int, sec int, ms int) Time {
 	}
 }
 
-// NewTimeFromString creates a Time object from a string in the format: "hh:mm:ss" or "hh:mm:ss.mmm"
-func NewTimeFromString(str string) (Time, error) {
+// NewTimeFromIso creates a Time object from a string in the format: "hh:mm:ss[.mmm]"
+func NewTimeFromIso(str string) (Time, error) {
 	parts := strings.Split(str, ":")
 
 	hour, hourErr := strconv.Atoi(parts[0])
@@ -100,22 +100,44 @@ func (time Time) Millis() int {
 	return time.ms
 }
 
-// ToZinc representes the object as: "hh:mm:ss.FFF"
+// ToZinc representes the object as: "hh:mm:ss[.mmm]"
 func (time Time) ToZinc() string {
-	return time.encode()
+	return time.toIso()
 }
 
-// MarshalJSON representes the object as: "h:hh:mm:ss.FFF"
+// MarshalJSON representes the object as: "h:hh:mm:ss[.mmm]"
 func (time Time) MarshalJSON() ([]byte, error) {
-	return json.Marshal("h:" + time.encode())
+	return json.Marshal("h:" + time.toIso())
 }
 
-// MarshalHayson representes the object as: "{\"_kind\":\"time\",\"val\":\"hh:mm:ss.FFF\""}"
+// UnmarshalJSON interprets the json value: "h:hh:mm:ss[.mmm]"
+func (time *Time) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "h:") {
+		return errors.New("Input value does not begin with h:")
+	}
+	timeStr := jsonStr[2:len(jsonStr)]
+
+	parseTime, parseErr := NewDateFromIso(timeStr)
+	if parseErr != nil {
+		return parseErr
+	}
+	*time = parseTime
+
+	return nil
+}
+
+// MarshalHayson representes the object as: "{\"_kind\":\"time\",\"val\":\"hh:mm:ss[.mmm]\""}"
 func (time Time) MarshalHayson() ([]byte, error) {
-	return []byte("{\"_kind\":\"time\",\"val\":\"" + time.encode() + "\"}"), nil
+	return []byte("{\"_kind\":\"time\",\"val\":\"" + time.toIso() + "\"}"), nil
 }
 
-func (time Time) encode() string {
+func (time Time) toIso() string {
 	result := ""
 	if time.hour < 10 {
 		result = result + "0"

@@ -341,7 +341,7 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
 }
 
 func (tokenizer *Tokenizer) date(str string) Token {
-	date, err := NewDateFromString(str)
+	date, err := NewDateFromIso(str)
 	if err != nil {
 		panic(err)
 	}
@@ -353,7 +353,7 @@ func (tokenizer *Tokenizer) time(str string, addSeconds bool) Token {
 	if addSeconds {
 		str = str + ":00"
 	}
-	time, err := NewTimeFromString(str)
+	time, err := NewTimeFromIso(str)
 	if err != nil {
 		panic(err)
 	}

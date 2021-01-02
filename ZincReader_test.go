@@ -177,9 +177,9 @@ func TestZincReader_large(t *testing.T) {
 			NewNull(),
 		},
 	)
-	date, _ := NewDateFromString("2009-12-31")
-	time1, _ := NewTimeFromString("23:59:01")
-	time2, _ := NewTimeFromString("01:02:03.123")
+	date, _ := NewDateFromIso("2009-12-31")
+	time1, _ := NewTimeFromIso("23:59:01")
+	time2, _ := NewTimeFromIso("01:02:03.123")
 	datetime, _ := NewDateTimeFromString("2009-02-03T04:05:06Z")
 	gb.AddRow( // 2009-12-31, 23:59:01, 01:02:03.123, 2009-02-03T04:05:06Z
 		[]Val{

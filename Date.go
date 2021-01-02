@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -23,8 +24,8 @@ func NewDate(year int, month int, day int) Date {
 	}
 }
 
-// NewDateFromString creates a Date object from a string in the format: "YYYY-MM-DD"
-func NewDateFromString(str string) (Date, error) {
+// NewDateFromIso creates a Date object from a string in the format: "YYYY-MM-DD"
+func NewDateFromIso(str string) (Date, error) {
 	parts := strings.Split(str, "-")
 
 	year, yearErr := strconv.Atoi(parts[0])
@@ -64,20 +65,42 @@ func (date Date) Day() int {
 
 // ToZinc representes the object as: "YYYY-MM-DD"
 func (date Date) ToZinc() string {
-	return date.encode()
+	return date.toIso()
 }
 
 // MarshalJSON representes the object as: "d:YYYY-MM-DD"
 func (date Date) MarshalJSON() ([]byte, error) {
-	return json.Marshal("d:" + date.encode())
+	return json.Marshal("d:" + date.toIso())
+}
+
+// UnmarshalJSON interprets the json value: "d:YYYY-MM-DD"
+func (date *Date) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "d:") {
+		return errors.New("Input value does not begin with d:")
+	}
+	dateStr := jsonStr[2:len(jsonStr)]
+
+	parseDate, parseErr := NewDateFromIso(dateStr)
+	if parseErr != nil {
+		return parseErr
+	}
+	*date = parseDate
+
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"date\",\"val\":\"YYYY-MM-DD\""}"
 func (date Date) MarshalHayson() ([]byte, error) {
-	return []byte("{\"_kind\":\"date\",\"val\":\"" + date.encode() + "\"}"), nil
+	return []byte("{\"_kind\":\"date\",\"val\":\"" + date.toIso() + "\"}"), nil
 }
 
-func (date Date) encode() string {
+func (date Date) toIso() string {
 	result := ""
 	result = result + fmt.Sprintf("%d", date.year) + "-"
 	if date.month < 10 {

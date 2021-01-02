@@ -1,6 +1,10 @@
 package haystack
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+	"strings"
+)
 
 // Marker is the value for a marker tag.
 type Marker struct {
@@ -19,6 +23,23 @@ func (marker Marker) ToZinc() string {
 // MarshalJSON representes the object as: "m:"
 func (marker Marker) MarshalJSON() ([]byte, error) {
 	return json.Marshal("m:")
+}
+
+// UnmarshalJSON interprets the json value: "m:"
+func (marker *Marker) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "m:") {
+		return errors.New("Input value does not begin with m:")
+	}
+
+	*marker = Marker{}
+
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"marker\"}"
@@ -43,6 +64,23 @@ func (remove Remove) ToZinc() string {
 // MarshalJSON representes the object as: "-:"
 func (remove Remove) MarshalJSON() ([]byte, error) {
 	return json.Marshal("-:")
+}
+
+// UnmarshalJSON interprets the json value: "m:"
+func (remove *Remove) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "-:") {
+		return errors.New("Input value does not begin with -:")
+	}
+
+	*remove = Remove{}
+
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"remove\"}"

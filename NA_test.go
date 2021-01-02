@@ -12,6 +12,11 @@ func TestNA_MarshalJSON(t *testing.T) {
 	valTest_MarshalJSON(na, "\"z:\"", t)
 }
 
+func TestNA_UnmarshalJSON(t *testing.T) {
+	var val NA
+	valTest_UnmarshalJSON("\"z:\"", val, "NA", t)
+}
+
 func TestNA_MarshalHayson(t *testing.T) {
 	na := NewNA()
 	valTest_MarshalHayson(na, "{\"_kind\":\"na\"}", t)

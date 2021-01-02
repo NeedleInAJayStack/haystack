@@ -6,6 +6,7 @@ import "encoding/json"
 type Val interface {
 	ToZinc() string
 	json.Marshaler
+	json.Unmarshaler
 	HaysonMarshaller
 }
 

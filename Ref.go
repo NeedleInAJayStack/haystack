@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 )
 
@@ -43,6 +44,31 @@ func (ref Ref) MarshalJSON() ([]byte, error) {
 		result = result + " " + ref.dis
 	}
 	return json.Marshal(result)
+}
+
+// UnmarshalJSON interprets the json value: "r:<id> [dis]"
+func (ref *Ref) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "r:") {
+		return errors.New("Input value does not begin with r:")
+	}
+	refStr := jsonStr[2:len(jsonStr)]
+	firstSpaceIndex := strings.Index(refStr, " ")
+
+	if firstSpaceIndex == -1 {
+		*ref = NewRef(refStr, "")
+	} else {
+		id := refStr[0:firstSpaceIndex]
+		dis := refStr[firstSpaceIndex+1 : len(refStr)]
+		*ref = NewRef(id, dis)
+	}
+
+	return nil
 }
 
 // MarshalHayson representes the object as: "{"_kind":"ref","val":<id>,["dis":<dis>]}"

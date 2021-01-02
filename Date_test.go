@@ -21,10 +21,10 @@ func TestDate_equals(t *testing.T) {
 	}
 }
 
-func TestDate_NewDateFromString(t *testing.T) {
+func TestDate_NewDateFromIso(t *testing.T) {
 	dateStr := "2020-08-17"
 	exp := NewDate(2020, 8, 17)
-	date, err := NewDateFromString(dateStr)
+	date, err := NewDateFromIso(dateStr)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,16 +34,18 @@ func TestDate_NewDateFromString(t *testing.T) {
 }
 
 func TestDate_ToZinc(t *testing.T) {
-	date := NewDate(2020, 8, 17)
-	valTest_ToZinc(date, "2020-08-17", t)
+	valTest_ToZinc(NewDate(2020, 8, 17), "2020-08-17", t)
 }
 
 func TestDate_MarshalJSON(t *testing.T) {
-	date := NewDate(2020, 8, 17)
-	valTest_MarshalJSON(date, "\"d:2020-08-17\"", t)
+	valTest_MarshalJSON(NewDate(2020, 8, 17), "\"d:2020-08-17\"", t)
+}
+
+func TestDate_UnmarshalJSON(t *testing.T) {
+	var val Date
+	valTest_UnmarshalJSON("\"d:2020-08-17\"", val, "2020-08-17", t)
 }
 
 func TestDate_MarshalHayson(t *testing.T) {
-	date := NewDate(2020, 8, 17)
-	valTest_MarshalHayson(date, "{\"_kind\":\"date\",\"val\":\"2020-08-17\"}", t)
+	valTest_MarshalHayson(NewDate(2020, 8, 17), "{\"_kind\":\"date\",\"val\":\"2020-08-17\"}", t)
 }

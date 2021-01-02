@@ -1,6 +1,8 @@
 package haystack
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestXStr_ToZinc(t *testing.T) {
 	xStr := NewXStr("Str", "hello world")
@@ -10,6 +12,11 @@ func TestXStr_ToZinc(t *testing.T) {
 func TestXStr_MarhsalJSON(t *testing.T) {
 	xStr := NewXStr("Str", "hello world")
 	valTest_MarshalJSON(xStr, "\"x:Str:hello world\"", t)
+}
+
+func TestXStr_UnmarshalJSON(t *testing.T) {
+	var val Uri
+	valTest_UnmarshalJSON("\"x:Str:hello world\"", val, "Str(\"hello world\")", t)
 }
 
 func TestXStr_MarhsalHAYSON(t *testing.T) {

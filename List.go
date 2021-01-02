@@ -31,6 +31,26 @@ func (list List) MarshalJSON() ([]byte, error) {
 	return json.Marshal(list.vals)
 }
 
+// UnmarshalJSON interprets the JSON array format: "[<val1>, <val2>, ...]"
+func (list *List) UnmarshalJSON(buf []byte) error {
+	var jsonList []interface{}
+	err := json.Unmarshal(buf, &jsonList)
+	if err != nil {
+		return err
+	}
+
+	// TODO finish implementation
+
+	// for value := range jsonList {
+	// }
+
+	*list = NewList(
+		[]Val{},
+	)
+
+	return nil
+}
+
 // MarshalHayson represents the object in JSON array format: "[<val1>, <val2>, ...]"
 func (list List) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)

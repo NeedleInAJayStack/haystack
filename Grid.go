@@ -94,6 +94,24 @@ func (grid Grid) MarshalJSON() ([]byte, error) {
 	// return json.Marshal(jsonGrid)
 }
 
+// UnmarshalJSON interprets the special JSON object format. See https://project-haystack.org/doc/Json#grid
+func (grid *Grid) UnmarshalJSON(buf []byte) error {
+	var jsonMap map[string]interface{}
+	err := json.Unmarshal(buf, &jsonMap)
+	if err != nil {
+		return err
+	}
+
+	// TODO finish implementation
+
+	// for key, value := range jsonMap {
+	// }
+
+	*grid = EmptyGrid()
+
+	return nil
+}
+
 // MarshalHayson represents the object in a special JSON object format. See https://bitbucket.org/finproducts/hayson/src/master/spec.md
 func (grid Grid) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}

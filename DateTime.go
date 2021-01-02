@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -40,7 +41,7 @@ func NewDateTimeFromString(str string) (DateTime, error) {
 		dateStr.WriteRune(curRune)
 		curRune = input.Next()
 	}
-	date, dateErr := NewDateFromString(dateStr.String())
+	date, dateErr := NewDateFromIso(dateStr.String())
 	if dateErr != nil {
 		return dateTimeDef(), dateErr
 	}
@@ -52,7 +53,7 @@ func NewDateTimeFromString(str string) (DateTime, error) {
 		timeStr.WriteRune(curRune)
 		curRune = input.Next()
 	}
-	time, timeErr := NewTimeFromString(timeStr.String())
+	time, timeErr := NewTimeFromIso(timeStr.String())
 	if timeErr != nil {
 		return dateTimeDef(), timeErr
 	}
@@ -109,7 +110,7 @@ func NewDateTimeFromString(str string) (DateTime, error) {
 	}, nil
 }
 
-func dateTimeFromGo(goTime time.Time) DateTime {
+func newDateTimeFromGo(goTime time.Time) DateTime {
 	hDate := Date{
 		year:  goTime.Year(),
 		month: int(goTime.Month()),
@@ -181,6 +182,28 @@ func (dateTime DateTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(buf.String())
 }
 
+// UnmarshalJSON interprets the json value: "t:YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+func (dateTime *DateTime) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "t:") {
+		return errors.New("Input value does not begin with t:")
+	}
+	dateTimeStr := jsonStr[2:len(jsonStr)]
+
+	parseDateTime, parseErr := NewDateTimeFromStr(dateTimeStr)
+	if parseErr != nil {
+		return parseErr
+	}
+	*dateTime = parseDateTime
+
+	return nil
+}
+
 // MarshalHayson representes the object as: "{\"_kind\":\"dateTime\",\"val\":\"YYYY-MM-DD'T'hh:mm:ss.FFFz\",\"tz\":\"zzzz\"}"
 func (dateTime DateTime) MarshalHayson() ([]byte, error) {
 	buf := strings.Builder{}
@@ -193,9 +216,9 @@ func (dateTime DateTime) MarshalHayson() ([]byte, error) {
 }
 
 func (dateTime *DateTime) encodeTo(buf *strings.Builder, includeTz bool) {
-	buf.WriteString(dateTime.date.encode())
+	buf.WriteString(dateTime.date.toIso())
 	buf.WriteRune('T')
-	buf.WriteString(dateTime.time.encode())
+	buf.WriteString(dateTime.time.toIso())
 	if dateTime.tzOffset == 0 {
 		buf.WriteRune('Z')
 	} else {

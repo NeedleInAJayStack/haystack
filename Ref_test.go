@@ -5,25 +5,23 @@ import (
 )
 
 func TestRef_ToZinc(t *testing.T) {
-	refNoDis := NewRef("123-abc", "")
-	valTest_ToZinc(refNoDis, "@123-abc", t)
-
-	refDis := NewRef("123-abc", "Name")
-	valTest_ToZinc(refDis, "@123-abc \"Name\"", t)
+	valTest_ToZinc(NewRef("123-abc", ""), "@123-abc", t)
+	valTest_ToZinc(NewRef("123-abc", "Name"), "@123-abc \"Name\"", t)
 }
 
 func TestRef_MarshalJSON(t *testing.T) {
-	refNoDis := NewRef("123-abc", "")
-	valTest_MarshalJSON(refNoDis, "\"r:123-abc\"", t)
+	valTest_MarshalJSON(NewRef("123-abc", ""), "\"r:123-abc\"", t)
+	valTest_MarshalJSON(NewRef("123-abc", "Name"), "\"r:123-abc Name\"", t)
+}
 
-	refDis := NewRef("123-abc", "Name")
-	valTest_MarshalJSON(refDis, "\"r:123-abc Name\"", t)
+func TestRef_UnmarshalJSON(t *testing.T) {
+	var refNoDis Ref
+	valTest_UnmarshalJSON("\"r:123-abc\"", refNoDis, "@123-abc", t)
+	var refDis Ref
+	valTest_UnmarshalJSON("\"r:123-abc Name\"", refNoDis, "@123-abc \"Name\"", t)
 }
 
 func TestRef_MarshalHayson(t *testing.T) {
-	refNoDis := NewRef("123-abc", "")
-	valTest_MarshalHayson(refNoDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\"}", t)
-
-	refDis := NewRef("123-abc", "Name")
-	valTest_MarshalHayson(refDis, "{\"_kind\":\"ref\",\"val\":\"123-abc\",\"dis\":\"Name\"}", t)
+	valTest_MarshalHayson(NewRef("123-abc", ""), "{\"_kind\":\"ref\",\"val\":\"123-abc\"}", t)
+	valTest_MarshalHayson(NewRef("123-abc", "Name"), "{\"_kind\":\"ref\",\"val\":\"123-abc\",\"dis\":\"Name\"}", t)
 }

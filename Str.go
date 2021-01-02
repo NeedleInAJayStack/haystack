@@ -31,6 +31,24 @@ func (str Str) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// UnmarshalJSON interprets the json value: "<val>", or "s:<val>" if val contains a colon
+func (str *Str) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(jsonStr, "s:") {
+		jsonStr = jsonStr[2:len(jsonStr)]
+	}
+
+	*str = Str{
+		val: jsonStr,
+	}
+	return nil
+}
+
 // MarshalHayson representes the object as "<val>"
 func (str Str) MarshalHayson() ([]byte, error) {
 	return json.Marshal(str.val)

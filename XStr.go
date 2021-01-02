@@ -2,6 +2,7 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 )
 
@@ -45,6 +46,26 @@ func (xStr XStr) MarshalJSON() ([]byte, error) {
 	result = result + xStr.val
 
 	return json.Marshal(result)
+}
+
+// UnmarshalJSON interprets the json value: "x:<valType>:<val>"
+func (xStr *XStr) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "x:") {
+		return errors.New("Input value does not begin with x:")
+	}
+	jsonSplit := strings.Split(jsonStr[2:len(jsonStr)], ":")
+
+	*xStr = XStr{
+		valType: jsonSplit[0],
+		val:     jsonSplit[1],
+	}
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"xstr\",\"type\":\"<valType>\",\"val\":\"<val>\"}"

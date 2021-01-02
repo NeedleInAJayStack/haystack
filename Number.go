@@ -2,8 +2,10 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +20,27 @@ func NewNumber(val float64, unit string) Number {
 	return Number{val: val, unit: unit}
 }
 
+// newNumberFromStr creates a new number from a string. The string representation must have a space between the number and unit
+func newNumberFromStr(str string) (Number, error) {
+	if str == "INF" {
+		return NewNumber(math.Inf(1), ""), nil
+	} else if str == "-INF" {
+		return NewNumber(math.Inf(-1), ""), nil
+	} else if str == "NaN" {
+		return NewNumber(math.NaN, ""), nil
+	} else {
+		val, valErr := strconv.ParseFloat(numberSplit[0], 64)
+		if valErr != nil {
+			return nil, valErr
+		}
+		unit := ""
+		if len(numberSplit) > 1 {
+			unit = numberSplit[1]
+		}
+		return NewNumber(val, unit), nil
+	}
+}
+
 // Float returns the numerical value
 func (number Number) Float() float64 {
 	return number.val
@@ -30,12 +53,34 @@ func (number Number) Unit() string {
 
 // ToZinc representes the object as: "<val>[unit]"
 func (number Number) ToZinc() string {
-	return number.encode(false)
+	return number.toStr(false)
 }
 
 // MarshalJSON representes the object as: "n:<val> [unit]"
 func (number Number) MarshalJSON() ([]byte, error) {
-	return json.Marshal("n:" + number.encode(true))
+	return json.Marshal("n:" + number.toStr(true))
+}
+
+// UnmarshalJSON interprets the json value: "n:<val> [unit]"
+func (number *Number) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "n:") {
+		return errors.New("Input value does not begin with n:")
+	}
+	numberStr := jsonStr[2:len(jsonStr)]
+
+	parseNumber, parseErr := newNumberFromStr(numberStr)
+	if parseErr != nil {
+		return parseErr
+	}
+	*number = parseNumber
+
+	return nil
 }
 
 // MarshalHayson representes the object as: "{"_kind":"number","val":<val>,["unit":<unit>]}"
@@ -61,7 +106,7 @@ func (number Number) MarshalHayson() ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
-func (number Number) encode(spaceBeforeUnit bool) string {
+func (number Number) toStr(spaceBeforeUnit bool) string {
 	if math.IsInf(number.val, 1) {
 		return "INF"
 	} else if math.IsInf(number.val, -1) {

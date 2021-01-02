@@ -2,8 +2,10 @@ package haystack
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -45,6 +47,36 @@ func (coord Coord) ToZinc() string {
 func (coord Coord) MarshalJSON() ([]byte, error) {
 	result := "c:" + fmt.Sprintf("%g", coord.lat) + "," + fmt.Sprintf("%g", coord.lng)
 	return json.Marshal(result)
+}
+
+// UnmarshalJSON interprets the json value: "c:<lat>,<lng>"
+func (coord *Coord) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(jsonStr, "c:") {
+		return errors.New("Input value does not begin with c:")
+	}
+	coordSplit := strings.Split(jsonStr[2:len(jsonStr)], ",")
+
+	lat, latErr := strconv.ParseFloat(coordSplit[0], 64)
+	if latErr != nil {
+		return latErr
+	}
+	lng, lngErr := strconv.ParseFloat(coordSplit[1], 64)
+	if lngErr != nil {
+		return lngErr
+	}
+
+	*coord = Coord{
+		lat: lat,
+		lng: lng,
+	}
+
+	return nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"coord\",\"lat\":<lat>,\"lng\":<lng>}"

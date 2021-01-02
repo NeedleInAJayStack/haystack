@@ -26,7 +26,7 @@ func (bin Bin) MarshalJSON() ([]byte, error) {
 	return json.Marshal("b:" + bin.mime)
 }
 
-// UnmarshalJSON interprets the json value: "u:<val>"
+// UnmarshalJSON interprets the json value: "b:<val>"
 func (bin *Bin) UnmarshalJSON(buf []byte) error {
 	var jsonStr string
 	err := json.Unmarshal(buf, &jsonStr)

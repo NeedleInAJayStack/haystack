@@ -28,6 +28,19 @@ func (id Id) MarshalJSON() ([]byte, error) {
 	return json.Marshal(id.val)
 }
 
+// UnmarshalJSON interprets the json value: "<val>"
+func (id *Id) UnmarshalJSON(buf []byte) error {
+	var jsonStr string
+	err := json.Unmarshal(buf, &jsonStr)
+	if err != nil {
+		return err
+	}
+
+	*id = NewId(jsonStr)
+
+	return nil
+}
+
 // MarshalHayson representes the object as: "<val>"
 func (id Id) MarshalHayson() ([]byte, error) {
 	return json.Marshal(id.val)

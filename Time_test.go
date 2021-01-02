@@ -21,10 +21,10 @@ func TestTime_equals(t *testing.T) {
 	}
 }
 
-func TestTime_NewTimeFromString(t *testing.T) {
+func TestTime_NewTimeFromIso(t *testing.T) {
 	noMs := "23:07:10"
 	expNoMs := NewTime(23, 7, 10, 0)
-	timeNoMs, err := NewTimeFromString(noMs)
+	timeNoMs, err := NewTimeFromIso(noMs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,7 +34,7 @@ func TestTime_NewTimeFromString(t *testing.T) {
 
 	ms := "23:07:10.957"
 	expMs := NewTime(23, 7, 10, 957)
-	timeMs, err := NewTimeFromString(ms)
+	timeMs, err := NewTimeFromIso(ms)
 	if err != nil {
 		t.Error(err)
 	}
@@ -44,43 +44,33 @@ func TestTime_NewTimeFromString(t *testing.T) {
 }
 
 func TestTime_ToZinc(t *testing.T) {
-	timeNoMs := NewTime(23, 7, 10, 0)
-	valTest_ToZinc(timeNoMs, "23:07:10", t)
-
-	timeMs := NewTime(23, 7, 10, 957)
-	valTest_ToZinc(timeMs, "23:07:10.957", t)
-
-	timeOnesMs := NewTime(23, 7, 10, 2)
-	valTest_ToZinc(timeOnesMs, "23:07:10.002", t)
-
-	timeTensMs := NewTime(23, 7, 10, 56)
-	valTest_ToZinc(timeTensMs, "23:07:10.056", t)
+	valTest_ToZinc(NewTime(23, 7, 10, 0), "23:07:10", t)
+	valTest_ToZinc(NewTime(23, 7, 10, 2), "23:07:10.002", t)
+	valTest_ToZinc(NewTime(23, 7, 10, 56), "23:07:10.056", t)
+	valTest_ToZinc(NewTime(23, 7, 10, 957), "23:07:10.957", t)
 }
 
 func TestTime_MarshalJSON(t *testing.T) {
-	timeNoMs := NewTime(23, 7, 10, 0)
-	valTest_MarshalJSON(timeNoMs, "\"h:23:07:10\"", t)
+	valTest_MarshalJSON(NewTime(23, 7, 10, 0), "\"h:23:07:10\"", t)
+	valTest_MarshalJSON(NewTime(23, 7, 10, 2), "\"h:23:07:10.002\"", t)
+	valTest_MarshalJSON(NewTime(23, 7, 10, 56), "\"h:23:07:10.056\"", t)
+	valTest_MarshalJSON(NewTime(23, 7, 10, 957), "\"h:23:07:10.957\"", t)
+}
 
-	timeMs := NewTime(23, 7, 10, 957)
-	valTest_MarshalJSON(timeMs, "\"h:23:07:10.957\"", t)
-
-	timeOnesMs := NewTime(23, 7, 10, 2)
-	valTest_MarshalJSON(timeOnesMs, "\"h:23:07:10.002\"", t)
-
-	timeTensMs := NewTime(23, 7, 10, 56)
-	valTest_MarshalJSON(timeTensMs, "\"h:23:07:10.056\"", t)
+func TestTime_UnmarshalJSON(t *testing.T) {
+	var noMs Date
+	valTest_UnmarshalJSON("\"h:23:07:10\"", noMs, "23:07:10", t)
+	var oneMs Date
+	valTest_UnmarshalJSON("\"h:23:07:10.002\"", oneMs, "23:07:10.002", t)
+	var tenMs Date
+	valTest_UnmarshalJSON("\"h:23:07:10.056\"", tenMs, "23:07:10.056", t)
+	var hundredMs Date
+	valTest_UnmarshalJSON("\"h:23:07:10.957\"", hundredMs, "23:07:10.957", t)
 }
 
 func TestTime_MarshalHayson(t *testing.T) {
-	timeNoMs := NewTime(23, 7, 10, 0)
-	valTest_MarshalHayson(timeNoMs, "{\"_kind\":\"time\",\"val\":\"23:07:10\"}", t)
-
-	timeMs := NewTime(23, 7, 10, 957)
-	valTest_MarshalHayson(timeMs, "{\"_kind\":\"time\",\"val\":\"23:07:10.957\"}", t)
-
-	timeOnesMs := NewTime(23, 7, 10, 2)
-	valTest_MarshalHayson(timeOnesMs, "{\"_kind\":\"time\",\"val\":\"23:07:10.002\"}", t)
-
-	timeTensMs := NewTime(23, 7, 10, 56)
-	valTest_MarshalHayson(timeTensMs, "{\"_kind\":\"time\",\"val\":\"23:07:10.056\"}", t)
+	valTest_MarshalHayson(NewTime(23, 7, 10, 0), "{\"_kind\":\"time\",\"val\":\"23:07:10\"}", t)
+	valTest_MarshalHayson(NewTime(23, 7, 10, 2), "{\"_kind\":\"time\",\"val\":\"23:07:10.002\"}", t)
+	valTest_MarshalHayson(NewTime(23, 7, 10, 56), "{\"_kind\":\"time\",\"val\":\"23:07:10.056\"}", t)
+	valTest_MarshalHayson(NewTime(23, 7, 10, 957), "{\"_kind\":\"time\",\"val\":\"23:07:10.957\"}", t)
 }

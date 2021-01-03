@@ -11,7 +11,7 @@ import (
 type Val interface {
 	ToZinc() string
 	json.Marshaler
-	// json.Unmarshaler
+	json.Unmarshaler
 	MarshalHayson() ([]byte, error)
 }
 

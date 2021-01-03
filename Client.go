@@ -14,11 +14,11 @@ import (
 
 // Client models a client connection to a server using the Haystack API.
 type Client struct {
-	httpClient  *http.Client
-	uri         string
-	username    string
-	password    string
-	authHeaders map[string]string
+	clientHttp clientHttp
+	uri        string
+	username   string
+	password   string
+	auth       string
 }
 
 var encoding = base64.RawURLEncoding
@@ -36,118 +36,23 @@ func NewClient(uri string, username string, password string) *Client {
 	timeout, _ := time.ParseDuration("1m")
 
 	return &Client{
-		httpClient:  &http.Client{Timeout: timeout},
-		uri:         uri,
-		username:    username,
-		password:    password,
-		authHeaders: map[string]string{},
+		clientHttp: &clientHttpImpl{
+			&http.Client{Timeout: timeout},
+		},
+		uri:      uri,
+		username: username,
+		password: password,
+		auth:     "",
 	}
 }
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	helloAuth, helloErr := client.sendHello()
-	if helloErr != nil {
-		return helloErr
+	auth, err := client.clientHttp.open(client.uri, client.username, client.password)
+	if err != nil {
+		return err
 	}
-
-	// TODO Expand support to multiple auth scheme returns
-	// TODO Add support for non-scram auth
-	if helloAuth.scheme != "scram" {
-		return errors.New("Auth scheme not supported: " + helloAuth.scheme)
-	}
-
-	handshakeToken := helloAuth.get("handshakeToken")
-	hashName := helloAuth.get("hash")
-
-	scramErr := client.openScram(handshakeToken, hashName)
-	return scramErr
-}
-
-// sendHello sends a hello message and returns the value of the WWW-Authenticate header
-func (client *Client) sendHello() (authMsg, error) {
-	req, _ := http.NewRequest("get", client.uri+"about", nil)
-	reqAuth := authMsg{
-		scheme: "hello",
-		attrs: map[string]string{
-			"username": encoding.EncodeToString([]byte(client.username)),
-		},
-	}
-	client.prepare(req)
-	req.Header.Add("Authorization", reqAuth.toString())
-
-	resp, respErr := client.httpClient.Do(req)
-	if respErr != nil {
-		return authMsg{}, respErr
-	}
-	if resp.StatusCode != 401 {
-		return authMsg{}, NewHTTPError(resp.StatusCode, "Hello "+resp.Status)
-	}
-	resp.Body.Close()
-	respAuthString := resp.Header.Get("WWW-Authenticate")
-	if respAuthString == "" {
-		return authMsg{}, NewAuthError("Missing required header: WWW-Authenticate")
-	}
-	return authMsgFromString(respAuthString), nil
-}
-
-// openScram opens a scram connection. 'hashName' only supports "SHA-256" and "SHA-512"
-func (client *Client) openScram(handshakeToken string, hashName string) error {
-	var hash func() hash.Hash
-	if hashName == "SHA-256" {
-		hash = sha256.New
-	} else if hashName == "SHA-512" {
-		hash = sha512.New
-	} else { // Only support SHA-256 and SHA-512
-		return NewAuthError("Auth hash not supported: " + hashName)
-	}
-
-	var in []byte
-	var scram = NewScram(hash, client.username, client.password)
-	var authToken string
-	for !scram.Step(in) {
-		out := scram.Out()
-
-		req, _ := http.NewRequest("get", client.uri+"about", nil)
-		reqAuth := authMsg{
-			scheme: "scram",
-			attrs: map[string]string{
-				"handshakeToken": handshakeToken,
-				"data":           encoding.EncodeToString(out),
-			},
-		}
-		client.prepare(req)
-		req.Header.Add("Authorization", reqAuth.toString())
-		resp, _ := client.httpClient.Do(req)
-
-		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
-			return NewHTTPError(resp.StatusCode, resp.Status)
-		}
-		respAuthString := resp.Header.Get("WWW-Authenticate")
-		if respAuthString == "" { // This header switches to Authentication-Info on success
-			respAuthString = resp.Header.Get("Authentication-Info")
-		}
-		respAuth := authMsgFromString(respAuthString)
-
-		handshakeToken = respAuth.get("handshakeToken") // it grows over time
-		dataEnc := respAuth.get("data")
-		authToken = respAuth.get("authToken") // This will only be set on the last message
-		data, _ := encoding.DecodeString(dataEnc)
-
-		in = data
-	}
-	if scram.Err() != nil {
-		return scram.Err()
-	}
-
-	finalAuth := authMsg{
-		scheme: "bearer",
-		attrs: map[string]string{ // Only keep the authToken
-			"authToken": authToken,
-		},
-	}
-	client.authHeaders["Authorization"] = finalAuth.toString()
-
+	client.auth = auth
 	return nil
 }
 
@@ -244,13 +149,13 @@ func (client *Client) PointWrite(id *Ref, level int, val Val, who string, durati
 }
 
 // HisReadAbsDate calls the 'hisRead' op with an input absolute Date range.
-func (client *Client) HisReadAbsDate(id *Ref, from Date, to Date) (*Grid, error) {
+func (client *Client) HisReadAbsDate(id *Ref, from *Date, to *Date) (*Grid, error) {
 	rangeString := from.ToZinc() + "," + to.ToZinc()
 	return client.HisRead(id, rangeString)
 }
 
 // HisReadAbsDateTime calls the 'hisRead' op with an input absolute DateTime range.
-func (client *Client) HisReadAbsDateTime(id *Ref, from DateTime, to DateTime) (*Grid, error) {
+func (client *Client) HisReadAbsDateTime(id *Ref, from *DateTime, to *DateTime) (*Grid, error) {
 	rangeString := from.ToZinc() + "," + to.ToZinc()
 	return client.HisRead(id, rangeString)
 }
@@ -304,7 +209,8 @@ func (client *Client) Eval(expr string) (*Grid, error) {
 // Call executes the given operation. The request grid is posted to the client URI and the response is parsed as a grid.
 func (client *Client) Call(op string, reqGrid *Grid) (*Grid, error) {
 	req := reqGrid.ToZinc()
-	resp, err := client.postString(op, req)
+
+	resp, err := client.clientHttp.postString(client.uri, client.auth, op, req)
 	if err != nil {
 		return EmptyGrid(), err
 	}
@@ -321,32 +227,6 @@ func (client *Client) Call(op string, reqGrid *Grid) (*Grid, error) {
 	default:
 		return EmptyGrid(), errors.New("Result was not a grid")
 	}
-}
-
-func (client *Client) postString(op string, reqBody string) (string, error) {
-	reqReader := strings.NewReader(reqBody)
-	req, _ := http.NewRequest("post", client.uri+op, reqReader)
-	client.prepare(req)
-	req.Header.Add("Connection", "Close")
-	resp, respErr := client.httpClient.Do(req)
-	if respErr != nil {
-		return "", respErr
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", NewHTTPError(resp.StatusCode, resp.Status)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	return string(body), err
-}
-
-func (client *Client) prepare(req *http.Request) {
-	for name, val := range client.authHeaders {
-		req.Header.Add(name, val)
-	}
-	req.Header.Add("User-Agent", userAgent)
-	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
-	req.Header.Add("Accept", "text/zinc")
 }
 
 // authMsg models a message in the Haystack authorization header format.
@@ -404,6 +284,128 @@ func (authMsg *authMsg) toString() string {
 		builder.WriteString(val)
 	}
 	return builder.String()
+}
+
+// clientHttp is defined as an interface to allow dependency-injection testing
+type clientHttp interface {
+	open(uri string, username string, password string) (string, error)
+	postString(uri string, auth string, op string, reqBody string) (string, error)
+}
+
+type clientHttpImpl struct {
+	httpClient *http.Client
+}
+
+func (this *clientHttpImpl) open(uri string, username string, password string) (string, error) {
+	req, _ := http.NewRequest("get", uri+"about", nil)
+	reqAuth := authMsg{
+		scheme: "hello",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(username)),
+		},
+	}
+	this.prepare(req, reqAuth.toString())
+
+	resp, respErr := this.httpClient.Do(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	if resp.StatusCode != 401 {
+		NewHTTPError(resp.StatusCode, "Hello "+resp.Status)
+	}
+	resp.Body.Close()
+	respAuthString := resp.Header.Get("WWW-Authenticate")
+	if respAuthString == "" {
+		NewAuthError("Missing required header: WWW-Authenticate")
+	}
+	helloAuth := authMsgFromString(respAuthString)
+
+	// TODO Expand support to multiple auth scheme returns
+	// TODO Add support for non-scram auth
+	if helloAuth.scheme != "scram" {
+		return "", errors.New("Auth scheme not supported: " + helloAuth.scheme)
+	}
+
+	handshakeToken := helloAuth.get("handshakeToken")
+	hashName := helloAuth.get("hash")
+	var hash func() hash.Hash
+	if hashName == "SHA-256" {
+		hash = sha256.New
+	} else if hashName == "SHA-512" {
+		hash = sha512.New
+	} else { // Only support SHA-256 and SHA-512
+		return "", NewAuthError("Auth hash not supported: " + hashName)
+	}
+
+	var in []byte
+	var scram = NewScram(hash, username, password)
+	var authToken string
+	for !scram.Step(in) {
+		out := scram.Out()
+
+		req, _ := http.NewRequest("get", uri+"about", nil)
+		reqAuth := authMsg{
+			scheme: "scram",
+			attrs: map[string]string{
+				"handshakeToken": handshakeToken,
+				"data":           encoding.EncodeToString(out),
+			},
+		}
+		this.prepare(req, reqAuth.toString())
+		resp, _ := this.httpClient.Do(req)
+
+		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
+			return "", NewHTTPError(resp.StatusCode, resp.Status)
+		}
+		respAuthString := resp.Header.Get("WWW-Authenticate")
+		if respAuthString == "" { // This header switches to Authentication-Info on success
+			respAuthString = resp.Header.Get("Authentication-Info")
+		}
+		respAuth := authMsgFromString(respAuthString)
+
+		handshakeToken = respAuth.get("handshakeToken") // it grows over time
+		dataEnc := respAuth.get("data")
+		authToken = respAuth.get("authToken") // This will only be set on the last message
+		data, _ := encoding.DecodeString(dataEnc)
+
+		in = data
+	}
+	if scram.Err() != nil {
+		return "", scram.Err()
+	}
+
+	finalAuth := authMsg{
+		scheme: "bearer",
+		attrs: map[string]string{ // Only keep the authToken
+			"authToken": authToken,
+		},
+	}
+	return finalAuth.toString(), nil
+}
+
+func (this *clientHttpImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {
+	reqReader := strings.NewReader(reqBody)
+	req, _ := http.NewRequest("post", uri+op, reqReader)
+	this.prepare(req, auth)
+	req.Header.Add("Connection", "Close")
+	resp, respErr := this.httpClient.Do(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", NewHTTPError(resp.StatusCode, resp.Status)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	return string(body), err
+}
+
+func (this *clientHttpImpl) prepare(req *http.Request, auth string) {
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
+	req.Header.Add("Accept", "text/zinc")
 }
 
 /////////////////////

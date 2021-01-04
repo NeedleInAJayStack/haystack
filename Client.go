@@ -14,7 +14,7 @@ import (
 
 // Client models a client connection to a server using the Haystack API.
 type Client struct {
-	clientHttp clientHttp
+	clientHTTP clientHTTP
 	uri        string
 	username   string
 	password   string
@@ -36,7 +36,7 @@ func NewClient(uri string, username string, password string) *Client {
 	timeout, _ := time.ParseDuration("1m")
 
 	return &Client{
-		clientHttp: &clientHttpImpl{
+		clientHTTP: &clientHTTPImpl{
 			&http.Client{Timeout: timeout},
 		},
 		uri:      uri,
@@ -48,7 +48,7 @@ func NewClient(uri string, username string, password string) *Client {
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	auth, err := client.clientHttp.open(client.uri, client.username, client.password)
+	auth, err := client.clientHTTP.open(client.uri, client.username, client.password)
 	if err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func (client *Client) Eval(expr string) (*Grid, error) {
 func (client *Client) Call(op string, reqGrid *Grid) (*Grid, error) {
 	req := reqGrid.ToZinc()
 
-	resp, err := client.clientHttp.postString(client.uri, client.auth, op, req)
+	resp, err := client.clientHTTP.postString(client.uri, client.auth, op, req)
 	if err != nil {
 		return EmptyGrid(), err
 	}
@@ -286,17 +286,17 @@ func (authMsg *authMsg) toString() string {
 	return builder.String()
 }
 
-// clientHttp is defined as an interface to allow dependency-injection testing
-type clientHttp interface {
+// clientHTTP is defined as an interface to allow dependency-injection testing
+type clientHTTP interface {
 	open(uri string, username string, password string) (string, error)
 	postString(uri string, auth string, op string, reqBody string) (string, error)
 }
 
-type clientHttpImpl struct {
+type clientHTTPImpl struct {
 	httpClient *http.Client
 }
 
-func (this *clientHttpImpl) open(uri string, username string, password string) (string, error) {
+func (clientHTTP *clientHTTPImpl) open(uri string, username string, password string) (string, error) {
 	req, _ := http.NewRequest("get", uri+"about", nil)
 	reqAuth := authMsg{
 		scheme: "hello",
@@ -304,9 +304,9 @@ func (this *clientHttpImpl) open(uri string, username string, password string) (
 			"username": encoding.EncodeToString([]byte(username)),
 		},
 	}
-	this.prepare(req, reqAuth.toString())
+	clientHTTP.prepare(req, reqAuth.toString())
 
-	resp, respErr := this.httpClient.Do(req)
+	resp, respErr := clientHTTP.httpClient.Do(req)
 	if respErr != nil {
 		return "", respErr
 	}
@@ -351,8 +351,8 @@ func (this *clientHttpImpl) open(uri string, username string, password string) (
 				"data":           encoding.EncodeToString(out),
 			},
 		}
-		this.prepare(req, reqAuth.toString())
-		resp, _ := this.httpClient.Do(req)
+		clientHTTP.prepare(req, reqAuth.toString())
+		resp, _ := clientHTTP.httpClient.Do(req)
 
 		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
 			return "", NewHTTPError(resp.StatusCode, resp.Status)
@@ -383,12 +383,12 @@ func (this *clientHttpImpl) open(uri string, username string, password string) (
 	return finalAuth.toString(), nil
 }
 
-func (this *clientHttpImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {
+func (clientHTTP *clientHTTPImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {
 	reqReader := strings.NewReader(reqBody)
 	req, _ := http.NewRequest("post", uri+op, reqReader)
-	this.prepare(req, auth)
+	clientHTTP.prepare(req, auth)
 	req.Header.Add("Connection", "Close")
-	resp, respErr := this.httpClient.Do(req)
+	resp, respErr := clientHTTP.httpClient.Do(req)
 	if respErr != nil {
 		return "", respErr
 	}
@@ -401,7 +401,7 @@ func (this *clientHttpImpl) postString(uri string, auth string, op string, reqBo
 	return string(body), err
 }
 
-func (this *clientHttpImpl) prepare(req *http.Request, auth string) {
+func (clientHTTP *clientHTTPImpl) prepare(req *http.Request, auth string) {
 	req.Header.Add("Authorization", auth)
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")

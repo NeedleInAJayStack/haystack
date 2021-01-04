@@ -66,7 +66,7 @@ func coordFromJSON(jsonStr string) (*Coord, error) {
 	if !strings.HasPrefix(jsonStr, "c:") {
 		return nil, errors.New("Input value does not begin with 'c:'")
 	}
-	coordSplit := strings.Split(jsonStr[2:len(jsonStr)], ",")
+	coordSplit := strings.Split(jsonStr[2:], ",")
 
 	lat, latErr := strconv.ParseFloat(coordSplit[0], 64)
 	if latErr != nil {

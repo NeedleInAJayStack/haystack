@@ -46,7 +46,7 @@ func (str *Str) UnmarshalJSON(buf []byte) error {
 
 func strFromJSON(jsonStr string) (*Str, error) {
 	if strings.HasPrefix(jsonStr, "s:") {
-		jsonStr = jsonStr[2:len(jsonStr)]
+		jsonStr = jsonStr[2:]
 	}
 
 	return NewStr(jsonStr), nil

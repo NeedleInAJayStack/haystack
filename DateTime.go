@@ -194,7 +194,7 @@ func dateTimeFromJSON(jsonStr string) (*DateTime, error) {
 	if !strings.HasPrefix(jsonStr, "t:") {
 		return nil, errors.New("Input value does not begin with 't:'")
 	}
-	dateTimeStr := jsonStr[2:len(jsonStr)]
+	dateTimeStr := jsonStr[2:]
 
 	parseDateTime, parseErr := NewDateTimeFromString(dateTimeStr)
 	if parseErr != nil {

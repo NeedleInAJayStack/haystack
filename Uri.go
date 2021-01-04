@@ -42,9 +42,9 @@ func (uri *Uri) UnmarshalJSON(buf []byte) error {
 
 func uriFromJSON(jsonStr string) (*Uri, error) {
 	if !strings.HasPrefix(jsonStr, "u:") {
-		return nil, errors.New("Input value does not begin with u:")
+		return nil, errors.New("Input value does not begin with 'u:'")
 	}
-	val := jsonStr[2:len(jsonStr)]
+	val := jsonStr[2:]
 
 	return NewUri(val), nil
 }

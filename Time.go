@@ -122,7 +122,7 @@ func timeFromJSON(jsonStr string) (*Time, error) {
 	if !strings.HasPrefix(jsonStr, "h:") {
 		return nil, errors.New("Input value does not begin with 'h:'")
 	}
-	timeStr := jsonStr[2:len(jsonStr)]
+	timeStr := jsonStr[2:]
 
 	return NewTimeFromIso(timeStr)
 }

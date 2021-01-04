@@ -43,7 +43,7 @@ func binFromJSON(jsonStr string) (*Bin, error) {
 	if !strings.HasPrefix(jsonStr, "b:") {
 		return nil, errors.New("Input value does not begin with 'b:'")
 	}
-	mime := jsonStr[2:len(jsonStr)]
+	mime := jsonStr[2:]
 	return NewBin(mime), nil
 }
 

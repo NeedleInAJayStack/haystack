@@ -371,7 +371,7 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) Token {
 		return NUMBER
 	} else {
 		numberStr := str[0:unitIndex]
-		unit := str[unitIndex:len(str)]
+		unit := str[unitIndex:]
 		number, err := strconv.ParseFloat(numberStr, 64)
 		if err != nil {
 			panic(err)

@@ -65,7 +65,7 @@ func xStrFromJSON(jsonStr string) (*XStr, error) {
 	if !strings.HasPrefix(jsonStr, "x:") {
 		return nil, errors.New("Input value does not begin with 'x:'")
 	}
-	jsonSplit := strings.Split(jsonStr[2:len(jsonStr)], ":")
+	jsonSplit := strings.Split(jsonStr[2:], ":")
 
 	return NewXStr(jsonSplit[0], jsonSplit[1]), nil
 }

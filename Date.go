@@ -86,7 +86,7 @@ func dateFromJSON(jsonStr string) (*Date, error) {
 	if !strings.HasPrefix(jsonStr, "d:") {
 		return nil, errors.New("Input value does not begin with 'd:'")
 	}
-	dateStr := jsonStr[2:len(jsonStr)]
+	dateStr := jsonStr[2:]
 
 	parseDate, parseErr := NewDateFromIso(dateStr)
 	if parseErr != nil {

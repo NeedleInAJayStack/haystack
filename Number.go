@@ -79,7 +79,7 @@ func numberFromJSON(jsonStr string) (*Number, error) {
 	if !strings.HasPrefix(jsonStr, "n:") {
 		return nil, errors.New("Input value does not begin with 'n:'")
 	}
-	numberStr := jsonStr[2:len(jsonStr)]
+	numberStr := jsonStr[2:]
 
 	return newNumberFromStr(numberStr)
 }

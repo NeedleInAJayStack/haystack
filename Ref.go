@@ -63,14 +63,14 @@ func refFromJSON(jsonStr string) (*Ref, error) {
 	if !strings.HasPrefix(jsonStr, "r:") {
 		return nil, errors.New("Input value does not begin with 'r:'")
 	}
-	refStr := jsonStr[2:len(jsonStr)]
+	refStr := jsonStr[2:]
 	firstSpaceIndex := strings.Index(refStr, " ")
 
 	if firstSpaceIndex == -1 {
 		return NewRef(refStr, ""), nil
 	} else {
-		id := refStr[0:firstSpaceIndex]
-		dis := refStr[firstSpaceIndex+1 : len(refStr)]
+		id := refStr[:firstSpaceIndex]
+		dis := refStr[firstSpaceIndex+1:]
 		return NewRef(id, dis), nil
 	}
 }

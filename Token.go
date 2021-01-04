@@ -1,50 +1,85 @@
 package haystack
 
-// Models a Zinc token. See https://project-haystack.org/doc/Zinc
+// Token categorizes the contents of a Zinc string into specific literals or syntax objects. See https://project-haystack.org/doc/Zinc
 type Token int
 
 const (
 	// Special tokens
 
+	// DEF is the default value token
 	DEF Token = iota
+	// EOF indicates that the end of the input has been reached
 	EOF
 
 	// Literals
+
 	literalBegin
+	// ID indicates non-string literal text, typically variable names, etc.
 	ID
+	// NUMBER indicates a Number literal
 	NUMBER
+	// STR indicates a Str literal
 	STR
+	// REF indicates a Ref literal
 	REF
+	// URI indicates a Uri literal
 	URI
+	// DATE indicates a Date literal
 	DATE
+	// TIME indicates a Time literal
 	TIME
+	// DATETIME indicates a DateTime literal
 	DATETIME
 	literalEnd
 
 	// Syntax
+
 	syntaxBegin
+	// COLON indicates ':'
 	COLON
+	// COMMA indicates ','
 	COMMA
+	// SEMICOLON indicates ';'
 	SEMICOLON
+	// MINUS indicates '-'
 	MINUS
+	// EQ indicates '=='
 	EQ
+	// NOTEQ indicates '!='
 	NOTEQ
+	// LT indicates '<'
 	LT
+	// LT2 indicates '<<'
 	LT2
+	// LTEQ indicates '<='
 	LTEQ
+	// GT indicates '>'
 	GT
+	// GT2 inciates '>>'
 	GT2
+	// GTEQ indicates '>='
 	GTEQ
+	// LBRACKET indicates '['
 	LBRACKET
+	// RBRACKET indicates ']'
 	RBRACKET
+	// LBRACE indicates '{'
 	LBRACE
+	// RBRACE indicates '}'
 	RBRACE
+	// LPAREN indicates '('
 	LPAREN
+	// RPAREN indicates ')'
 	RPAREN
+	// ARROW indicates '->'
 	ARROW
+	// SLASH indicates '/'
 	SLASH
+	// ASSIGN indicates '='
 	ASSIGN
+	// BANG indicates '!'
 	BANG
+	// NL indicates the newline character
 	NL
 	syntaxEnd
 )
@@ -66,7 +101,7 @@ var tokens = [...]string{
 	COMMA:     ",",
 	SEMICOLON: ";",
 	MINUS:     "-",
-	EQ:        "=",
+	EQ:        "==",
 	NOTEQ:     "!=",
 	LT:        "<",
 	LT2:       "<<",

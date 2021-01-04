@@ -9,7 +9,8 @@ and conventions. Currently, it implements the following:
 - A Haystack Client
 - The Haystack type system
 - Zinc encoding and decoding
-- JSON encoding
+- JSON encoding and decoding
+- Hayson encoding
 
 ## How To Use
 This package can be used by importing `gitlab.com/NeedleInAJayStack/haystack` (as is the norm in Go). Here is an example that uses the client:
@@ -47,8 +48,8 @@ These are enhancement ideas, in no particular order.
     - watchSub
     - watchUnsub
     - watchPoll
-- Add Hayson unmarshalling support
-- Add Haystack server support
+- Add Hayson unmarshalling
+- Add a Haystack server implementation
 
 ## Contributing
 Contributions are absolutely welcome! To contribute, please create a branch, commit your changes, and make a pull request.

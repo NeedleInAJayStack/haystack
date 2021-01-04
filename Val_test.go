@@ -5,6 +5,24 @@ import (
 	"testing"
 )
 
+func valTest_Equal(actual Val, expected Val, t *testing.T) {
+	// Compare based on zinc representation
+	actualZinc := actual.ToZinc()
+	expectedZinc := expected.ToZinc()
+	if actualZinc != expectedZinc {
+		t.Error(actualZinc + " != " + expectedZinc)
+	}
+}
+
+func valTest_Equal_Grid(actual Val, expected Val, t *testing.T) {
+	// Compare based on zinc representation
+	actualZinc := actual.ToZinc()
+	expectedZinc := expected.ToZinc()
+	if actualZinc != expectedZinc {
+		t.Error("\nACTUAL:\n" + actualZinc + "\n\nEXPECT:\n" + expectedZinc)
+	}
+}
+
 func valTest_ToZinc(val Val, expected string, t *testing.T) {
 	actual := val.ToZinc()
 	if actual != expected {

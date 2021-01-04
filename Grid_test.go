@@ -299,8 +299,8 @@ func newGridSimple() *Grid {
 // "scalar", "simple string"
 func newGridNested() *Grid {
 	gb := NewGridBuilder()
-	gb.AddCol("type", map[string]Val{})
-	gb.AddCol("val", map[string]Val{})
+	gb.AddColNoMeta("type")
+	gb.AddColNoMeta("val")
 	gb.AddRow(
 		[]Val{
 			NewStr("list"),
@@ -325,8 +325,8 @@ func newGridNested() *Grid {
 		},
 	)
 	var dblNestedGb GridBuilder
-	dblNestedGb.AddCol("c", map[string]Val{})
-	dblNestedGb.AddCol("d", map[string]Val{})
+	dblNestedGb.AddColNoMeta("c")
+	dblNestedGb.AddColNoMeta("d")
 	dblNestedGb.AddRow(
 		[]Val{
 			NewNumber(5, ""),
@@ -335,8 +335,8 @@ func newGridNested() *Grid {
 	)
 	dblNestedGrid := dblNestedGb.ToGrid()
 	var nestedGb GridBuilder
-	nestedGb.AddCol("a", map[string]Val{})
-	nestedGb.AddCol("b", map[string]Val{})
+	nestedGb.AddColNoMeta("a")
+	nestedGb.AddColNoMeta("b")
 	nestedGb.AddRow(
 		[]Val{
 			NewNumber(1, ""),

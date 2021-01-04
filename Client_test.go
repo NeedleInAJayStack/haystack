@@ -5,80 +5,181 @@ import (
 	"testing"
 )
 
-// TODO Add testing to verify that results are parsed correctly
-func TestClient(t *testing.T) {
+// TODO complete the grid-result testing
 
-	haystackClient := &Client{
-		clientHttp: &clientHttpMock{},
-		uri:        "http://localhost:8080/api/demo",
-		username:   "test",
-		password:   "test",
-	}
-
-	openErr := haystackClient.Open()
+func TestClient_Open(t *testing.T) {
+	client := testClient()
+	openErr := client.Open()
 	if openErr != nil {
 		t.Error(openErr)
 	}
+}
 
-	_, callErr := haystackClient.Call("about", EmptyGrid())
+func TestClient_Call(t *testing.T) {
+	client := testClient()
+	actual, callErr := client.Call("about", EmptyGrid())
 	if callErr != nil {
 		t.Error(callErr)
 	}
 
-	_, aboutErr := haystackClient.About()
+	gb := NewGridBuilder()
+	gb.AddColNoMeta("haystackVersion")
+	gb.AddColNoMeta("projName")
+	gb.AddColNoMeta("serverName")
+	gb.AddColNoMeta("serverBootTime")
+	gb.AddColNoMeta("serverTime")
+	gb.AddColNoMeta("productName")
+	gb.AddColNoMeta("productUri")
+	gb.AddColNoMeta("productVersion")
+	gb.AddColNoMeta("moduleName")
+	gb.AddColNoMeta("moduleVersion")
+	gb.AddColNoMeta("tz")
+	gb.AddColNoMeta("whoami")
+	gb.AddColNoMeta("hostDis")
+	gb.AddColNoMeta("hostModel")
+	gb.AddColNoMeta("hostId")
+	serverBootTime, _ := NewDateTimeFromString("2021-01-03T00:21:01.588-07:00 Denver")
+	serverTime, _ := NewDateTimeFromString("2021-01-03T00:21:43.799-07:00 Denver")
+	gb.AddRow([]Val{
+		NewStr("3.0"),
+		NewStr("demo"),
+		NewStr("JaysDesktop"),
+		serverBootTime,
+		serverTime,
+		NewStr("SkySpark"),
+		NewUri("http://skyfoundry.com/skyspark"),
+		NewStr("3.0.26"),
+		NewStr("skyarcd"),
+		NewStr("3.0.26"),
+		NewStr("Denver"),
+		NewStr("test"),
+		NewStr("Linux amd64 5.4.0-58-generic"),
+		NewStr("Linux amd64 5.4.0-58-generic"),
+		NewNA(),
+	})
+	expected := gb.ToGrid()
+
+	valTest_Equal_Grid(actual, expected, t)
+}
+
+func TestClient_About(t *testing.T) {
+	client := testClient()
+	_, aboutErr := client.About()
 	if aboutErr != nil {
 		t.Error(aboutErr)
 	}
+}
 
-	_, formatsErr := haystackClient.Formats()
+func TestClient_Formats(t *testing.T) {
+	client := testClient()
+	_, formatsErr := client.Formats()
 	if formatsErr != nil {
 		t.Error(formatsErr)
 	}
+}
 
-	_, opsErr := haystackClient.Ops()
+func TestClient_Ops(t *testing.T) {
+	client := testClient()
+	_, opsErr := client.Ops()
 	if opsErr != nil {
 		t.Error(opsErr)
 	}
+}
 
-	_, readErr := haystackClient.Read("site")
+func TestClient_Read(t *testing.T) {
+	client := testClient()
+	_, readErr := client.Read("site")
 	if readErr != nil {
 		t.Error(readErr)
 	}
+}
 
-	readLimit, readLimitErr := haystackClient.ReadLimit("point", 1)
+func TestClient_ReadLimit(t *testing.T) {
+	client := testClient()
+	_, readLimitErr := client.ReadLimit("point", 1)
+	if readLimitErr != nil {
+		t.Error(readLimitErr)
+	}
+}
+
+func TestClient_ReadByIds(t *testing.T) {
+	client := testClient()
+	readLimit, readLimitErr := client.ReadLimit("point", 1)
 	if readLimitErr != nil {
 		t.Error(readLimitErr)
 	} else {
 		pointRef := readLimit.RowAt(0).Get("id").(*Ref)
 
-		_, readByIdsErr := haystackClient.ReadByIds([]*Ref{pointRef})
+		_, readByIdsErr := client.ReadByIds([]*Ref{pointRef})
 		if readByIdsErr != nil {
 			t.Error(readByIdsErr)
 		}
+	}
+}
 
-		_, hisReadErr := haystackClient.HisRead(pointRef, "yesterday")
+func TestClient_HisRead(t *testing.T) {
+	client := testClient()
+	readLimit, readLimitErr := client.ReadLimit("point", 1)
+	if readLimitErr != nil {
+		t.Error(readLimitErr)
+	} else {
+		pointRef := readLimit.RowAt(0).Get("id").(*Ref)
+
+		_, hisReadErr := client.HisRead(pointRef, "yesterday")
 		if hisReadErr != nil {
 			t.Error(hisReadErr)
 		}
+	}
+}
+
+func TestClient_HisReadAbsDate(t *testing.T) {
+	client := testClient()
+	readLimit, readLimitErr := client.ReadLimit("point", 1)
+	if readLimitErr != nil {
+		t.Error(readLimitErr)
+	} else {
+		pointRef := readLimit.RowAt(0).Get("id").(*Ref)
 
 		fromDate := NewDate(2020, 10, 4)
 		toDate := NewDate(2020, 10, 5)
-		_, hisReadAbsDateErr := haystackClient.HisReadAbsDate(pointRef, fromDate, toDate)
+		_, hisReadAbsDateErr := client.HisReadAbsDate(pointRef, fromDate, toDate)
 		if hisReadAbsDateErr != nil {
 			t.Error(hisReadAbsDateErr)
 		}
+	}
+}
+
+func TestClient_HisReadAbsDateTime(t *testing.T) {
+	client := testClient()
+	readLimit, readLimitErr := client.ReadLimit("point", 1)
+	if readLimitErr != nil {
+		t.Error(readLimitErr)
+	} else {
+		pointRef := readLimit.RowAt(0).Get("id").(*Ref)
 
 		fromTs, _ := NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
 		toTs, _ := NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
-		_, hisReadAbsDateTimeErr := haystackClient.HisReadAbsDateTime(pointRef, fromTs, toTs)
+		_, hisReadAbsDateTimeErr := client.HisReadAbsDateTime(pointRef, fromTs, toTs)
 		if hisReadAbsDateTimeErr != nil {
 			t.Error(hisReadAbsDateTimeErr)
 		}
 	}
+}
 
-	_, evalErr := haystackClient.Eval("read(point)")
+func TestClient_Eval(t *testing.T) {
+	client := testClient()
+	_, evalErr := client.Eval("read(point)")
 	if evalErr != nil {
 		t.Error(evalErr)
+	}
+}
+
+func testClient() *Client {
+	return &Client{
+		clientHttp: &clientHttpMock{},
+		uri:        "http://localhost:8080/api/demo",
+		username:   "test",
+		password:   "test",
 	}
 }
 

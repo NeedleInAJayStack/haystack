@@ -297,7 +297,7 @@ type clientHTTPImpl struct {
 }
 
 func (clientHTTP *clientHTTPImpl) open(uri string, username string, password string) (string, error) {
-	req, _ := http.NewRequest("get", uri+"about", nil)
+	req, _ := http.NewRequest("GET", uri+"about", nil)
 	reqAuth := authMsg{
 		scheme: "hello",
 		attrs: map[string]string{
@@ -311,12 +311,12 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 		return "", respErr
 	}
 	if resp.StatusCode != 401 {
-		NewHTTPError(resp.StatusCode, "Hello "+resp.Status)
+		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
 	}
 	resp.Body.Close()
 	respAuthString := resp.Header.Get("WWW-Authenticate")
 	if respAuthString == "" {
-		NewAuthError("Missing required header: WWW-Authenticate")
+		return "", NewAuthError("Missing required header: WWW-Authenticate")
 	}
 	helloAuth := authMsgFromString(respAuthString)
 
@@ -343,7 +343,7 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 	for !scram.Step(in) {
 		out := scram.Out()
 
-		req, _ := http.NewRequest("get", uri+"about", nil)
+		req, _ := http.NewRequest("GET", uri+"about", nil)
 		reqAuth := authMsg{
 			scheme: "scram",
 			attrs: map[string]string{
@@ -385,7 +385,7 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 
 func (clientHTTP *clientHTTPImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {
 	reqReader := strings.NewReader(reqBody)
-	req, _ := http.NewRequest("post", uri+op, reqReader)
+	req, _ := http.NewRequest("POST", uri+op, reqReader)
 	clientHTTP.prepare(req, auth)
 	req.Header.Add("Connection", "Close")
 	resp, respErr := clientHTTP.httpClient.Do(req)

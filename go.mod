@@ -1,3 +1,3 @@
-module gitlab.com/NeedleInAJayStack/haystack
+module github.com/NeedleInAJayStack/haystack
 
 go 1.14

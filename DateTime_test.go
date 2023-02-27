@@ -118,3 +118,23 @@ func TestDateTime_MarshalHayson(t *testing.T) {
 	valTest_MarshalHayson(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10-07:00\",\"tz\":\"Los_Angeles\"}", t)
 	valTest_MarshalHayson(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10+08:00\",\"tz\":\"Taipei\"}", t)
 }
+
+func TestDateTime_ToGo(t *testing.T) {
+	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
+	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
+
+	date1 := time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)
+	if date1.Unix() != NewDateTimeFromGo(date1).ToGo().Unix() {
+		t.Error(date1, "!=", NewDateTimeFromGo(date1).ToGo())
+	}
+
+	date2 := time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)
+	if date2.Unix() != NewDateTimeFromGo(date2).ToGo().Unix() {
+		t.Error(date2, "!=", NewDateTimeFromGo(date2).ToGo())
+	}
+
+	date3 := time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)
+	if date3.Unix() != NewDateTimeFromGo(date3).ToGo().Unix() {
+		t.Error(date3, "!=", NewDateTimeFromGo(date3).ToGo())
+	}
+}

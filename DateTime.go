@@ -169,6 +169,24 @@ func (dateTime *DateTime) ToZinc() string {
 	return buf.String()
 }
 
+// ToGo creates a Go time.Time representation of the object
+func (dateTime *DateTime) ToGo() time.Time {
+	location := time.FixedZone(
+		dateTime.tz,
+		dateTime.tzOffset,
+	)
+	return time.Date(
+		dateTime.date.year,
+		time.Month(dateTime.date.month),
+		dateTime.date.day,
+		dateTime.time.hour,
+		dateTime.time.min,
+		dateTime.time.sec,
+		dateTime.time.ms*1000,
+		location,
+	)
+}
+
 // MarshalJSON representes the object as: "t:YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func (dateTime *DateTime) MarshalJSON() ([]byte, error) {
 	buf := strings.Builder{}

@@ -87,18 +87,18 @@ func TestDateTime_ToZinc(t *testing.T) {
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
 
-	valTest_ToZinc(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "2020-08-17T23:07:10Z UTC", t)
-	valTest_ToZinc(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "2020-08-17T23:07:10-07:00 Los_Angeles", t)
-	valTest_ToZinc(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "2020-08-17T23:07:10+08:00 Taipei", t)
+	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "2020-08-17T23:07:10Z UTC", t)
+	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "2020-08-17T23:07:10-07:00 Los_Angeles", t)
+	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "2020-08-17T23:07:10+08:00 Taipei", t)
 }
 
 func TestDateTime_MarshalJSON(t *testing.T) {
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
 
-	valTest_MarshalJSON(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "\"t:2020-08-17T23:07:10Z UTC\"", t)
-	valTest_MarshalJSON(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "\"t:2020-08-17T23:07:10-07:00 Los_Angeles\"", t)
-	valTest_MarshalJSON(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "\"t:2020-08-17T23:07:10+08:00 Taipei\"", t)
+	valTest_MarshalJSON(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "\"t:2020-08-17T23:07:10Z UTC\"", t)
+	valTest_MarshalJSON(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "\"t:2020-08-17T23:07:10-07:00 Los_Angeles\"", t)
+	valTest_MarshalJSON(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "\"t:2020-08-17T23:07:10+08:00 Taipei\"", t)
 }
 
 func TestDateTime_UnmarshalJSON(t *testing.T) {
@@ -114,7 +114,7 @@ func TestDateTime_MarshalHayson(t *testing.T) {
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
 
-	valTest_MarshalHayson(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10Z\",\"tz\":\"UTC\"}", t)
-	valTest_MarshalHayson(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10-07:00\",\"tz\":\"Los_Angeles\"}", t)
-	valTest_MarshalHayson(newDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10+08:00\",\"tz\":\"Taipei\"}", t)
+	valTest_MarshalHayson(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10Z\",\"tz\":\"UTC\"}", t)
+	valTest_MarshalHayson(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10-07:00\",\"tz\":\"Los_Angeles\"}", t)
+	valTest_MarshalHayson(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "{\"_kind\":\"dateTime\",\"val\":\"2020-08-17T23:07:10+08:00\",\"tz\":\"Taipei\"}", t)
 }

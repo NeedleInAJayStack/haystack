@@ -115,7 +115,7 @@ func NewDateTimeFromString(str string) (*DateTime, error) {
 	return NewDateTime(date, time, tzOffset, tz), nil
 }
 
-func newDateTimeFromGo(goTime time.Time) *DateTime {
+func NewDateTimeFromGo(goTime time.Time) *DateTime {
 	hDate := NewDate(
 		goTime.Year(),
 		int(goTime.Month()),

@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestCoord_NewCoord(t *testing.T) {
 	valid := NewCoord(41.534, 111.478)
@@ -29,8 +32,9 @@ func TestCoord_MarshalJSON(t *testing.T) {
 }
 
 func TestCoord_UnmarshalJSON(t *testing.T) {
-	val := NewCoord(0, 0)
-	valTest_UnmarshalJSON("\"c:41.534,111.478\"", val, "C(41.534,111.478)", t)
+	var coord Coord
+	json.Unmarshal([]byte("\"c:41.534,111.478\""), &coord)
+	valTest_ToZinc(coord, "C(41.534,111.478)", t)
 }
 
 func TestCoord_MarshalHayson(t *testing.T) {

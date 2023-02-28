@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -98,9 +99,8 @@ func TestGrid_MarshalJSON(t *testing.T) {
 }
 
 func TestGrid_UnmarshalJSON(t *testing.T) {
-	grid := EmptyGrid()
 	// Remember all dicts are alphabetical.
-	json := "{" +
+	jsonLiteral := "{" +
 		"\"meta\":{\"dis\":\"Site Energy Summary\",\"ver\":\"3.0\"}," +
 		"\"cols\":[" +
 		"{\"dis\":\"Sites\",\"name\":\"siteName\"}," +
@@ -115,7 +115,10 @@ func TestGrid_UnmarshalJSON(t *testing.T) {
 		"siteName dis:\"Sites\", val dis:\"Value\"\n" +
 		"\"Site 1\", 356.214kW\n" +
 		"\"Site 2\", 463.028kW"
-	valTest_UnmarshalJSON(json, grid, zinc, t)
+
+	var grid Grid
+	json.Unmarshal([]byte(jsonLiteral), &grid)
+	valTest_ToZinc(grid, zinc, t)
 }
 
 func TestGrid_MarshalJSON_empty(t *testing.T) {
@@ -243,11 +246,12 @@ func TestGrid_MarshalHayson_nested(t *testing.T) {
 }
 
 // Zinc representation:
-// 		ver:"3.0" dis:"Site Energy Summary"
-// 		siteName dis:"Sites", val dis:"Value"
-// 		"Site 1", 356.214kW
-// 		"Site 2", 463.028kW
-func newGridSimple() *Grid {
+//
+//	ver:"3.0" dis:"Site Energy Summary"
+//	siteName dis:"Sites", val dis:"Value"
+//	"Site 1", 356.214kW
+//	"Site 2", 463.028kW
+func newGridSimple() Grid {
 	gb := NewGridBuilder()
 	gb.SetMeta(
 		map[string]Val{
@@ -287,17 +291,19 @@ func newGridSimple() *Grid {
 // "list", [1, 2, 3]
 // "dict", {dis:"Dict!" foo}
 // "grid", <<
-//   ver:"3.0"
-//   a, b
-//   1, <<
-//     ver:"3.0"
-//     c, d
-//     5, 6
-//     >>
-//   3, 4
-//   >>
+//
+//	ver:"3.0"
+//	a, b
+//	1, <<
+//	  ver:"3.0"
+//	  c, d
+//	  5, 6
+//	  >>
+//	3, 4
+//	>>
+//
 // "scalar", "simple string"
-func newGridNested() *Grid {
+func newGridNested() Grid {
 	gb := NewGridBuilder()
 	gb.AddColNoMeta("type")
 	gb.AddColNoMeta("val")

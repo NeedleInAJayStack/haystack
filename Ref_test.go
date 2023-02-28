@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -15,10 +16,13 @@ func TestRef_MarshalJSON(t *testing.T) {
 }
 
 func TestRef_UnmarshalJSON(t *testing.T) {
-	refNoDis := NewRef("", "")
-	valTest_UnmarshalJSON("\"r:123-abc\"", refNoDis, "@123-abc", t)
-	refDis := NewRef("", "")
-	valTest_UnmarshalJSON("\"r:123-abc Name\"", refDis, "@123-abc \"Name\"", t)
+	var refNoDis Ref
+	json.Unmarshal([]byte("\"r:123-abc\""), &refNoDis)
+	valTest_ToZinc(refNoDis, "@123-abc", t)
+
+	var refDis Ref
+	json.Unmarshal([]byte("\"r:123-abc Name\""), &refDis)
+	valTest_ToZinc(refDis, "@123-abc \"Name\"", t)
 }
 
 func TestRef_MarshalHayson(t *testing.T) {

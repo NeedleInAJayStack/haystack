@@ -51,7 +51,7 @@ func (reader *ZincReader) ReadVal() Val {
 
 func (reader *ZincReader) parseVal() Val {
 	if reader.cur == ID {
-		id := reader.curVal.(*Id).String()
+		id := reader.curVal.(Id).String()
 		reader.consumeToken(ID)
 
 		// check for coord or xstr
@@ -109,13 +109,13 @@ func (reader *ZincReader) parseVal() Val {
 	panic("Unexpected token: " + reader.cur.String())
 }
 
-func (reader *ZincReader) parseCoord(id string) *Coord {
+func (reader *ZincReader) parseCoord(id string) Coord {
 	if id != "C" {
 		panic("Expecting 'C' for coord, not " + id)
 	}
 
-	var lat *Number
-	var lng *Number
+	var lat Number
+	var lng Number
 	reader.consumeToken(LPAREN)
 	lat = reader.consumeNumber()
 	reader.consumeToken(COMMA)
@@ -148,8 +148,8 @@ func (reader *ZincReader) parseLiteral() Val {
 	val := reader.curVal
 	// Combine ref and dis
 	if reader.cur == REF && reader.peek == STR {
-		ref := reader.curVal.(*Ref)
-		dis := reader.peekVal.(*Str)
+		ref := reader.curVal.(Ref)
+		dis := reader.peekVal.(Str)
 
 		val = NewRef(ref.Id(), dis.String())
 		reader.consumeToken(REF)
@@ -158,7 +158,7 @@ func (reader *ZincReader) parseLiteral() Val {
 	return val
 }
 
-func (reader *ZincReader) parseList() *List {
+func (reader *ZincReader) parseList() List {
 	var vals []Val
 
 	reader.consumeToken(LBRACKET)
@@ -177,7 +177,7 @@ func (reader *ZincReader) parseList() *List {
 	return NewList(vals)
 }
 
-func (reader *ZincReader) parseDict() *Dict {
+func (reader *ZincReader) parseDict() Dict {
 	items := make(map[string]Val)
 
 	braces := reader.cur == LBRACE
@@ -204,7 +204,7 @@ func (reader *ZincReader) parseDict() *Dict {
 	return NewDict(items)
 }
 
-func (reader *ZincReader) parseGrid() *Grid {
+func (reader *ZincReader) parseGrid() Grid {
 	gb := NewGridBuilder()
 
 	nested := reader.cur == LT2
@@ -296,7 +296,7 @@ func (reader *ZincReader) parseGrid() *Grid {
 }
 
 func (reader *ZincReader) consumeTagName() string {
-	id := reader.curVal.(*Id)
+	id := reader.curVal.(Id)
 	val := id.String()
 	if val == "" || unicode.IsUpper([]rune(val)[0]) {
 		panic("Invalid dict tag name: " + val)
@@ -311,14 +311,14 @@ func checkVersion(str string) {
 	}
 }
 
-func (reader *ZincReader) consumeNumber() *Number {
-	number := reader.curVal.(*Number)
+func (reader *ZincReader) consumeNumber() Number {
+	number := reader.curVal.(Number)
 	reader.consumeToken(NUMBER)
 	return number
 }
 
-func (reader *ZincReader) consumeStr() *Str {
-	str := reader.curVal.(*Str)
+func (reader *ZincReader) consumeStr() Str {
+	str := reader.curVal.(Str)
 	reader.consumeToken(STR)
 	return str
 }

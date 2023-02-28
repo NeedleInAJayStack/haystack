@@ -17,9 +17,9 @@ func NewGridBuilder() *GridBuilder {
 }
 
 // ToGrid returns the grid representation of the builder.
-func (gb *GridBuilder) ToGrid() *Grid {
+func (gb *GridBuilder) ToGrid() Grid {
 	meta := NewDict(gb.meta)
-	return &Grid{
+	return Grid{
 		meta: meta,
 		cols: gb.cols,
 		rows: gb.rows,
@@ -34,7 +34,7 @@ func (gb *GridBuilder) AddMeta(meta map[string]Val) {
 }
 
 // AddMetaDict adds or replaces the meta keys with the inputs.
-func (gb *GridBuilder) AddMetaDict(meta *Dict) {
+func (gb *GridBuilder) AddMetaDict(meta Dict) {
 	gb.AddMeta(meta.items)
 }
 
@@ -50,7 +50,7 @@ func (gb *GridBuilder) SetMeta(meta map[string]Val) {
 }
 
 // SetMetaDict erases any existing meta and replaces it with the input Dict.
-func (gb *GridBuilder) SetMetaDict(meta *Dict) {
+func (gb *GridBuilder) SetMetaDict(meta Dict) {
 	gb.SetMeta(meta.items)
 }
 
@@ -65,7 +65,7 @@ func (gb *GridBuilder) AddColNoMeta(name string) {
 }
 
 // AddColDict adds a column with the given name and meta Dict.
-func (gb *GridBuilder) AddColDict(name string, meta *Dict) {
+func (gb *GridBuilder) AddColDict(name string, meta Dict) {
 	index := len(gb.cols)
 	newCol := newCol(index, name, meta)
 	// TODO check that the name doesn't duplicate
@@ -84,7 +84,7 @@ func (gb *GridBuilder) AddColMetaVal(colName string, metaName string, metaVal Va
 }
 
 // AddColMetaDict adds the metadata Dict to an existing column with the given name.
-func (gb *GridBuilder) AddColMetaDict(name string, meta *Dict) {
+func (gb *GridBuilder) AddColMetaDict(name string, meta Dict) {
 	gb.AddColMeta(name, meta.items)
 }
 
@@ -99,7 +99,7 @@ func (gb *GridBuilder) AddRow(vals []Val) {
 }
 
 // AddRowDict adds a row from the input dict, extracting the values that correspond to the grid columns.
-func (gb *GridBuilder) AddRowDict(row *Dict) {
+func (gb *GridBuilder) AddRowDict(row Dict) {
 	items := make(map[string]Val)
 	for _, col := range gb.cols {
 		items[col.name] = row.Get(col.name)
@@ -109,7 +109,7 @@ func (gb *GridBuilder) AddRowDict(row *Dict) {
 }
 
 // AddRowDicts adds rows from the dicts, extracting the values that correspond to the grid columns.
-func (gb *GridBuilder) AddRowDicts(rows []*Dict) {
+func (gb *GridBuilder) AddRowDicts(rows []Dict) {
 	for _, row := range rows {
 		gb.AddRowDict(row)
 	}

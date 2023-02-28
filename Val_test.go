@@ -1,18 +1,8 @@
 package haystack
 
 import (
-	"encoding/json"
 	"testing"
 )
-
-func valTest_Equal(actual Val, expected Val, t *testing.T) {
-	// Compare based on zinc representation
-	actualZinc := actual.ToZinc()
-	expectedZinc := expected.ToZinc()
-	if actualZinc != expectedZinc {
-		t.Error(actualZinc + " != " + expectedZinc)
-	}
-}
 
 func valTest_Equal_Grid(actual Val, expected Val, t *testing.T) {
 	// Compare based on zinc representation
@@ -46,23 +36,6 @@ func valTest_MarshalJSON(val Val, expected string, t *testing.T) {
 	actual := string(bytes)
 	if actual != expected {
 		t.Error(actual + " != " + expected)
-	}
-}
-
-func valTest_UnmarshalJSON(input string, val Val, expectedZinc string, t *testing.T) {
-	unmarshalErr := json.Unmarshal([]byte(input), &val)
-	if unmarshalErr != nil {
-		t.Error(unmarshalErr)
-	}
-	// We must add this because UnmarshalJSON([]byte("null")) is implemented as a no-op
-	// meaning our Null unmarshaller doesn't work and we get nil.
-	// See https://golang.org/pkg/encoding/json/#Unmarshal
-	if val == nil {
-		val = NewNull()
-	}
-	actualZinc := val.ToZinc()
-	if actualZinc != expectedZinc {
-		t.Error(actualZinc + " != " + expectedZinc)
 	}
 }
 

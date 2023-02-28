@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestTime_equals(t *testing.T) {
 	time1 := NewTime(23, 7, 10, 957)
@@ -58,14 +61,21 @@ func TestTime_MarshalJSON(t *testing.T) {
 }
 
 func TestTime_UnmarshalJSON(t *testing.T) {
-	noMs := NewTime(0, 0, 0, 0)
-	valTest_UnmarshalJSON("\"h:23:07:10\"", noMs, "23:07:10", t)
-	oneMs := NewTime(0, 0, 0, 0)
-	valTest_UnmarshalJSON("\"h:23:07:10.002\"", oneMs, "23:07:10.002", t)
-	tenMs := NewTime(0, 0, 0, 0)
-	valTest_UnmarshalJSON("\"h:23:07:10.056\"", tenMs, "23:07:10.056", t)
-	hundredMs := NewTime(0, 0, 0, 0)
-	valTest_UnmarshalJSON("\"h:23:07:10.957\"", hundredMs, "23:07:10.957", t)
+	var noMs Time
+	json.Unmarshal([]byte("\"h:23:07:10\""), &noMs)
+	valTest_ToZinc(noMs, "23:07:10", t)
+
+	var oneMs Time
+	json.Unmarshal([]byte("\"h:23:07:10.002\""), &oneMs)
+	valTest_ToZinc(oneMs, "23:07:10.002", t)
+
+	var tenMs Time
+	json.Unmarshal([]byte("\"h:23:07:10.056\""), &tenMs)
+	valTest_ToZinc(tenMs, "23:07:10.056", t)
+
+	var hundredMs Time
+	json.Unmarshal([]byte("\"h:23:07:10.957\""), &hundredMs)
+	valTest_ToZinc(hundredMs, "23:07:10.957", t)
 }
 
 func TestTime_MarshalHayson(t *testing.T) {

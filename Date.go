@@ -16,8 +16,8 @@ type Date struct {
 }
 
 // NewDate creates a new Date object. The values are not validated for correctness.
-func NewDate(year int, month int, day int) *Date {
-	return &Date{
+func NewDate(year int, month int, day int) Date {
+	return Date{
 		year:  year,
 		month: month,
 		day:   day,
@@ -25,7 +25,7 @@ func NewDate(year int, month int, day int) *Date {
 }
 
 // NewDateFromIso creates a Date object from a string in the format: "YYYY-MM-DD"
-func NewDateFromIso(str string) (*Date, error) {
+func NewDateFromIso(str string) (Date, error) {
 	parts := strings.Split(str, "-")
 
 	year, yearErr := strconv.Atoi(parts[0])
@@ -45,27 +45,27 @@ func NewDateFromIso(str string) (*Date, error) {
 }
 
 // Year returns the years of the object.
-func (date *Date) Year() int {
+func (date Date) Year() int {
 	return date.year
 }
 
 // Month returns the numerical month of the object.
-func (date *Date) Month() int {
+func (date Date) Month() int {
 	return date.month
 }
 
 // Day returns the day-of-month of the object.
-func (date *Date) Day() int {
+func (date Date) Day() int {
 	return date.day
 }
 
 // ToZinc representes the object as: "YYYY-MM-DD"
-func (date *Date) ToZinc() string {
+func (date Date) ToZinc() string {
 	return date.toIso()
 }
 
 // MarshalJSON representes the object as: "d:YYYY-MM-DD"
-func (date *Date) MarshalJSON() ([]byte, error) {
+func (date Date) MarshalJSON() ([]byte, error) {
 	return json.Marshal("d:" + date.toIso())
 }
 
@@ -78,29 +78,29 @@ func (date *Date) UnmarshalJSON(buf []byte) error {
 	}
 
 	newDate, newErr := dateFromJSON(jsonStr)
-	*date = *newDate
+	*date = newDate
 	return newErr
 }
 
-func dateFromJSON(jsonStr string) (*Date, error) {
+func dateFromJSON(jsonStr string) (Date, error) {
 	if !strings.HasPrefix(jsonStr, "d:") {
-		return nil, errors.New("Input value does not begin with 'd:'")
+		return Date{}, errors.New("Input value does not begin with 'd:'")
 	}
 	dateStr := jsonStr[2:]
 
 	parseDate, parseErr := NewDateFromIso(dateStr)
 	if parseErr != nil {
-		return nil, parseErr
+		return Date{}, parseErr
 	}
 	return parseDate, nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"date\",\"val\":\"YYYY-MM-DD\""}"
-func (date *Date) MarshalHayson() ([]byte, error) {
+func (date Date) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"date\",\"val\":\"" + date.toIso() + "\"}"), nil
 }
 
-func (date *Date) toIso() string {
+func (date Date) toIso() string {
 	result := ""
 	result = result + fmt.Sprintf("%d", date.year) + "-"
 	if date.month < 10 {
@@ -114,7 +114,7 @@ func (date *Date) toIso() string {
 	return result
 }
 
-func (date *Date) equals(otherDate *Date) bool {
+func (date Date) equals(otherDate Date) bool {
 	return date.year == otherDate.year &&
 		date.month == otherDate.month &&
 		date.day == otherDate.day

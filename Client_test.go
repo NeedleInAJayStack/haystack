@@ -33,7 +33,7 @@ func TestClient_About(t *testing.T) {
 	var reader ZincReader
 	reader.InitString(expectedZinc)
 	expectedGrid := reader.ReadVal()
-	expected := expectedGrid.(*Grid).RowAt(0).ToDict()
+	expected := expectedGrid.(Grid).RowAt(0).ToDict()
 
 	valTest_Equal_Grid(actual, expected, t)
 }
@@ -80,9 +80,9 @@ func TestClient_ReadByIds(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(*Ref)
+		pointRef := points.RowAt(0).Get("id").(Ref)
 
-		actual, err := client.ReadByIds([]*Ref{pointRef})
+		actual, err := client.ReadByIds([]Ref{pointRef})
 		if err != nil {
 			t.Error(err)
 		}
@@ -96,7 +96,7 @@ func TestClient_HisRead(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(*Ref)
+		pointRef := points.RowAt(0).Get("id").(Ref)
 
 		actual, err := client.HisRead(pointRef, "yesterday")
 		if err != nil {
@@ -112,7 +112,7 @@ func TestClient_HisReadAbsDate(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(*Ref)
+		pointRef := points.RowAt(0).Get("id").(Ref)
 
 		fromDate := NewDate(2020, 10, 4)
 		toDate := NewDate(2020, 10, 5)
@@ -130,7 +130,7 @@ func TestClient_HisReadAbsDateTime(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(*Ref)
+		pointRef := points.RowAt(0).Get("id").(Ref)
 
 		fromTs, _ := NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
 		toTs, _ := NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")

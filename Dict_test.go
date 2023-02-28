@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"sort"
 	"testing"
 )
@@ -154,8 +155,9 @@ func TestDict_MarshalJSON(t *testing.T) {
 }
 
 func TestDict_UnmarshalJSON(t *testing.T) {
-	dict := EmptyDict()
-	valTest_UnmarshalJSON("{\"area\":\"n:35000 ft²\",\"dis\":\"Building\",\"site\":\"m:\"}", dict, "{area:35000ft² dis:\"Building\" site}", t)
+	var dict Dict
+	json.Unmarshal([]byte("{\"area\":\"n:35000 ft²\",\"dis\":\"Building\",\"site\":\"m:\"}"), &dict)
+	valTest_ToZinc(dict, "{area:35000ft² dis:\"Building\" site}", t)
 }
 
 func TestDict_MarshalHayson(t *testing.T) {

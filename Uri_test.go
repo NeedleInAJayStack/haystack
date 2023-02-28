@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -15,8 +16,9 @@ func TestUri_MarshalJSON(t *testing.T) {
 }
 
 func TestUri_UnmarshalJSON(t *testing.T) {
-	val := &Uri{}
-	valTest_UnmarshalJSON("\"u:http://www.project-haystack.org\"", val, "`http://www.project-haystack.org`", t)
+	var val Uri
+	json.Unmarshal([]byte("\"u:http://www.project-haystack.org\""), &val)
+	valTest_ToZinc(val, "`http://www.project-haystack.org`", t)
 }
 
 func TestUri_MarshalHayson(t *testing.T) {

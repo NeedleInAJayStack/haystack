@@ -534,12 +534,12 @@ func TestZincReader_nested(t *testing.T) {
 
 // Verifies that the tokenized result has the expected token type and value.
 // Values are matched based on the result of the 'ToZinc' method
-func testZincReaderGrid(t *testing.T, str string, expected *Grid) {
+func testZincReaderGrid(t *testing.T, str string, expected Grid) {
 	var reader ZincReader
 	reader.InitString(str)
 
 	val := reader.ReadVal()
-	grid := val.(*Grid)
+	grid := val.(Grid)
 	testGridEq(t, grid, expected)
 
 	// write grid, read grid, and verify it equals the original
@@ -547,12 +547,12 @@ func testZincReaderGrid(t *testing.T, str string, expected *Grid) {
 	var writtenReader ZincReader
 	writtenReader.InitString(writeStr)
 	writeReadVal := writtenReader.ReadVal()
-	writeReadGrid := writeReadVal.(*Grid)
+	writeReadGrid := writeReadVal.(Grid)
 	testGridEq(t, writeReadGrid, expected)
 }
 
 // Test whether the grids match based on a ToZinc call
-func testGridEq(t *testing.T, actual *Grid, expected *Grid) {
+func testGridEq(t *testing.T, actual Grid, expected Grid) {
 	actualZinc := actual.ToZinc()
 	expectedZinc := expected.ToZinc()
 

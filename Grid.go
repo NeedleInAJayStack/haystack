@@ -9,63 +9,60 @@ import (
 
 // Grid is a two dimension data structure of cols and rows.
 type Grid struct {
-	meta *Dict
+	meta Dict
 	cols []Col
 	rows []Row
 }
 
 // EmptyGrid creates an empty grid.
-func EmptyGrid() *Grid {
-	return &Grid{
-		meta: &Dict{},
+func EmptyGrid() Grid {
+	return Grid{
+		meta: Dict{},
 		cols: []Col{},
 		rows: []Row{},
 	}
 }
 
 // Meta returns the grid-level metadata
-func (grid *Grid) Meta() *Dict {
+func (grid Grid) Meta() Dict {
 	return grid.meta
 }
 
 // ColCount returns the count of columns
-func (grid *Grid) ColCount() int {
+func (grid Grid) ColCount() int {
 	return len(grid.cols)
 }
 
 // Col returns the column matching the name
-func (grid *Grid) Col(name string) *Col {
-	var colMatch *Col
+func (grid Grid) Col(name string) Col {
+	var colMatch Col
 	for i := 0; i < grid.ColCount(); i++ {
 		col := grid.ColAt(i)
 		if grid.cols[i].name == name {
 			colMatch = col
-			break
+			return colMatch
 		}
 	}
-	if colMatch == nil {
-		panic("Unknown column: " + name)
-	}
-	return colMatch
+	panic("Unknown column: " + name)
 }
 
 // ColAt returns the column at the index
-func (grid *Grid) ColAt(index int) *Col {
-	return &grid.cols[index]
+func (grid Grid) ColAt(index int) Col {
+	return grid.cols[index]
 }
 
 // RowCount returns the count of rows
-func (grid *Grid) RowCount() int {
+func (grid Grid) RowCount() int {
 	return len(grid.rows)
 }
 
 // RowAt returns the row at the index
-func (grid *Grid) RowAt(index int) *Row {
-	return &grid.rows[index]
+func (grid Grid) RowAt(index int) Row {
+	return grid.rows[index]
 }
 
 // MarshalJSON represents the object in a special JSON object format. See https://project-haystack.org/doc/Json#grid
-func (grid *Grid) MarshalJSON() ([]byte, error) {
+func (grid Grid) MarshalJSON() ([]byte, error) {
 	buf := strings.Builder{}
 
 	buf.WriteString("{\"meta\":")
@@ -108,22 +105,22 @@ func (grid *Grid) UnmarshalJSON(buf []byte) error {
 	}
 
 	newGrid, newErr := gridFromJSON(jsonMap)
-	*grid = *newGrid
+	*grid = newGrid
 	return newErr
 }
 
-func gridFromJSON(jsonMap map[string]interface{}) (*Grid, error) {
+func gridFromJSON(jsonMap map[string]interface{}) (Grid, error) {
 	gb := NewGridBuilder()
 
 	if jsonMap["meta"] == nil || jsonMap["cols"] == nil || jsonMap["rows"] == nil {
-		return nil, errors.New("Input object does not contain keys: meta, cols, or rows")
+		return EmptyGrid(), errors.New("Input object does not contain keys: meta, cols, or rows")
 	}
 
 	metaMap := jsonMap["meta"].(map[string]interface{})
 	delete(metaMap, "ver")
 	meta, metaErr := dictFromJSON(metaMap)
 	if metaErr != nil {
-		return nil, metaErr
+		return EmptyGrid(), metaErr
 	}
 	gb.AddMetaDict(meta)
 
@@ -134,7 +131,7 @@ func gridFromJSON(jsonMap map[string]interface{}) (*Grid, error) {
 		delete(jsonColMap, "name")
 		colMeta, colMetaErr := dictFromJSON(jsonColMap)
 		if colMetaErr != nil {
-			return nil, colMetaErr
+			return EmptyGrid(), colMetaErr
 		}
 		gb.AddColDict(name, colMeta)
 	}
@@ -143,7 +140,7 @@ func gridFromJSON(jsonMap map[string]interface{}) (*Grid, error) {
 		jsonRowMap := jsonRow.(map[string]interface{})
 		row, rowErr := dictFromJSON(jsonRowMap)
 		if rowErr != nil {
-			return nil, rowErr
+			return EmptyGrid(), rowErr
 		}
 		gb.AddRowDict(row)
 	}
@@ -194,12 +191,13 @@ func (grid Grid) MarshalHayson() ([]byte, error) {
 }
 
 // ToZinc representes the object as:
-//     ver:"3.0" <meta>
-//     <col1>, <col2>, ...
-//     <row1>
-//     <row2>
-//     ...
-func (grid *Grid) ToZinc() string {
+//
+//	ver:"3.0" <meta>
+//	<col1>, <col2>, ...
+//	<row1>
+//	<row2>
+//	...
+func (grid Grid) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)
 	grid.WriteZincTo(out, 0)
@@ -208,14 +206,15 @@ func (grid *Grid) ToZinc() string {
 }
 
 // WriteZincTo appends the Writer with the Grid zinc representation:
-//     ver:"3.0" <meta>
-//     <col1>, <col2>, ...
-//     <row1>
-//     <row2>
-//     ...
+//
+//	ver:"3.0" <meta>
+//	<col1>, <col2>, ...
+//	<row1>
+//	<row2>
+//	...
 //
 // indentSize is the number of spaces to add to each new-line.
-func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
+func (grid Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 	writeIndent(buf, indentSize)
 	buf.WriteString("ver:\"3.0\"")
 	if !grid.meta.IsEmpty() {
@@ -240,7 +239,7 @@ func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 				buf.WriteString("\n")
 				writeIndent(buf, indentSize)
 			}
-			row.WriteZincTo(buf, &grid.cols, indentSize)
+			row.WriteZincTo(buf, grid.cols, indentSize)
 		}
 	}
 }
@@ -249,10 +248,10 @@ func (grid *Grid) WriteZincTo(buf *bufio.Writer, indentSize int) {
 type Col struct {
 	index int
 	name  string
-	meta  *Dict
+	meta  Dict
 }
 
-func newCol(index int, name string, meta *Dict) Col {
+func newCol(index int, name string, meta Dict) Col {
 	return Col{
 		index: index,
 		name:  name,
@@ -261,31 +260,31 @@ func newCol(index int, name string, meta *Dict) Col {
 }
 
 // Name returns the string name
-func (col *Col) Name() string {
+func (col Col) Name() string {
 	return col.name
 }
 
 // Meta returns the column-level metadata
-func (col *Col) Meta() *Dict {
+func (col Col) Meta() Dict {
 	return col.meta
 }
 
 // MarshalJSON represents the object in JSON object format with a required name field and the column metadata:
 // "{"name":"<name>", "<field1>":<val1> ...}"
-func (col *Col) MarshalJSON() ([]byte, error) {
+func (col Col) MarshalJSON() ([]byte, error) {
 	newMeta := col.meta.Set("name", NewStr(col.name))
 	return newMeta.MarshalJSON()
 }
 
 // MarshalHayson represents the object in JSON object format with a required name field and the column metadata:
 // "{"name":"<name>", "<field1>":<val1> ...}"
-func (col *Col) MarshalHayson() ([]byte, error) {
+func (col Col) MarshalHayson() ([]byte, error) {
 	newMeta := col.meta.Set("name", NewStr(col.name))
 	return newMeta.MarshalHayson()
 }
 
 // WriteZincTo appends the Writer with the Col representation: <name> <meta>
-func (col *Col) WriteZincTo(buf *bufio.Writer) {
+func (col Col) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteString(col.name)
 	if !col.meta.IsEmpty() {
 		buf.WriteRune(' ')
@@ -299,36 +298,36 @@ type Row struct {
 }
 
 // Get returns the Val of the given name. If the name is not found, Null is returned.
-func (row *Row) Get(name string) Val {
+func (row Row) Get(name string) Val {
 	return row.items[name]
 }
 
 // ToDict returns the values in a Dict format
-func (row *Row) ToDict() *Dict {
-	return &Dict{items: row.items}
+func (row Row) ToDict() Dict {
+	return Dict{items: row.items}
 }
 
 // MarshalJSON represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
-func (row *Row) MarshalJSON() ([]byte, error) {
+func (row Row) MarshalJSON() ([]byte, error) {
 	// Use Dict.MarshalJSON to enforce alphabetical order for easier testing.
 	return row.ToDict().MarshalJSON()
 }
 
 // MarshalHayson represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"
-func (row *Row) MarshalHayson() ([]byte, error) {
+func (row Row) MarshalHayson() ([]byte, error) {
 	// Use Dict.MarshalHayson to enforce alphabetical order for easier testing.
 	return row.ToDict().MarshalHayson()
 }
 
 // WriteZincTo appends the Writer with the Row representation: <val1>, <val2>, ... Cols sets ordering
-func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col, indentSize int) {
-	for colIdx, col := range *cols {
+func (row Row) WriteZincTo(buf *bufio.Writer, cols []Col, indentSize int) {
+	for colIdx, col := range cols {
 		if colIdx != 0 {
 			buf.WriteString(", ")
 		}
 		val := row.items[col.name]
 		switch val := val.(type) {
-		case *Grid:
+		case Grid:
 			indentSize = indentSize + 1
 			buf.WriteString("<<\n")
 			val.WriteZincTo(buf, indentSize)
@@ -336,13 +335,13 @@ func (row *Row) WriteZincTo(buf *bufio.Writer, cols *[]Col, indentSize int) {
 			writeIndent(buf, indentSize)
 			buf.WriteString(">>")
 			indentSize = indentSize - 1
-		case *List:
+		case List:
 			val.WriteZincTo(buf)
-		case *Dict:
+		case Dict:
 			val.WriteZincTo(buf, true)
-		case *Str:
+		case Str:
 			val.WriteZincTo(buf)
-		case *Uri:
+		case Uri:
 			val.WriteZincTo(buf)
 		default:
 			buf.WriteString(val.ToZinc())

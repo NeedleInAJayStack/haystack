@@ -33,6 +33,11 @@ func (grid Grid) ColCount() int {
 	return len(grid.cols)
 }
 
+// Cols returns the column objects
+func (grid Grid) Cols() []Col {
+	return grid.cols
+}
+
 // Col returns the column matching the name
 func (grid Grid) Col(name string) Col {
 	var colMatch Col
@@ -54,6 +59,11 @@ func (grid Grid) ColAt(index int) Col {
 // RowCount returns the count of rows
 func (grid Grid) RowCount() int {
 	return len(grid.rows)
+}
+
+// Rows returns the column objects
+func (grid Grid) Rows() []Row {
+	return grid.rows
 }
 
 // RowAt returns the row at the index

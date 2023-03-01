@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestNull_ToZinc(t *testing.T) {
 	valTest_ToZinc(NewNull(), "N", t)
@@ -11,8 +14,9 @@ func TestNull_MarshalJSON(t *testing.T) {
 }
 
 func TestNull_UnmarshalJSON(t *testing.T) {
-	val := NewNull()
-	valTest_UnmarshalJSON("null", val, "N", t)
+	var null Null
+	json.Unmarshal([]byte("null"), &null)
+	valTest_ToZinc(null, "N", t)
 }
 
 func TestNull_MarshalHayson(t *testing.T) {

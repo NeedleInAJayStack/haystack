@@ -1,4 +1,4 @@
-package haystack
+package io
 
 // Token categorizes the contents of a Zinc string into specific literals or syntax objects. See https://project-haystack.org/doc/Zinc
 type Token int

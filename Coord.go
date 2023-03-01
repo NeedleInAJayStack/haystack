@@ -16,24 +16,24 @@ type Coord struct {
 }
 
 // NewCoord creates a new Coord object. lat/lng are clipped to reasonable values.
-func NewCoord(lat float64, lng float64) *Coord {
+func NewCoord(lat float64, lng float64) Coord {
 	lat = math.Min(math.Max(lat, -90.0), 90.0) // Clip to -90 to 90
 	lng = math.Min(math.Max(lng, 0.0), 180)    // Clip to 0 to 180
-	return &Coord{lat: lat, lng: lng}
+	return Coord{lat: lat, lng: lng}
 }
 
 // Lat returns the latitude.
-func (coord *Coord) Lat() float64 {
+func (coord Coord) Lat() float64 {
 	return coord.lat
 }
 
 // Lng returns the longitude.
-func (coord *Coord) Lng() float64 {
+func (coord Coord) Lng() float64 {
 	return coord.lng
 }
 
 // ToZinc representes the object as: "C(<lat>,<lng>)"
-func (coord *Coord) ToZinc() string {
+func (coord Coord) ToZinc() string {
 	result := "C("
 	result = result + fmt.Sprintf("%g", coord.lat)
 	result = result + ","
@@ -44,7 +44,7 @@ func (coord *Coord) ToZinc() string {
 }
 
 // MarshalJSON representes the object as: "c:<lat>,<lng>"
-func (coord *Coord) MarshalJSON() ([]byte, error) {
+func (coord Coord) MarshalJSON() ([]byte, error) {
 	result := "c:" + fmt.Sprintf("%g", coord.lat) + "," + fmt.Sprintf("%g", coord.lng)
 	return json.Marshal(result)
 }
@@ -58,29 +58,29 @@ func (coord *Coord) UnmarshalJSON(buf []byte) error {
 	}
 
 	newCoord, newErr := coordFromJSON(jsonStr)
-	*coord = *newCoord
+	*coord = newCoord
 	return newErr
 }
 
-func coordFromJSON(jsonStr string) (*Coord, error) {
+func coordFromJSON(jsonStr string) (Coord, error) {
 	if !strings.HasPrefix(jsonStr, "c:") {
-		return nil, errors.New("Input value does not begin with 'c:'")
+		return Coord{}, errors.New("value does not begin with 'c:'")
 	}
 	coordSplit := strings.Split(jsonStr[2:], ",")
 
 	lat, latErr := strconv.ParseFloat(coordSplit[0], 64)
 	if latErr != nil {
-		return nil, latErr
+		return Coord{}, latErr
 	}
 	lng, lngErr := strconv.ParseFloat(coordSplit[1], 64)
 	if lngErr != nil {
-		return nil, lngErr
+		return Coord{}, lngErr
 	}
 	return NewCoord(lat, lng), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"coord\",\"lat\":<lat>,\"lng\":<lng>}"
-func (coord *Coord) MarshalHayson() ([]byte, error) {
+func (coord Coord) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"coord\",\"lat\":")
 	builder.WriteString(fmt.Sprintf("%g", coord.lat))

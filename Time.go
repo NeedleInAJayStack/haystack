@@ -17,8 +17,8 @@ type Time struct {
 }
 
 // NewTime creates a new Time object. The values are not validated for correctness.
-func NewTime(hour int, min int, sec int, ms int) *Time {
-	return &Time{
+func NewTime(hour int, min int, sec int, ms int) Time {
+	return Time{
 		hour: hour,
 		min:  min,
 		sec:  sec,
@@ -27,16 +27,16 @@ func NewTime(hour int, min int, sec int, ms int) *Time {
 }
 
 // NewTimeFromIso creates a Time object from a string in the format: "hh:mm:ss[.mmm]"
-func NewTimeFromIso(str string) (*Time, error) {
+func NewTimeFromIso(str string) (Time, error) {
 	parts := strings.Split(str, ":")
 
 	hour, hourErr := strconv.Atoi(parts[0])
 	if hourErr != nil {
-		return &Time{}, hourErr
+		return Time{}, hourErr
 	}
 	min, minErr := strconv.Atoi(parts[1])
 	if minErr != nil {
-		return &Time{}, minErr
+		return Time{}, minErr
 	}
 
 	sec := 0
@@ -46,13 +46,13 @@ func NewTimeFromIso(str string) (*Time, error) {
 
 		secVal, secErr := strconv.Atoi(secParts[0])
 		if secErr != nil {
-			return &Time{}, secErr
+			return Time{}, secErr
 		}
 		sec = secVal
 		msPart := secParts[1]
 		msVal, msErr := strconv.Atoi(msPart)
 		if msErr != nil {
-			return &Time{}, msErr
+			return Time{}, msErr
 		}
 		// Support inputting up to 3 digit accuracy
 		if len(msPart) == 1 {
@@ -62,12 +62,12 @@ func NewTimeFromIso(str string) (*Time, error) {
 		} else if len(msPart) == 3 {
 			ms = msVal
 		} else {
-			return &Time{}, errors.New("ms section contained more than 3 digits")
+			return Time{}, errors.New("ms section contained more than 3 digits")
 		}
 	} else {
 		secVal, secErr := strconv.Atoi(parts[2])
 		if secErr != nil {
-			return &Time{}, secErr
+			return Time{}, secErr
 		}
 		sec = secVal
 	}
@@ -76,32 +76,32 @@ func NewTimeFromIso(str string) (*Time, error) {
 }
 
 // Hour returns the hours of the object.
-func (time *Time) Hour() int {
+func (time Time) Hour() int {
 	return time.hour
 }
 
 // Min returns the minutes of the object.
-func (time *Time) Min() int {
+func (time Time) Min() int {
 	return time.min
 }
 
 // Sec returns the seconds of the object.
-func (time *Time) Sec() int {
+func (time Time) Sec() int {
 	return time.sec
 }
 
 // Millis returns the milliseconds of the object.
-func (time *Time) Millis() int {
+func (time Time) Millis() int {
 	return time.ms
 }
 
 // ToZinc representes the object as: "hh:mm:ss[.mmm]"
-func (time *Time) ToZinc() string {
+func (time Time) ToZinc() string {
 	return time.toIso()
 }
 
 // MarshalJSON representes the object as: "h:hh:mm:ss[.mmm]"
-func (time *Time) MarshalJSON() ([]byte, error) {
+func (time Time) MarshalJSON() ([]byte, error) {
 	return json.Marshal("h:" + time.toIso())
 }
 
@@ -114,13 +114,13 @@ func (time *Time) UnmarshalJSON(buf []byte) error {
 	}
 
 	newTime, newErr := timeFromJSON(jsonStr)
-	*time = *newTime
+	*time = newTime
 	return newErr
 }
 
-func timeFromJSON(jsonStr string) (*Time, error) {
+func timeFromJSON(jsonStr string) (Time, error) {
 	if !strings.HasPrefix(jsonStr, "h:") {
-		return nil, errors.New("Input value does not begin with 'h:'")
+		return Time{}, errors.New("value does not begin with 'h:'")
 	}
 	timeStr := jsonStr[2:]
 
@@ -128,11 +128,11 @@ func timeFromJSON(jsonStr string) (*Time, error) {
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"time\",\"val\":\"hh:mm:ss[.mmm]\""}"
-func (time *Time) MarshalHayson() ([]byte, error) {
+func (time Time) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"time\",\"val\":\"" + time.toIso() + "\"}"), nil
 }
 
-func (time *Time) toIso() string {
+func (time Time) toIso() string {
 	result := ""
 	if time.hour < 10 {
 		result = result + "0"
@@ -159,7 +159,7 @@ func (time *Time) toIso() string {
 	return result
 }
 
-func (time *Time) equals(otherTime *Time) bool {
+func (time Time) equals(otherTime Time) bool {
 	return time.hour == otherTime.hour &&
 		time.min == otherTime.min &&
 		time.sec == otherTime.sec &&

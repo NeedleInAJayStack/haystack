@@ -1,9 +1,11 @@
-package haystack
+package io
 
 import (
 	"math"
 	"strings"
 	"unicode"
+
+	"github.com/NeedleInAJayStack/haystack"
 )
 
 // ZincReader reads Zinc strings into Haystack Vals
@@ -11,11 +13,11 @@ type ZincReader struct {
 	tokenizer Tokenizer
 
 	cur    Token
-	curVal Val
+	curVal haystack.Val
 	// curLine int
 
 	peek    Token
-	peekVal Val
+	peekVal haystack.Val
 	// peekLine int
 }
 
@@ -33,9 +35,9 @@ func (reader *ZincReader) Init(in *strings.Reader) {
 	reader.consume()
 }
 
-// ReadVal proceeds through the next Val and returns it
-func (reader *ZincReader) ReadVal() Val {
-	var val Val
+// ReadVal proceeds through the next haystack.Val and returns it
+func (reader *ZincReader) ReadVal() haystack.Val {
+	var val haystack.Val
 
 	if reader.cur == ID {
 		val = reader.parseGrid()
@@ -49,9 +51,9 @@ func (reader *ZincReader) ReadVal() Val {
 	return val
 }
 
-func (reader *ZincReader) parseVal() Val {
+func (reader *ZincReader) parseVal() haystack.Val {
 	if reader.cur == ID {
-		id := reader.curVal.(*Id).String()
+		id := reader.curVal.(haystack.Id).String()
 		reader.consumeToken(ID)
 
 		// check for coord or xstr
@@ -65,21 +67,21 @@ func (reader *ZincReader) parseVal() Val {
 
 		// check for keyword
 		if id == "T" {
-			return NewBool(true)
+			return haystack.NewBool(true)
 		} else if id == "F" {
-			return NewBool(false)
+			return haystack.NewBool(false)
 		} else if id == "N" {
-			return NewNull()
+			return haystack.NewNull()
 		} else if id == "M" {
-			return NewMarker()
+			return haystack.NewMarker()
 		} else if id == "NA" {
-			return NewNA()
+			return haystack.NewNA()
 		} else if id == "R" {
-			return NewRemove()
+			return haystack.NewRemove()
 		} else if id == "NaN" {
-			return NewNumber(math.NaN(), "")
+			return haystack.NewNumber(math.NaN(), "")
 		} else if id == "INF" {
-			return NewNumber(math.Inf(1), "")
+			return haystack.NewNumber(math.Inf(1), "")
 		} else {
 			panic("Unexpected identifier: " + id)
 		}
@@ -94,7 +96,7 @@ func (reader *ZincReader) parseVal() Val {
 	if reader.cur == MINUS && reader.peekVal.ToZinc() == "INF" {
 		reader.consumeToken(MINUS)
 		reader.consumeToken(ID)
-		return NewNumber(math.Inf(-1), "")
+		return haystack.NewNumber(math.Inf(-1), "")
 	}
 
 	// nested collections
@@ -109,23 +111,23 @@ func (reader *ZincReader) parseVal() Val {
 	panic("Unexpected token: " + reader.cur.String())
 }
 
-func (reader *ZincReader) parseCoord(id string) *Coord {
+func (reader *ZincReader) parseCoord(id string) haystack.Coord {
 	if id != "C" {
 		panic("Expecting 'C' for coord, not " + id)
 	}
 
-	var lat *Number
-	var lng *Number
+	var lat haystack.Number
+	var lng haystack.Number
 	reader.consumeToken(LPAREN)
 	lat = reader.consumeNumber()
 	reader.consumeToken(COMMA)
 	lng = reader.consumeNumber()
 	reader.consumeToken(RPAREN)
 
-	return NewCoord(lat.Float(), lng.Float())
+	return haystack.NewCoord(lat.Float(), lng.Float())
 }
 
-func (reader *ZincReader) parseXStr(id string) Val {
+func (reader *ZincReader) parseXStr(id string) haystack.Val {
 	if !unicode.IsUpper([]rune(id)[0]) {
 		panic("Invalid XStr type: " + id)
 	}
@@ -134,37 +136,36 @@ func (reader *ZincReader) parseXStr(id string) Val {
 		mime := reader.consumeStr()
 		reader.consumeToken(RPAREN)
 
-		return NewBin(mime.String())
+		return haystack.NewBin(mime.String())
 	} else {
 		reader.consumeToken(LPAREN)
 		val := reader.consumeStr()
 		reader.consumeToken(RPAREN)
 
-		return NewXStr(id, val.String())
+		return haystack.NewXStr(id, val.String())
 	}
 }
 
-func (reader *ZincReader) parseLiteral() Val {
+func (reader *ZincReader) parseLiteral() haystack.Val {
 	val := reader.curVal
 	// Combine ref and dis
 	if reader.cur == REF && reader.peek == STR {
-		ref := reader.curVal.(*Ref)
-		dis := reader.peekVal.(*Str)
+		ref := reader.curVal.(haystack.Ref)
+		dis := reader.peekVal.(haystack.Str)
 
-		val = NewRef(ref.Id(), dis.String())
+		val = haystack.NewRef(ref.Id(), dis.String())
 		reader.consumeToken(REF)
 	}
 	reader.consume()
 	return val
 }
 
-func (reader *ZincReader) parseList() *List {
-	var vals []Val
+func (reader *ZincReader) parseList() haystack.List {
+	var vals []haystack.Val
 
 	reader.consumeToken(LBRACKET)
 	for reader.cur != RBRACKET && reader.cur != EOF {
-		var val Val
-		val = reader.parseVal()
+		val := reader.parseVal()
 		vals = append(vals, val)
 		if reader.cur != COMMA {
 			break
@@ -174,11 +175,11 @@ func (reader *ZincReader) parseList() *List {
 
 	reader.consumeToken(RBRACKET)
 
-	return NewList(vals)
+	return haystack.NewList(vals)
 }
 
-func (reader *ZincReader) parseDict() *Dict {
-	items := make(map[string]Val)
+func (reader *ZincReader) parseDict() haystack.Dict {
+	items := make(map[string]haystack.Val)
 
 	braces := reader.cur == LBRACE
 	if braces {
@@ -186,11 +187,11 @@ func (reader *ZincReader) parseDict() *Dict {
 	}
 	for reader.cur == ID {
 		var id string
-		var val Val
+		var val haystack.Val
 
 		id = reader.consumeTagName()
 
-		val = NewMarker() // Default to marker val if there is no value
+		val = haystack.NewMarker() // Default to marker val if there is no value
 		if reader.cur == COLON {
 			reader.consumeToken(COLON)
 			val = reader.parseVal()
@@ -201,11 +202,11 @@ func (reader *ZincReader) parseDict() *Dict {
 		reader.consumeToken(RBRACE)
 	}
 
-	return NewDict(items)
+	return haystack.NewDict(items)
 }
 
-func (reader *ZincReader) parseGrid() *Grid {
-	gb := NewGridBuilder()
+func (reader *ZincReader) parseGrid() haystack.Grid {
+	gb := haystack.NewGridBuilder()
 
 	nested := reader.cur == LT2
 	if nested {
@@ -236,7 +237,7 @@ func (reader *ZincReader) parseGrid() *Grid {
 		numCols = numCols + 1
 		name := reader.consumeTagName()
 
-		colMeta := EmptyDict()
+		colMeta := haystack.EmptyDict()
 		if reader.cur == ID {
 			colMeta = reader.parseDict()
 		}
@@ -263,10 +264,10 @@ func (reader *ZincReader) parseGrid() *Grid {
 		}
 
 		// read cells
-		var vals []Val
+		var vals []haystack.Val
 		for i := 0; i < numCols; i = i + 1 {
 			if reader.cur == COMMA || reader.cur == NL || reader.cur == EOF {
-				vals = append(vals, NewNull())
+				vals = append(vals, haystack.NewNull())
 			} else {
 				vals = append(vals, reader.parseVal())
 			}
@@ -296,7 +297,7 @@ func (reader *ZincReader) parseGrid() *Grid {
 }
 
 func (reader *ZincReader) consumeTagName() string {
-	id := reader.curVal.(*Id)
+	id := reader.curVal.(haystack.Id)
 	val := id.String()
 	if val == "" || unicode.IsUpper([]rune(val)[0]) {
 		panic("Invalid dict tag name: " + val)
@@ -311,14 +312,14 @@ func checkVersion(str string) {
 	}
 }
 
-func (reader *ZincReader) consumeNumber() *Number {
-	number := reader.curVal.(*Number)
+func (reader *ZincReader) consumeNumber() haystack.Number {
+	number := reader.curVal.(haystack.Number)
 	reader.consumeToken(NUMBER)
 	return number
 }
 
-func (reader *ZincReader) consumeStr() *Str {
-	str := reader.curVal.(*Str)
+func (reader *ZincReader) consumeStr() haystack.Str {
+	str := reader.curVal.(haystack.Str)
 	reader.consumeToken(STR)
 	return str
 }

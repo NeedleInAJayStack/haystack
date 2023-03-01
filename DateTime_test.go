@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -102,12 +103,17 @@ func TestDateTime_MarshalJSON(t *testing.T) {
 }
 
 func TestDateTime_UnmarshalJSON(t *testing.T) {
-	utc := dateTimeDef()
-	valTest_UnmarshalJSON("\"t:2020-08-17T23:07:10Z UTC\"", utc, "2020-08-17T23:07:10Z UTC", t)
-	la := dateTimeDef()
-	valTest_UnmarshalJSON("\"t:2020-08-17T23:07:10-07:00 Los_Angeles\"", la, "2020-08-17T23:07:10-07:00 Los_Angeles", t)
-	taipei := dateTimeDef()
-	valTest_UnmarshalJSON("\"t:2020-08-17T23:07:10+08:00 Taipei\"", taipei, "2020-08-17T23:07:10+08:00 Taipei", t)
+	var utc DateTime
+	json.Unmarshal([]byte("\"t:2020-08-17T23:07:10Z UTC\""), &utc)
+	valTest_ToZinc(utc, "2020-08-17T23:07:10Z UTC", t)
+
+	var la DateTime
+	json.Unmarshal([]byte("\"t:2020-08-17T23:07:10-07:00 Los_Angeles\""), &la)
+	valTest_ToZinc(la, "2020-08-17T23:07:10-07:00 Los_Angeles", t)
+
+	var taipei DateTime
+	json.Unmarshal([]byte("\"t:2020-08-17T23:07:10+08:00 Taipei\""), &taipei)
+	valTest_ToZinc(taipei, "2020-08-17T23:07:10+08:00 Taipei", t)
 }
 
 func TestDateTime_MarshalHayson(t *testing.T) {

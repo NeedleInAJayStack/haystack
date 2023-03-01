@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"math"
 	"testing"
 )
@@ -22,16 +23,25 @@ func TestNumber_MarshalJSON(t *testing.T) {
 }
 
 func TestNumber_UnmarshalJSON(t *testing.T) {
-	number := NewNumber(0, "")
-	valTest_UnmarshalJSON("\"n:100.457\"", number, "100.457", t)
-	numberUnit := NewNumber(0, "")
-	valTest_UnmarshalJSON("\"n:100.457 kWh\"", numberUnit, "100.457kWh", t)
-	inf := NewNumber(0, "")
-	valTest_UnmarshalJSON("\"n:INF\"", inf, "INF", t)
-	negInf := NewNumber(0, "")
-	valTest_UnmarshalJSON("\"n:-INF\"", negInf, "-INF", t)
-	nan := NewNumber(0, "")
-	valTest_UnmarshalJSON("\"n:NaN\"", nan, "NaN", t)
+	var number Number
+	json.Unmarshal([]byte("\"n:100.457\""), &number)
+	valTest_ToZinc(number, "100.457", t)
+
+	var numberUnit Number
+	json.Unmarshal([]byte("\"n:100.457 kWh\""), &numberUnit)
+	valTest_ToZinc(numberUnit, "100.457kWh", t)
+
+	var inf Number
+	json.Unmarshal([]byte("\"n:INF\""), &inf)
+	valTest_ToZinc(inf, "INF", t)
+
+	var negInf Number
+	json.Unmarshal([]byte("\"n:-INF\""), &negInf)
+	valTest_ToZinc(negInf, "-INF", t)
+
+	var nan Number
+	json.Unmarshal([]byte("\"n:NaN\""), &nan)
+	valTest_ToZinc(nan, "NaN", t)
 }
 
 func TestNumber_MarshalHayson(t *testing.T) {

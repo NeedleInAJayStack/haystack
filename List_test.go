@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestList_Get(t *testing.T) {
 	list := NewList(
@@ -51,8 +54,9 @@ func TestList_MarshalJSON(t *testing.T) {
 }
 
 func TestList_UnmarshalJSON(t *testing.T) {
-	list := NewList([]Val{})
-	valTest_UnmarshalJSON("[\"n:5.5\",\"h:23:07:10\",\"r:null\"]", list, "[5.5, 23:07:10, @null]", t)
+	var list List
+	json.Unmarshal([]byte("[\"n:5.5\",\"h:23:07:10\",\"r:null\"]"), &list)
+	valTest_ToZinc(list, "[5.5, 23:07:10, @null]", t)
 }
 
 func TestList_MarshalHayson(t *testing.T) {

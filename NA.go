@@ -11,17 +11,17 @@ type NA struct {
 }
 
 // NewNA creates a new NA object.
-func NewNA() *NA {
-	return &NA{}
+func NewNA() NA {
+	return NA{}
 }
 
 // ToZinc representes the object as: "NA"
-func (na *NA) ToZinc() string {
+func (na NA) ToZinc() string {
 	return "NA"
 }
 
 // MarshalJSON representes the object as: "z:"
-func (na *NA) MarshalJSON() ([]byte, error) {
+func (na NA) MarshalJSON() ([]byte, error) {
 	return json.Marshal("z:")
 }
 
@@ -34,18 +34,18 @@ func (na *NA) UnmarshalJSON(buf []byte) error {
 	}
 
 	newNA, newErr := naFromJSON(jsonStr)
-	*na = *newNA
+	*na = newNA
 	return newErr
 }
 
-func naFromJSON(jsonStr string) (*NA, error) {
+func naFromJSON(jsonStr string) (NA, error) {
 	if !strings.HasPrefix(jsonStr, "z:") {
-		return nil, errors.New("Input value does not begin with 'z:'")
+		return NewNA(), errors.New("value does not begin with 'z:'")
 	}
 	return NewNA(), nil
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"na\"}"
-func (na *NA) MarshalHayson() ([]byte, error) {
+func (na NA) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"na\"}"), nil
 }

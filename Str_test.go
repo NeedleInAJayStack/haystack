@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -15,8 +16,9 @@ func TestStr_MarshalJSON(t *testing.T) {
 }
 
 func TestStr_UnmarshalJSON(t *testing.T) {
-	val := NewStr("")
-	valTest_UnmarshalJSON("\"s:https://project-haystack.org/\"", val, "\"https://project-haystack.org/\"", t)
+	var val Str
+	json.Unmarshal([]byte("\"s:https://project-haystack.org/\""), &val)
+	valTest_ToZinc(val, "\"https://project-haystack.org/\"", t)
 }
 
 func TestStr_MarshalHayson(t *testing.T) {

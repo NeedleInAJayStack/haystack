@@ -13,17 +13,17 @@ type Uri struct {
 }
 
 // NewUri creates a new Uri object.
-func NewUri(val string) *Uri {
-	return &Uri{val: val}
+func NewUri(val string) Uri {
+	return Uri{val: val}
 }
 
 // Type returns the XStr object type
-func (uri *Uri) String() string {
+func (uri Uri) String() string {
 	return uri.val
 }
 
 // MarshalJSON representes the object as: "u:<val>"
-func (uri *Uri) MarshalJSON() ([]byte, error) {
+func (uri Uri) MarshalJSON() ([]byte, error) {
 	return json.Marshal("u:" + uri.val)
 }
 
@@ -36,13 +36,13 @@ func (uri *Uri) UnmarshalJSON(buf []byte) error {
 	}
 
 	newUri, newErr := uriFromJSON(jsonStr)
-	*uri = *newUri
+	*uri = newUri
 	return newErr
 }
 
-func uriFromJSON(jsonStr string) (*Uri, error) {
+func uriFromJSON(jsonStr string) (Uri, error) {
 	if !strings.HasPrefix(jsonStr, "u:") {
-		return nil, errors.New("Input value does not begin with 'u:'")
+		return Uri{}, errors.New("value does not begin with 'u:'")
 	}
 	val := jsonStr[2:]
 
@@ -50,12 +50,12 @@ func uriFromJSON(jsonStr string) (*Uri, error) {
 }
 
 // MarshalHayson representes the object as: "{\"_kind\":\"uri\",\"val\":\"<val>\"}"
-func (uri *Uri) MarshalHayson() ([]byte, error) {
+func (uri Uri) MarshalHayson() ([]byte, error) {
 	return []byte("{\"_kind\":\"uri\",\"val\":\"" + uri.val + "\"}"), nil
 }
 
 // ToZinc representes the object as: "`<val>`" with escaped backticks
-func (uri *Uri) ToZinc() string {
+func (uri Uri) ToZinc() string {
 	builder := new(strings.Builder)
 	out := bufio.NewWriter(builder)
 	uri.WriteZincTo(out)
@@ -64,7 +64,7 @@ func (uri *Uri) ToZinc() string {
 }
 
 // WriteZincTo appends the Writer with the URI zinc representation
-func (uri *Uri) WriteZincTo(buf *bufio.Writer) {
+func (uri Uri) WriteZincTo(buf *bufio.Writer) {
 	buf.WriteRune('`')
 	for i := 0; i < len(uri.val); i++ {
 		char := uri.val[i]

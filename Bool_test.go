@@ -1,6 +1,7 @@
 package haystack
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -15,8 +16,9 @@ func TestBool_MarshalJSON(t *testing.T) {
 }
 
 func TestBool_UnmarshalJSON(t *testing.T) {
-	val := NewBool(false)
-	valTest_UnmarshalJSON("true", val, "T", t)
+	var bool Bool
+	json.Unmarshal([]byte("true"), &bool)
+	valTest_ToZinc(bool, "T", t)
 }
 
 func TestBool_MarshalHayson(t *testing.T) {

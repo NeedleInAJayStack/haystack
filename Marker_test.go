@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestMarker_ToZinc(t *testing.T) {
 	valTest_ToZinc(NewMarker(), "M", t)
@@ -11,8 +14,9 @@ func TestMarker_MarshalJSON(t *testing.T) {
 }
 
 func TestMarker_UnmarshalJSON(t *testing.T) {
-	val := NewMarker()
-	valTest_UnmarshalJSON("\"m:\"", val, "M", t)
+	var marker Marker
+	json.Unmarshal([]byte("\"m:\""), &marker)
+	valTest_ToZinc(marker, "M", t)
 }
 
 func TestMarker_MarshalHayson(t *testing.T) {
@@ -28,8 +32,9 @@ func TestRemove_MarshalJSON(t *testing.T) {
 }
 
 func TestRemove_UnmarshalJSON(t *testing.T) {
-	val := NewRemove()
-	valTest_UnmarshalJSON("\"-:\"", val, "R", t)
+	var remove Remove
+	json.Unmarshal([]byte("\"-:\""), &remove)
+	valTest_ToZinc(remove, "R", t)
 }
 
 func TestRemove_MarshalHayson(t *testing.T) {

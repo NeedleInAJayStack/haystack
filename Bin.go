@@ -12,17 +12,17 @@ type Bin struct {
 }
 
 // NewBin creates a new Bin object.
-func NewBin(mime string) *Bin {
-	return &Bin{mime: mime}
+func NewBin(mime string) Bin {
+	return Bin{mime: mime}
 }
 
 // ToZinc representes the object as: "{@code Bin("<mime>")}"
-func (bin *Bin) ToZinc() string {
+func (bin Bin) ToZinc() string {
 	return "Bin(\"" + bin.mime + "\")"
 }
 
 // MarshalJSON representes the object as: "b:<mime>"
-func (bin *Bin) MarshalJSON() ([]byte, error) {
+func (bin Bin) MarshalJSON() ([]byte, error) {
 	return json.Marshal("b:" + bin.mime)
 }
 
@@ -35,13 +35,13 @@ func (bin *Bin) UnmarshalJSON(buf []byte) error {
 	}
 
 	newBin, newErr := binFromJSON(jsonStr)
-	*bin = *newBin
+	*bin = newBin
 	return newErr
 }
 
-func binFromJSON(jsonStr string) (*Bin, error) {
+func binFromJSON(jsonStr string) (Bin, error) {
 	if !strings.HasPrefix(jsonStr, "b:") {
-		return nil, errors.New("Input value does not begin with 'b:'")
+		return Bin{}, errors.New("value does not begin with 'b:'")
 	}
 	mime := jsonStr[2:]
 	return NewBin(mime), nil
@@ -49,7 +49,7 @@ func binFromJSON(jsonStr string) (*Bin, error) {
 
 // MarshalHayson representes the object as: "{\"_kind\":\"bin\",\"mime\":\"<mime>\"}"
 // This representation is unofficial, but it fills out the Val interface
-func (bin *Bin) MarshalHayson() ([]byte, error) {
+func (bin Bin) MarshalHayson() ([]byte, error) {
 	builder := new(strings.Builder)
 	builder.WriteString("{\"_kind\":\"bin\",\"mime\":\"")
 	builder.WriteString(bin.mime)

@@ -1,6 +1,9 @@
 package haystack
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestDate_equals(t *testing.T) {
 	date1 := NewDate(2020, 8, 17)
@@ -42,8 +45,9 @@ func TestDate_MarshalJSON(t *testing.T) {
 }
 
 func TestDate_UnmarshalJSON(t *testing.T) {
-	val := NewDate(0, 0, 0)
-	valTest_UnmarshalJSON("\"d:2020-08-17\"", val, "2020-08-17", t)
+	var date Date
+	json.Unmarshal([]byte("\"d:2020-08-17\""), &date)
+	valTest_ToZinc(date, "2020-08-17", t)
 }
 
 func TestDate_MarshalHayson(t *testing.T) {

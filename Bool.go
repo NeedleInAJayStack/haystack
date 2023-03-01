@@ -8,19 +8,19 @@ type Bool struct {
 }
 
 // NewBool creates a new Bool object.
-func NewBool(val bool) *Bool {
-	return &Bool{
+func NewBool(val bool) Bool {
+	return Bool{
 		val: val,
 	}
 }
 
 // ToBool returns the value of this object as a Go bool
-func (b *Bool) ToBool() bool {
+func (b Bool) ToBool() bool {
 	return b.val
 }
 
 // ToZinc representes the object as: "T" or "F"
-func (b *Bool) ToZinc() string {
+func (b Bool) ToZinc() string {
 	if b.ToBool() {
 		return "T"
 	}
@@ -28,7 +28,7 @@ func (b *Bool) ToZinc() string {
 }
 
 // MarshalJSON representes the object as: "true" or "false"
-func (b *Bool) MarshalJSON() ([]byte, error) {
+func (b Bool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }
 
@@ -39,20 +39,15 @@ func (b *Bool) UnmarshalJSON(buf []byte) error {
 	if err != nil {
 		return err
 	}
-
-	newBool, newErr := boolFromJSON(jsonBool)
-	*b = *newBool
-	return newErr
+	*b = Bool{val: jsonBool}
+	return nil
 }
 
 func boolFromJSON(jsonBool bool) (*Bool, error) {
-	if jsonBool {
-		return NewBool(true), nil
-	}
-	return NewBool(false), nil
+	return &Bool{val: jsonBool}, nil
 }
 
 // MarshalHayson is the same as MarshalJSON
-func (b *Bool) MarshalHayson() ([]byte, error) {
+func (b Bool) MarshalHayson() ([]byte, error) {
 	return json.Marshal(b.ToBool())
 }

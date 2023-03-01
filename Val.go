@@ -11,7 +11,6 @@ import (
 type Val interface {
 	ToZinc() string
 	json.Marshaler
-	json.Unmarshaler
 	MarshalHayson() ([]byte, error)
 }
 
@@ -61,9 +60,4 @@ func ValFromJSON(jsonObj interface{}) (Val, error) {
 	default:
 		return nil, errors.New("JSON type doesn't correlate to any haystack type: " + reflect.TypeOf(typedObj).Name())
 	}
-}
-
-func valUnmarshalToType(buf []byte, val Val) (Val, error) {
-	typeErr := json.Unmarshal(buf, val)
-	return val, typeErr
 }

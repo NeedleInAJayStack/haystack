@@ -22,7 +22,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package haystack
+package auth
 
 import (
 	"bytes"
@@ -39,17 +39,16 @@ import (
 //
 // A Scram may be used within a SASL conversation with logic resembling:
 //
-//    var in []byte
-//    var client = scram.NewScram(sha1.New, user, pass)
-//    for client.Step(in) {
-//            out := client.Out()
-//            // send out to server
-//            in := serverOut
-//    }
-//    if client.Err() != nil {
-//            // auth failed
-//    }
-//
+//	var in []byte
+//	var client = scram.NewScram(sha1.New, user, pass)
+//	for client.Step(in) {
+//	        out := client.Out()
+//	        // send out to server
+//	        in := serverOut
+//	}
+//	if client.Err() != nil {
+//	        // auth failed
+//	}
 type Scram struct {
 	newHash func() hash.Hash
 
@@ -73,8 +72,7 @@ var b64Uri = base64.RawURLEncoding // No padding
 //
 // For SCRAM-SHA-256, for example, use:
 //
-//    client := scram.NewScram(sha256.New, user, pass)
-//
+//	client := scram.NewScram(sha256.New, user, pass)
 func NewScram(newHash func() hash.Hash, user, pass string) *Scram {
 	c := &Scram{
 		newHash: newHash,

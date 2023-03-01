@@ -1,8 +1,11 @@
-package haystack
+package client
 
 import (
 	"errors"
 	"testing"
+
+	"github.com/NeedleInAJayStack/haystack"
+	"github.com/NeedleInAJayStack/haystack/io"
 )
 
 func TestClient_Open(t *testing.T) {
@@ -15,7 +18,7 @@ func TestClient_Open(t *testing.T) {
 
 func TestClient_Call(t *testing.T) {
 	client := testClient()
-	actual, err := client.Call("about", EmptyGrid())
+	actual, err := client.Call("about", haystack.EmptyGrid())
 	if err != nil {
 		t.Error(err)
 	}
@@ -30,10 +33,10 @@ func TestClient_About(t *testing.T) {
 	}
 	// About returns a Dict so get the first value of expected manually
 	expectedZinc := clientHTTPMock_about
-	var reader ZincReader
+	var reader io.ZincReader
 	reader.InitString(expectedZinc)
 	expectedGrid := reader.ReadVal()
-	expected := expectedGrid.(Grid).RowAt(0).ToDict()
+	expected := expectedGrid.(haystack.Grid).RowAt(0).ToDict()
 
 	valTest_Equal_Grid(actual, expected, t)
 }
@@ -80,9 +83,9 @@ func TestClient_ReadByIds(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(Ref)
+		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		actual, err := client.ReadByIds([]Ref{pointRef})
+		actual, err := client.ReadByIds([]haystack.Ref{pointRef})
 		if err != nil {
 			t.Error(err)
 		}
@@ -96,7 +99,7 @@ func TestClient_HisRead(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(Ref)
+		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
 		actual, err := client.HisRead(pointRef, "yesterday")
 		if err != nil {
@@ -112,10 +115,10 @@ func TestClient_HisReadAbsDate(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(Ref)
+		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		fromDate := NewDate(2020, 10, 4)
-		toDate := NewDate(2020, 10, 5)
+		fromDate := haystack.NewDate(2020, 10, 4)
+		toDate := haystack.NewDate(2020, 10, 5)
 		actual, err := client.HisReadAbsDate(pointRef, fromDate, toDate)
 		if err != nil {
 			t.Error(err)
@@ -130,10 +133,10 @@ func TestClient_HisReadAbsDateTime(t *testing.T) {
 	if pointsErr != nil {
 		t.Error(pointsErr)
 	} else {
-		pointRef := points.RowAt(0).Get("id").(Ref)
+		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		fromTs, _ := NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
-		toTs, _ := NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
+		fromTs, _ := haystack.NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
+		toTs, _ := haystack.NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
 		actual, err := client.HisReadAbsDateTime(pointRef, fromTs, toTs)
 		if err != nil {
 			t.Error(err)
@@ -151,8 +154,8 @@ func TestClient_Eval(t *testing.T) {
 	testClient_ValZinc(actual, clientHTTPMock_readPoint, t)
 }
 
-func testClient_ValZinc(actual Val, expectedZinc string, t *testing.T) {
-	var reader ZincReader
+func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) {
+	var reader io.ZincReader
 	reader.InitString(expectedZinc)
 	expected := reader.ReadVal()
 	valTest_Equal_Grid(actual, expected, t)
@@ -164,6 +167,15 @@ func testClient() *Client {
 		uri:        "http://localhost:8080/api/demo",
 		username:   "test",
 		password:   "test",
+	}
+}
+
+func valTest_Equal_Grid(actual haystack.Val, expected haystack.Val, t *testing.T) {
+	// Compare based on zinc representation
+	actualZinc := actual.ToZinc()
+	expectedZinc := expected.ToZinc()
+	if actualZinc != expectedZinc {
+		t.Error("\nACTUAL:\n" + actualZinc + "\n\nEXPECT:\n" + expectedZinc)
 	}
 }
 

@@ -61,7 +61,7 @@ func (ref *Ref) UnmarshalJSON(buf []byte) error {
 
 func refFromJSON(jsonStr string) (Ref, error) {
 	if !strings.HasPrefix(jsonStr, "r:") {
-		return Ref{}, errors.New("Input value does not begin with 'r:'")
+		return Ref{}, errors.New("value does not begin with 'r:'")
 	}
 	refStr := jsonStr[2:]
 	firstSpaceIndex := strings.Index(refStr, " ")

@@ -225,7 +225,7 @@ func (client *Client) Call(op string, reqGrid Grid) (Grid, error) {
 		}
 		return val, nil
 	default:
-		return EmptyGrid(), errors.New("Result was not a grid")
+		return EmptyGrid(), errors.New("result was not a grid")
 	}
 }
 

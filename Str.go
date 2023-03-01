@@ -45,10 +45,7 @@ func (str *Str) UnmarshalJSON(buf []byte) error {
 }
 
 func strFromJSON(jsonStr string) (Str, error) {
-	if strings.HasPrefix(jsonStr, "s:") {
-		jsonStr = jsonStr[2:]
-	}
-
+	jsonStr = strings.TrimPrefix(jsonStr, "s:")
 	return NewStr(jsonStr), nil
 }
 

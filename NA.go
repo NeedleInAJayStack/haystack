@@ -40,7 +40,7 @@ func (na *NA) UnmarshalJSON(buf []byte) error {
 
 func naFromJSON(jsonStr string) (NA, error) {
 	if !strings.HasPrefix(jsonStr, "z:") {
-		return NewNA(), errors.New("Input value does not begin with 'z:'")
+		return NewNA(), errors.New("value does not begin with 'z:'")
 	}
 	return NewNA(), nil
 }

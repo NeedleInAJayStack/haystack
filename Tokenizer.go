@@ -47,7 +47,7 @@ func (tokenizer *Tokenizer) Next() Token {
 
 	// skip non-meaningful whitespace and comments
 	//int startLine = line
-	for true {
+	for {
 		// treat space, tab, non-breaking space as whitespace
 		if tokenizer.cur == ' ' || tokenizer.cur == '\t' || tokenizer.cur == 0xa0 {
 			tokenizer.consume()
@@ -147,7 +147,7 @@ func (tokenizer *Tokenizer) str() Token {
 func (tokenizer *Tokenizer) uri() Token {
 	tokenizer.consumeRune('`')
 	buf := strings.Builder{}
-	for true {
+	for {
 		if tokenizer.cur == '`' {
 			tokenizer.consumeRune('`')
 			break

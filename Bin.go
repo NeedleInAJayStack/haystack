@@ -41,7 +41,7 @@ func (bin *Bin) UnmarshalJSON(buf []byte) error {
 
 func binFromJSON(jsonStr string) (Bin, error) {
 	if !strings.HasPrefix(jsonStr, "b:") {
-		return Bin{}, errors.New("Input value does not begin with 'b:'")
+		return Bin{}, errors.New("value does not begin with 'b:'")
 	}
 	mime := jsonStr[2:]
 	return NewBin(mime), nil

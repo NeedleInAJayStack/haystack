@@ -163,8 +163,7 @@ func (reader *ZincReader) parseList() List {
 
 	reader.consumeToken(LBRACKET)
 	for reader.cur != RBRACKET && reader.cur != EOF {
-		var val Val
-		val = reader.parseVal()
+		val := reader.parseVal()
 		vals = append(vals, val)
 		if reader.cur != COMMA {
 			break

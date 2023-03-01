@@ -84,7 +84,7 @@ func (date *Date) UnmarshalJSON(buf []byte) error {
 
 func dateFromJSON(jsonStr string) (Date, error) {
 	if !strings.HasPrefix(jsonStr, "d:") {
-		return Date{}, errors.New("Input value does not begin with 'd:'")
+		return Date{}, errors.New("value does not begin with 'd:'")
 	}
 	dateStr := jsonStr[2:]
 

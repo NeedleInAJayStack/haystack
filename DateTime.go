@@ -210,7 +210,7 @@ func (dateTime *DateTime) UnmarshalJSON(buf []byte) error {
 
 func dateTimeFromJSON(jsonStr string) (DateTime, error) {
 	if !strings.HasPrefix(jsonStr, "t:") {
-		return dateTimeDef(), errors.New("Input value does not begin with 't:'")
+		return dateTimeDef(), errors.New("value does not begin with 't:'")
 	}
 	dateTimeStr := jsonStr[2:]
 

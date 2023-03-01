@@ -40,7 +40,7 @@ func (marker *Marker) UnmarshalJSON(buf []byte) error {
 
 func markerFromJSON(jsonStr string) (Marker, error) {
 	if !strings.HasPrefix(jsonStr, "m:") {
-		return NewMarker(), errors.New("Input value does not begin with 'm:'")
+		return NewMarker(), errors.New("value does not begin with 'm:'")
 	}
 	return NewMarker(), nil
 }
@@ -70,7 +70,7 @@ func (remove Remove) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON interprets the json value: "-:"
-func (remove Remove) UnmarshalJSON(buf []byte) error {
+func (remove *Remove) UnmarshalJSON(buf []byte) error {
 	var jsonStr string
 	err := json.Unmarshal(buf, &jsonStr)
 	if err != nil {
@@ -78,13 +78,13 @@ func (remove Remove) UnmarshalJSON(buf []byte) error {
 	}
 
 	newRemove, newErr := removeFromJSON(jsonStr)
-	remove = newRemove
+	*remove = newRemove
 	return newErr
 }
 
 func removeFromJSON(jsonStr string) (Remove, error) {
 	if !strings.HasPrefix(jsonStr, "-:") {
-		return NewRemove(), errors.New("Input value does not begin with '-:'")
+		return NewRemove(), errors.New("value does not begin with '-:'")
 	}
 	return NewRemove(), nil
 }

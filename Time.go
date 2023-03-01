@@ -120,7 +120,7 @@ func (time *Time) UnmarshalJSON(buf []byte) error {
 
 func timeFromJSON(jsonStr string) (Time, error) {
 	if !strings.HasPrefix(jsonStr, "h:") {
-		return Time{}, errors.New("Input value does not begin with 'h:'")
+		return Time{}, errors.New("value does not begin with 'h:'")
 	}
 	timeStr := jsonStr[2:]
 

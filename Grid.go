@@ -123,7 +123,7 @@ func gridFromJSON(jsonMap map[string]interface{}) (Grid, error) {
 	gb := NewGridBuilder()
 
 	if jsonMap["meta"] == nil || jsonMap["cols"] == nil || jsonMap["rows"] == nil {
-		return EmptyGrid(), errors.New("Input object does not contain keys: meta, cols, or rows")
+		return EmptyGrid(), errors.New("object does not contain keys: meta, cols, or rows")
 	}
 
 	metaMap := jsonMap["meta"].(map[string]interface{})
@@ -314,7 +314,7 @@ func (row Row) Get(name string) Val {
 
 // ToDict returns the values in a Dict format
 func (row Row) ToDict() Dict {
-	return Dict{items: row.items}
+	return NewDict(row.items)
 }
 
 // MarshalJSON represents the object in JSON object format: "{"<name1>":<val1>, "<name2>":<val2> ...}"

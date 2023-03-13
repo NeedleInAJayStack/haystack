@@ -143,4 +143,9 @@ func TestDateTime_ToGo(t *testing.T) {
 	if date3.Unix() != NewDateTimeFromGo(date3).ToGo().Unix() {
 		t.Error(date3, "!=", NewDateTimeFromGo(date3).ToGo())
 	}
+
+	date4 := time.Date(2020, time.August, 17, 23, 7, 10, 0, time.Local)
+	if date4.Unix() != NewDateTimeFromGo(date4).ToGo().Unix() {
+		t.Error(date4, "!=", NewDateTimeFromGo(date4).ToGo())
+	}
 }

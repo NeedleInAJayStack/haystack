@@ -93,6 +93,15 @@ func TestDateTime_ToZinc(t *testing.T) {
 	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "2020-08-17T23:07:10+08:00 Taipei", t)
 }
 
+func TestDateTime_ToAxon(t *testing.T) {
+	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
+	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
+
+	valTest_ToAxon(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "dateTime(2020-08-17,23:07:10,\"UTC\")", t)
+	valTest_ToAxon(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "dateTime(2020-08-17,23:07:10,\"Los_Angeles\")", t)
+	valTest_ToAxon(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "dateTime(2020-08-17,23:07:10,\"Taipei\")", t)
+}
+
 func TestDateTime_MarshalJSON(t *testing.T) {
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
@@ -147,5 +156,12 @@ func TestDateTime_ToGo(t *testing.T) {
 	date4 := time.Date(2020, time.August, 17, 23, 7, 10, 0, time.Local)
 	if date4.Unix() != NewDateTimeFromGo(date4).ToGo().Unix() {
 		t.Error(date4, "!=", NewDateTimeFromGo(date4).ToGo())
+	}
+}
+
+func valTest_ToAxon(val DateTime, expected string, t *testing.T) {
+	actual := val.ToAxon()
+	if actual != expected {
+		t.Error(actual + " != " + expected)
 	}
 }

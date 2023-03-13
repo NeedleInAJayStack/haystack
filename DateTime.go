@@ -170,7 +170,7 @@ func (dateTime DateTime) ToZinc() string {
 
 // ToAxon represents the object as: "dateTime(YYYY-MM-DD, hh:mm:ss.FFF)"
 func (dateTime DateTime) ToAxon() string {
-	return "dateTime(" + dateTime.Date().ToZinc() + "," + dateTime.Time().ToZinc() + ")"
+	return "dateTime(" + dateTime.Date().ToZinc() + "," + dateTime.Time().ToZinc() + ",\"" + dateTime.tz + "\")"
 }
 
 // ToGo creates a Go time.Time representation of the object

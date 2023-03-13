@@ -50,6 +50,11 @@ func NewTimeFromIso(str string) (Time, error) {
 		}
 		sec = secVal
 		msPart := secParts[1]
+		msMaxIndex := len(msPart)
+		if msMaxIndex > 3 {
+			msMaxIndex = 3
+		}
+		msPart = msPart[:msMaxIndex]
 		msVal, msErr := strconv.Atoi(msPart)
 		if msErr != nil {
 			return Time{}, msErr
@@ -61,9 +66,8 @@ func NewTimeFromIso(str string) (Time, error) {
 			ms = msVal * 10
 		} else if len(msPart) == 3 {
 			ms = msVal
-		} else {
-			return Time{}, errors.New("ms section contained more than 3 digits")
 		}
+		// It shouldn't be higher because we clamp it
 	} else {
 		secVal, secErr := strconv.Atoi(parts[2])
 		if secErr != nil {

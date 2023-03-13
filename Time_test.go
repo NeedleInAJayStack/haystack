@@ -25,24 +25,38 @@ func TestTime_equals(t *testing.T) {
 }
 
 func TestTime_NewTimeFromIso(t *testing.T) {
-	noMs := "23:07:10"
-	expNoMs := NewTime(23, 7, 10, 0)
-	timeNoMs, err := NewTimeFromIso(noMs)
+	iso := "23:07:10"
+	expected := NewTime(23, 7, 10, 0)
+	actual, err := NewTimeFromIso(iso)
 	if err != nil {
 		t.Error(err)
 	}
-	if !expNoMs.equals(timeNoMs) {
-		t.Error(timeNoMs)
+	if !expected.equals(actual) {
+		t.Error(actual)
 	}
+}
 
-	ms := "23:07:10.957"
-	expMs := NewTime(23, 7, 10, 957)
-	timeMs, err := NewTimeFromIso(ms)
+func TestTime_NewTimeFromIso_ms(t *testing.T) {
+	iso := "23:07:10.957"
+	expected := NewTime(23, 7, 10, 957)
+	actual, err := NewTimeFromIso(iso)
 	if err != nil {
 		t.Error(err)
 	}
-	if !expMs.equals(timeMs) {
-		t.Error(timeMs)
+	if !expected.equals(actual) {
+		t.Error(actual)
+	}
+}
+
+func TestTime_NewTimeFromIso_manyMs(t *testing.T) {
+	iso := "23:07:10.957654321"
+	expected := NewTime(23, 7, 10, 957)
+	actual, err := NewTimeFromIso(iso)
+	if err != nil {
+		t.Error(err)
+	}
+	if !expected.equals(actual) {
+		t.Error(actual)
 	}
 }
 

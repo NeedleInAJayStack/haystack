@@ -128,10 +128,9 @@ func NewDateTimeFromGo(goTime time.Time) DateTime {
 		goTime.Nanosecond()/1000,
 	)
 	location := goTime.Location()
-	hTz := "UTC"
-	if location != time.UTC {
-		tzName := goTime.Location().String()
-		hTz = strings.Split(tzName, "/")[1] // Don't include the region, only the city.
+	hTz := location.String()
+	if location != time.UTC && location != time.Local {
+		hTz = strings.Split(hTz, "/")[1] // Don't include the region, only the city.
 	}
 	_, hTzOffset := goTime.Zone()
 

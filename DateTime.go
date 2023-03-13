@@ -161,11 +161,16 @@ func (dateTime DateTime) TzOffset() int {
 	return dateTime.tzOffset
 }
 
-// ToZinc representes the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
+// ToZinc represents the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func (dateTime DateTime) ToZinc() string {
 	buf := strings.Builder{}
 	dateTime.encodeTo(&buf, true)
 	return buf.String()
+}
+
+// ToAxon represents the object as: "dateTime(YYYY-MM-DD, hh:mm:ss.FFF)"
+func (dateTime DateTime) ToAxon() string {
+	return "dateTime(" + dateTime.Date().ToZinc() + "," + dateTime.Time().ToZinc() + ")"
 }
 
 // ToGo creates a Go time.Time representation of the object

@@ -35,7 +35,10 @@ func TestClient_About(t *testing.T) {
 	expectedZinc := clientHTTPMock_about
 	var reader io.ZincReader
 	reader.InitString(expectedZinc)
-	expectedGrid := reader.ReadVal()
+	expectedGrid, err := reader.ReadVal()
+	if err != nil {
+		t.Error(err)
+	}
 	expected := expectedGrid.(haystack.Grid).RowAt(0).ToDict()
 
 	valTest_Equal_Grid(actual, expected, t)
@@ -200,7 +203,10 @@ func TestClient_Eval(t *testing.T) {
 func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) {
 	var reader io.ZincReader
 	reader.InitString(expectedZinc)
-	expected := reader.ReadVal()
+	expected, err := reader.ReadVal()
+	if err != nil {
+		t.Error(err)
+	}
 	valTest_Equal_Grid(actual, expected, t)
 }
 

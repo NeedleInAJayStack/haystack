@@ -540,7 +540,10 @@ func testZincReaderGrid(t *testing.T, str string, expected haystack.Grid) {
 	var reader ZincReader
 	reader.InitString(str)
 
-	val := reader.ReadVal()
+	val, err := reader.ReadVal()
+	if err != nil {
+		t.Error(err)
+	}
 	grid := val.(haystack.Grid)
 	testGridEq(t, grid, expected)
 
@@ -548,7 +551,10 @@ func testZincReaderGrid(t *testing.T, str string, expected haystack.Grid) {
 	writeStr := grid.ToZinc()
 	var writtenReader ZincReader
 	writtenReader.InitString(writeStr)
-	writeReadVal := writtenReader.ReadVal()
+	writeReadVal, err := writtenReader.ReadVal()
+	if err != nil {
+		t.Error(err)
+	}
 	writeReadGrid := writeReadVal.(haystack.Grid)
 	testGridEq(t, writeReadGrid, expected)
 }

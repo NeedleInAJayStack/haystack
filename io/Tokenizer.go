@@ -1,6 +1,7 @@
 package io
 
 import (
+	"errors"
 	"io"
 	"strconv"
 	"strings"
@@ -43,7 +44,7 @@ func (tokenizer *Tokenizer) Val() haystack.Val {
 }
 
 // Next reads the next token, storing the value in the Val, and Token fields
-func (tokenizer *Tokenizer) Next() Token {
+func (tokenizer *Tokenizer) Next() (Token, error) {
 	// reset
 	tokenizer.val = haystack.NewNull()
 
@@ -72,11 +73,12 @@ func (tokenizer *Tokenizer) Next() Token {
 	}
 
 	newToken := DEF
+	var err error
 	if tokenizer.cur == runeEOF {
 		newToken = EOF
 	} else if tokenizer.cur == '\n' || tokenizer.cur == '\r' { // newlines
 		if tokenizer.cur == '\r' && tokenizer.peek == '\n' {
-			tokenizer.consumeRune('\r')
+			err = tokenizer.consumeRune('\r')
 		}
 		tokenizer.consume()
 		//++line
@@ -84,21 +86,24 @@ func (tokenizer *Tokenizer) Next() Token {
 	} else if isIdStart(tokenizer.cur) { // handle various starting chars
 		newToken = tokenizer.id()
 	} else if tokenizer.cur == '"' {
-		newToken = tokenizer.str()
+		newToken, err = tokenizer.str()
 	} else if tokenizer.cur == '@' {
-		newToken = tokenizer.ref()
+		newToken, err = tokenizer.ref()
 	} else if unicode.IsDigit(tokenizer.cur) {
-		newToken = tokenizer.digits()
+		newToken, err = tokenizer.digits()
 	} else if tokenizer.cur == '`' {
-		newToken = tokenizer.uri()
+		newToken, err = tokenizer.uri()
 	} else if tokenizer.cur == '-' && unicode.IsDigit(tokenizer.peek) {
-		newToken = tokenizer.digits()
+		newToken, err = tokenizer.digits()
 	} else {
-		newToken = tokenizer.symbol()
+		newToken, err = tokenizer.symbol()
+	}
+	if err != nil {
+		return newToken, err
 	}
 
 	tokenizer.token = newToken
-	return tokenizer.token
+	return tokenizer.token, nil
 }
 
 // Token production methods
@@ -113,25 +118,35 @@ func (tokenizer *Tokenizer) id() Token {
 	return ID
 }
 
-func (tokenizer *Tokenizer) ref() Token {
-	tokenizer.consumeRune('@')
+func (tokenizer *Tokenizer) ref() (Token, error) {
+	err := tokenizer.consumeRune('@')
+	if err != nil {
+		return DEF, err
+	}
 	buf := strings.Builder{}
 	for isRefPart(tokenizer.cur) {
 		buf.WriteRune(tokenizer.cur)
 		tokenizer.consume()
 	}
 	tokenizer.val = haystack.NewRef(buf.String(), "")
-	return REF
+	return REF, nil
 }
 
-func (tokenizer *Tokenizer) str() Token {
-	tokenizer.consumeRune('"')
+func (tokenizer *Tokenizer) str() (Token, error) {
+	err := tokenizer.consumeRune('"')
+	if err != nil {
+		return DEF, err
+	}
+
 	buf := strings.Builder{}
 	for {
 		if tokenizer.cur == runeEOF { // runeEOF
-			panic("Unexpected end of str")
+			return DEF, errors.New("unexpected end of str")
 		} else if tokenizer.cur == '\\' {
-			esc := tokenizer.escape()
+			esc, err := tokenizer.escape()
+			if err != nil {
+				return DEF, err
+			}
 			buf.WriteRune(esc)
 			// continue
 		} else if tokenizer.cur == '"' {
@@ -143,20 +158,24 @@ func (tokenizer *Tokenizer) str() Token {
 		}
 	}
 	tokenizer.val = haystack.NewStr(buf.String())
-	return STR
+	return STR, nil
 }
 
-func (tokenizer *Tokenizer) uri() Token {
-	tokenizer.consumeRune('`')
+func (tokenizer *Tokenizer) uri() (Token, error) {
+	err := tokenizer.consumeRune('`')
+	if err != nil {
+		return DEF, err
+	}
+
 	buf := strings.Builder{}
 	for {
 		if tokenizer.cur == '`' {
 			tokenizer.consumeRune('`')
 			break
 		} else if tokenizer.cur == runeEOF {
-			panic("Unexpected end of uri: eof")
+			return DEF, errors.New("unexpected end of uri: eof")
 		} else if tokenizer.cur == '\n' {
-			panic("Unexpected end of uri: newline")
+			return DEF, errors.New("unexpected end of uri: newline")
 		} else if tokenizer.cur == '\\' {
 			if isUriEscapeIgnore(tokenizer.peek) {
 				buf.WriteRune(tokenizer.cur)
@@ -164,7 +183,10 @@ func (tokenizer *Tokenizer) uri() Token {
 				buf.WriteRune(tokenizer.cur)
 				tokenizer.consume()
 			} else {
-				char := tokenizer.escape()
+				char, err := tokenizer.escape()
+				if err != nil {
+					return DEF, err
+				}
 				buf.WriteRune(char)
 			}
 		} else {
@@ -174,11 +196,15 @@ func (tokenizer *Tokenizer) uri() Token {
 	}
 
 	tokenizer.val = haystack.NewUri(buf.String())
-	return URI
+	return URI, nil
 }
 
-func (tokenizer *Tokenizer) escape() rune {
-	tokenizer.consumeRune('\\')
+func (tokenizer *Tokenizer) escape() (rune, error) {
+	err := tokenizer.consumeRune('\\')
+	if err != nil {
+		return ' ', err
+	}
+
 	var result rune
 	if tokenizer.cur == 'b' {
 		result = '\b'
@@ -213,20 +239,20 @@ func (tokenizer *Tokenizer) escape() rune {
 
 		codeResult, codeErr := strconv.ParseInt(buf.String(), 16, 0) // Force to base-16 for utf16 format
 		if codeErr != nil {
-			panic(codeErr)
+			return ' ', codeErr
 		} else {
 			result = int32(codeResult)
 		}
 	}
 
 	if result == 0 {
-		panic("Invalid escape sequence: " + string(tokenizer.cur))
+		return ' ', errors.New("Invalid escape sequence: " + string(tokenizer.cur))
 	}
 	tokenizer.consume()
-	return result
+	return result, nil
 }
 
-func (tokenizer *Tokenizer) digits() Token {
+func (tokenizer *Tokenizer) digits() (Token, error) {
 	if tokenizer.cur == '0' && tokenizer.peek == 'x' { // hex integer (no unit allowed)
 		buf := strings.Builder{}
 		buf.WriteRune(tokenizer.cur)
@@ -239,11 +265,11 @@ func (tokenizer *Tokenizer) digits() Token {
 		}
 		valInt, err := strconv.ParseInt(buf.String(), 0, 0) // ParseInt accepts hex format
 		if err != nil {
-			panic(err)
+			return DEF, err
 		}
 		valFloat := float64(valInt)
 		tokenizer.val = haystack.NewNumber(valFloat, "")
-		return NUMBER
+		return NUMBER, nil
 	}
 	// consume all things that might be part of this number token
 	buf := strings.Builder{}
@@ -303,7 +329,7 @@ func (tokenizer *Tokenizer) digits() Token {
 	}
 }
 
-func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
+func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) (Token, error) {
 	// Format variable formats to: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 
 	// xxx timezone
@@ -312,7 +338,7 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
 		if str[len(str)-1] == 'Z' {
 			buf.WriteString(" UTC")
 		} else {
-			panic("Expecting timezone")
+			return DEF, errors.New("expecting timezone")
 		}
 	} else {
 		tokenizer.consume()
@@ -335,120 +361,120 @@ func (tokenizer *Tokenizer) dateTime(buf *strings.Builder) Token {
 
 	dateTime, err := haystack.NewDateTimeFromString(buf.String())
 	if err != nil {
-		panic(err)
+		return DEF, err
 	}
 
 	tokenizer.val = dateTime
-	return DATETIME
+	return DATETIME, nil
 }
 
-func (tokenizer *Tokenizer) date(str string) Token {
+func (tokenizer *Tokenizer) date(str string) (Token, error) {
 	date, err := haystack.NewDateFromIso(str)
 	if err != nil {
-		panic(err)
+		return DEF, err
 	}
 	tokenizer.val = date
-	return DATE
+	return DATE, nil
 }
 
-func (tokenizer *Tokenizer) time(str string, addSeconds bool) Token {
+func (tokenizer *Tokenizer) time(str string, addSeconds bool) (Token, error) {
 	if addSeconds {
 		str = str + ":00"
 	}
 	time, err := haystack.NewTimeFromIso(str)
 	if err != nil {
-		panic(err)
+		return DEF, err
 	}
 	tokenizer.val = time
-	return TIME
+	return TIME, nil
 }
 
-func (tokenizer *Tokenizer) number(str string, unitIndex int) Token {
+func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
 	if unitIndex == 0 {
 		number, err := strconv.ParseFloat(str, 64)
 		if err != nil {
-			panic(err)
+			return DEF, err
 		}
 		tokenizer.val = haystack.NewNumber(number, "")
-		return NUMBER
+		return NUMBER, nil
 	} else {
 		numberStr := str[0:unitIndex]
 		unit := str[unitIndex:]
 		number, err := strconv.ParseFloat(numberStr, 64)
 		if err != nil {
-			panic(err)
+			return DEF, err
 		}
 		tokenizer.val = haystack.NewNumber(number, unit)
-		return NUMBER
+		return NUMBER, nil
 	}
 }
 
-func (tokenizer *Tokenizer) symbol() Token {
+func (tokenizer *Tokenizer) symbol() (Token, error) {
 	c := tokenizer.cur
 	tokenizer.consume()
 	if c == ',' {
-		return COMMA
+		return COMMA, nil
 	} else if c == '/' {
-		return SLASH
+		return SLASH, nil
 	} else if c == ':' {
-		return COLON
+		return COLON, nil
 	} else if c == ';' {
-		return SEMICOLON
+		return SEMICOLON, nil
 	} else if c == '[' {
-		return LBRACKET
+		return LBRACKET, nil
 	} else if c == ']' {
-		return RBRACKET
+		return RBRACKET, nil
 	} else if c == '{' {
-		return LBRACE
+		return LBRACE, nil
 	} else if c == '}' {
-		return RBRACE
+		return RBRACE, nil
 	} else if c == '(' {
-		return LPAREN
+		return LPAREN, nil
 	} else if c == ')' {
-		return RPAREN
+		return RPAREN, nil
 	} else if c == '<' {
 		if tokenizer.cur == '<' {
 			tokenizer.consumeRune('<')
-			return LT2
+			return LT2, nil
 		} else if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return LTEQ
+			return LTEQ, nil
 		} else {
-			return LT
+			return LT, nil
 		}
 	} else if c == '>' {
 		if tokenizer.cur == '>' {
 			tokenizer.consumeRune('>')
-			return GT2
+			return GT2, nil
 		} else if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return GTEQ
+			return GTEQ, nil
 		} else {
-			return GT
+			return GT, nil
 		}
 	} else if c == '-' {
 		if tokenizer.cur == '>' {
 			tokenizer.consumeRune('>')
-			return ARROW
+			return ARROW, nil
 		} else {
-			return MINUS
+			return MINUS, nil
 		}
 	} else if c == '=' {
 		if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return EQ
+			return EQ, nil
 		}
-		return ASSIGN
+		return ASSIGN, nil
 	} else if c == '!' {
 		if tokenizer.cur == '=' {
 			tokenizer.consumeRune('=')
-			return NOTEQ
+			return NOTEQ, nil
 		}
-		return BANG
+		return BANG, nil
 	} else if c == runeEOF {
-		return EOF
+		return EOF, nil
 	}
-	panic("Unexpected symbol: '" + string(c) + "'")
+	return DEF, errors.New("Unexpected symbol: '" + string(c) + "'")
 }
 
 // Comments
@@ -498,11 +524,12 @@ func (tokenizer *Tokenizer) consume() {
 	}
 }
 
-func (tokenizer *Tokenizer) consumeRune(expected rune) {
+func (tokenizer *Tokenizer) consumeRune(expected rune) error {
 	if tokenizer.cur != expected {
-		panic("Expected " + string(expected))
+		return errors.New("Expected " + string(expected))
 	}
 	tokenizer.consume()
+	return nil
 }
 
 // Rune detection methods. These add onto those in unicode

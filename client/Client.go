@@ -321,7 +321,10 @@ func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, err
 
 	var reader io.ZincReader
 	reader.InitString(resp)
-	val := reader.ReadVal()
+	val, err := reader.ReadVal()
+	if err != nil {
+		return haystack.EmptyGrid(), err
+	}
 	switch val := val.(type) {
 	case haystack.Grid:
 		if val.Meta().Get("err") != haystack.NewNull() {

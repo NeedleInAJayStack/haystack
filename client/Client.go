@@ -92,20 +92,7 @@ func (client *Client) Read(filter string) (haystack.Grid, error) {
 
 // ReadLimit calls the 'read' op with a filter and a result limit.
 func (client *Client) ReadLimit(filter string, limit int) (haystack.Grid, error) {
-	var limitVal haystack.Val
-	if limit <= 0 {
-		limitVal = haystack.NewNull()
-	} else {
-		limitVal = haystack.NewNumber(float64(limit), "")
-	}
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("filter")
-	gb.AddColNoMeta("limit")
-	gb.AddRow([]haystack.Val{
-		haystack.NewStr(filter),
-		limitVal,
-	})
-	return client.Call("read", gb.ToGrid())
+	return client.Call("read", filterGrid(filter, limit))
 }
 
 // ReadByIds calls the 'read' op with the input ids.
@@ -113,9 +100,7 @@ func (client *Client) ReadByIds(ids []haystack.Ref) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
 	for _, id := range ids {
-		gb.AddRow([]haystack.Val{
-			id,
-		})
+		gb.AddRow([]haystack.Val{id})
 	}
 	return client.Call("read", gb.ToGrid())
 }
@@ -124,9 +109,7 @@ func (client *Client) ReadByIds(ids []haystack.Ref) (haystack.Grid, error) {
 func (client *Client) Nav(navId haystack.Val) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("navId")
-	gb.AddRow([]haystack.Val{
-		navId,
-	})
+	gb.AddRow([]haystack.Val{navId})
 	return client.Call("nav", gb.ToGrid())
 }
 
@@ -134,14 +117,18 @@ func (client *Client) Nav(navId haystack.Val) (haystack.Grid, error) {
 func (client *Client) PointWriteArray(id haystack.Ref) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
-	gb.AddRow([]haystack.Val{
-		id,
-	})
+	gb.AddRow([]haystack.Val{id})
 	return client.Call("pointWrite", gb.ToGrid())
 }
 
 // PointWrite calls the 'pointWrite' op to write the val to the given point.
-func (client *Client) PointWrite(id haystack.Ref, level int, val haystack.Val, who string, duration haystack.Number) (haystack.Grid, error) {
+func (client *Client) PointWrite(
+	id haystack.Ref,
+	level int,
+	val haystack.Val,
+	who string,
+	duration haystack.Number,
+) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
 	gb.AddColNoMeta("level")
@@ -237,6 +224,25 @@ func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, err
 	default:
 		return haystack.EmptyGrid(), errors.New("result was not a grid")
 	}
+}
+
+// filterGrid creates a Grid consisting of a `filter` Str and `limit` Number columns.
+// If a value of 0 or less is passed to limit, no limit is applied.
+func filterGrid(filter string, limit int) haystack.Grid {
+	var limitVal haystack.Val
+	if limit <= 0 {
+		limitVal = haystack.NewNull()
+	} else {
+		limitVal = haystack.NewNumber(float64(limit), "")
+	}
+	gb := haystack.NewGridBuilder()
+	gb.AddColNoMeta("filter")
+	gb.AddColNoMeta("limit")
+	gb.AddRow([]haystack.Val{
+		haystack.NewStr(filter),
+		limitVal,
+	})
+	return gb.ToGrid()
 }
 
 // authMsg models a message in the Haystack authorization header format.

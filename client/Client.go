@@ -75,14 +75,44 @@ func (client *Client) Close() error {
 	return err
 }
 
+// Defs calls the 'defs' op.
+func (client *Client) Defs() (haystack.Grid, error) {
+	return client.Call("defs", haystack.EmptyGrid())
+}
+
+// DefsWithFilter calls the 'defs' op with a filter grid.
+func (client *Client) DefsWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("defs", filterGrid(filter, limit))
+}
+
+// Libs calls the 'libs' op.
+func (client *Client) Libs() (haystack.Grid, error) {
+	return client.Call("libs", haystack.EmptyGrid())
+}
+
+// LibsWithFilter calls the 'libs' op with a filter grid.
+func (client *Client) LibsWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("libs", filterGrid(filter, limit))
+}
+
 // Ops calls the 'ops' op.
 func (client *Client) Ops() (haystack.Grid, error) {
 	return client.Call("ops", haystack.EmptyGrid())
 }
 
-// Formats calls the 'formats' op.
-func (client *Client) Formats() (haystack.Grid, error) {
-	return client.Call("formats", haystack.EmptyGrid())
+// OpsWithFilter calls the 'ops' op with a filter grid.
+func (client *Client) OpsWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("ops", filterGrid(filter, limit))
+}
+
+// Filetypes calls the 'filetypes' op.
+func (client *Client) Filetypes() (haystack.Grid, error) {
+	return client.Call("filetypes", haystack.EmptyGrid())
+}
+
+// FiletypesWithFilter calls the 'filetypes' op with a filter grid.
+func (client *Client) FiletypesWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("filetypes", filterGrid(filter, limit))
 }
 
 // Read calls the 'read' op with a filter and no result limit.

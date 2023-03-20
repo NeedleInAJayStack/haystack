@@ -49,13 +49,13 @@ func TestClient_Close(t *testing.T) {
 	}
 }
 
-func TestClient_Formats(t *testing.T) {
+func TestClient_Filetypes(t *testing.T) {
 	client := testClient()
-	actual, err := client.Formats()
+	actual, err := client.Filetypes()
 	if err != nil {
 		t.Error(err)
 	}
-	testClient_ValZinc(actual, clientHTTPMock_formats, t)
+	testClient_ValZinc(actual, clientHTTPMock_filetypes, t)
 }
 
 func TestClient_Ops(t *testing.T) {
@@ -238,7 +238,7 @@ const (
 	clientHTTPMock_about string = "ver:\"3.0\"\n" + // Can't use string literal because of Uri backticks
 		"haystackVersion,projName,serverName,serverBootTime,serverTime,productName,productUri,productVersion,moduleName,moduleVersion,tz,whoami,hostDis,hostModel,hostId\n" +
 		"\"3.0\",\"demo\",\"JaysDesktop\",2021-01-03T00:21:01.588-07:00 Denver,2021-01-03T00:21:43.799-07:00 Denver,\"SkySpark\",`http://skyfoundry.com/skyspark`,\"3.0.26\",\"skyarcd\",\"3.0.26\",\"Denver\",\"test\",\"Linux amd64 5.4.0-58-generic\",\"Linux amd64 5.4.0-58-generic\",NA\n"
-	clientHTTPMock_formats string = `ver:"3.0"
+	clientHTTPMock_filetypes string = `ver:"3.0"
 		name,dis,mime,receive,send
 		"zinc","Zinc","text/plain",M,M
 		"csv","CSV","text/csv",M,M

@@ -69,14 +69,50 @@ func (client *Client) About() (haystack.Dict, error) {
 	return result.RowAt(0).ToDict(), nil
 }
 
+// Close closes and de-authenticates the client
+func (client *Client) Close() error {
+	_, err := client.Call("close", haystack.EmptyGrid())
+	return err
+}
+
+// Defs calls the 'defs' op.
+func (client *Client) Defs() (haystack.Grid, error) {
+	return client.Call("defs", haystack.EmptyGrid())
+}
+
+// DefsWithFilter calls the 'defs' op with a filter grid.
+func (client *Client) DefsWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("defs", filterGrid(filter, limit))
+}
+
+// Libs calls the 'libs' op.
+func (client *Client) Libs() (haystack.Grid, error) {
+	return client.Call("libs", haystack.EmptyGrid())
+}
+
+// LibsWithFilter calls the 'libs' op with a filter grid.
+func (client *Client) LibsWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("libs", filterGrid(filter, limit))
+}
+
 // Ops calls the 'ops' op.
 func (client *Client) Ops() (haystack.Grid, error) {
 	return client.Call("ops", haystack.EmptyGrid())
 }
 
-// Formats calls the 'formats' op.
-func (client *Client) Formats() (haystack.Grid, error) {
-	return client.Call("formats", haystack.EmptyGrid())
+// OpsWithFilter calls the 'ops' op with a filter grid.
+func (client *Client) OpsWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("ops", filterGrid(filter, limit))
+}
+
+// Filetypes calls the 'filetypes' op.
+func (client *Client) Filetypes() (haystack.Grid, error) {
+	return client.Call("filetypes", haystack.EmptyGrid())
+}
+
+// FiletypesWithFilter calls the 'filetypes' op with a filter grid.
+func (client *Client) FiletypesWithFilter(filter string, limit int) (haystack.Grid, error) {
+	return client.Call("filetypes", filterGrid(filter, limit))
 }
 
 // Read calls the 'read' op with a filter and no result limit.
@@ -86,20 +122,7 @@ func (client *Client) Read(filter string) (haystack.Grid, error) {
 
 // ReadLimit calls the 'read' op with a filter and a result limit.
 func (client *Client) ReadLimit(filter string, limit int) (haystack.Grid, error) {
-	var limitVal haystack.Val
-	if limit <= 0 {
-		limitVal = haystack.NewNull()
-	} else {
-		limitVal = haystack.NewNumber(float64(limit), "")
-	}
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("filter")
-	gb.AddColNoMeta("limit")
-	gb.AddRow([]haystack.Val{
-		haystack.NewStr(filter),
-		limitVal,
-	})
-	return client.Call("read", gb.ToGrid())
+	return client.Call("read", filterGrid(filter, limit))
 }
 
 // ReadByIds calls the 'read' op with the input ids.
@@ -107,9 +130,7 @@ func (client *Client) ReadByIds(ids []haystack.Ref) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
 	for _, id := range ids {
-		gb.AddRow([]haystack.Val{
-			id,
-		})
+		gb.AddRow([]haystack.Val{id})
 	}
 	return client.Call("read", gb.ToGrid())
 }
@@ -118,24 +139,103 @@ func (client *Client) ReadByIds(ids []haystack.Ref) (haystack.Grid, error) {
 func (client *Client) Nav(navId haystack.Val) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("navId")
-	gb.AddRow([]haystack.Val{
-		navId,
-	})
+	gb.AddRow([]haystack.Val{navId})
 	return client.Call("nav", gb.ToGrid())
 }
 
-// PointWriteArray calls the 'pointWrite' op to query the point write priority array for the input id.
-func (client *Client) PointWriteArray(id haystack.Ref) (haystack.Grid, error) {
+// WatchSubCreate calls the 'watchSub' op to create a new subscription. If `lease` is 0 or less, no lease is added
+// to the subscription
+func (client *Client) WatchSubCreate(
+	watchDis string,
+	lease haystack.Number,
+	ids []haystack.Ref,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchDis": haystack.NewStr(watchDis)}
+	if lease.Float() > 0 {
+		meta["lease"] = lease
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	gb.AddColNoMeta("ids")
+	for _, id := range ids {
+		gb.AddRow([]haystack.Val{id})
+	}
+	return client.Call("watchSub", gb.ToGrid())
+}
+
+// WatchSubAdd calls the 'watchSub' op to add to an existing subscription. If `lease` is 0 or less, no lease is added
+// to the subscription.
+func (client *Client) WatchSubAdd(
+	watchId string,
+	lease haystack.Number,
+	ids []haystack.Ref,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+	if lease.Float() > 0 {
+		meta["lease"] = lease
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	gb.AddColNoMeta("ids")
+	for _, id := range ids {
+		gb.AddRow([]haystack.Val{id})
+	}
+	return client.Call("watchSub", gb.ToGrid())
+}
+
+// WatchUnsub calls the 'watchUnsub' op to delete or remove entities from a existing subscription. If `lease` is 0
+// or less, no lease is added to the subscription.
+func (client *Client) WatchUnsub(
+	watchId string,
+	ids []haystack.Ref,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+	if len(ids) <= 0 {
+		meta["close"] = haystack.NewMarker()
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	gb.AddColNoMeta("ids")
+	for _, id := range ids {
+		gb.AddRow([]haystack.Val{id})
+	}
+	return client.Call("watchUnsub", gb.ToGrid())
+}
+
+// WatchPoll calls the 'watchPoll' op to poll values of a subscription.
+func (client *Client) WatchPoll(
+	watchId string,
+	refresh bool,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+	if refresh {
+		meta["refresh"] = haystack.NewMarker()
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	return client.Call("watchPoll", gb.ToGrid())
+}
+
+// PointWriteStatus calls the 'pointWrite' op to query the point write priority array status for the input id.
+func (client *Client) PointWriteStatus(id haystack.Ref) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
-	gb.AddRow([]haystack.Val{
-		id,
-	})
+	gb.AddRow([]haystack.Val{id})
 	return client.Call("pointWrite", gb.ToGrid())
 }
 
 // PointWrite calls the 'pointWrite' op to write the val to the given point.
-func (client *Client) PointWrite(id haystack.Ref, level int, val haystack.Val, who string, duration haystack.Number) (haystack.Grid, error) {
+func (client *Client) PointWrite(
+	id haystack.Ref,
+	level int,
+	val haystack.Val,
+	who string,
+	duration haystack.Number,
+) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
 	gb.AddColNoMeta("level")
@@ -231,6 +331,25 @@ func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, err
 	default:
 		return haystack.EmptyGrid(), errors.New("result was not a grid")
 	}
+}
+
+// filterGrid creates a Grid consisting of a `filter` Str and `limit` Number columns.
+// If a value of 0 or less is passed to limit, no limit is applied.
+func filterGrid(filter string, limit int) haystack.Grid {
+	var limitVal haystack.Val
+	if limit <= 0 {
+		limitVal = haystack.NewNull()
+	} else {
+		limitVal = haystack.NewNumber(float64(limit), "")
+	}
+	gb := haystack.NewGridBuilder()
+	gb.AddColNoMeta("filter")
+	gb.AddColNoMeta("limit")
+	gb.AddRow([]haystack.Val{
+		haystack.NewStr(filter),
+		limitVal,
+	})
+	return gb.ToGrid()
 }
 
 // authMsg models a message in the Haystack authorization header format.

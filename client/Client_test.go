@@ -41,13 +41,21 @@ func TestClient_About(t *testing.T) {
 	valTest_Equal_Grid(actual, expected, t)
 }
 
-func TestClient_Formats(t *testing.T) {
+func TestClient_Close(t *testing.T) {
 	client := testClient()
-	actual, err := client.Formats()
+	err := client.Close()
 	if err != nil {
 		t.Error(err)
 	}
-	testClient_ValZinc(actual, clientHTTPMock_formats, t)
+}
+
+func TestClient_Filetypes(t *testing.T) {
+	client := testClient()
+	actual, err := client.Filetypes()
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, clientHTTPMock_filetypes, t)
 }
 
 func TestClient_Ops(t *testing.T) {
@@ -145,6 +153,41 @@ func TestClient_HisReadAbsDateTime(t *testing.T) {
 	}
 }
 
+func TestClient_WatchSubCreate(t *testing.T) {
+	client := testClient()
+	actual, err := client.WatchSubCreate(
+		"abc",
+		haystack.NewNumber(1, "min"),
+		[]haystack.Ref{haystack.NewRef("abc-123", "")},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, emptyRes, t)
+}
+
+func TestClient_WatchSubAdd(t *testing.T) {
+	client := testClient()
+	actual, err := client.WatchSubAdd(
+		"abc",
+		haystack.NewNumber(1, "min"),
+		[]haystack.Ref{haystack.NewRef("abc-123", "")},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, emptyRes, t)
+}
+
+func TestClient_WatchUnsub(t *testing.T) {
+	client := testClient()
+	actual, err := client.WatchUnsub("abc", []haystack.Ref{haystack.NewRef("abc-123", "")})
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, emptyRes, t)
+}
+
 func TestClient_Eval(t *testing.T) {
 	client := testClient()
 	actual, err := client.Eval("read(point)")
@@ -190,14 +233,17 @@ func (clientHTTPMock *clientHTTPMock) open(uri string, username string, password
 
 func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op string, reqBody string) (string, error) {
 	// These are taken from a SkySpark 3.0.26 demo project on 2021-01-03
-	if op == "about" {
+	switch op {
+	case "about":
 		// Can't use string literal because of Uri backticks
 		return clientHTTPMock_about, nil
-	} else if op == "formats" {
-		return clientHTTPMock_formats, nil
-	} else if op == "ops" {
+	case "close":
+		return emptyRes, nil
+	case "filetypes":
+		return clientHTTPMock_filetypes, nil
+	case "ops":
 		return clientHTTPMock_ops, nil
-	} else if op == "read" {
+	case "read":
 		if reqBody == "ver:\"3.0\"\nfilter, limit\n\"site\", N" { // readAll sites
 			return clientHTTPMock_readSites, nil
 		} else if reqBody == "ver:\"3.0\"\nfilter, limit\n\"point\", 1" { // readLimit point
@@ -206,7 +252,7 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 			return clientHTTPMock_readPoint, nil
 		}
 		return emptyRes, errors.New("'read' argument not supported by mock class")
-	} else if op == "hisRead" {
+	case "hisRead":
 		if reqBody == "ver:\"3.0\"\nid, range\n@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\", \"yesterday\"" { // hisRead relative
 			return clientHTTPMock_hisRead20210103, nil
 		} else if reqBody == "ver:\"3.0\"\nid, range\n@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\", \"2020-10-04,2020-10-05\"" { // hisRead absolute dates
@@ -215,20 +261,25 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 			return clientHTTPMock_hisReadDateTimes, nil
 		}
 		return emptyRes, errors.New("'hisRead' argument not supported by mock class")
-	} else if op == "eval" {
+	case "watchSub":
+		return emptyRes, nil
+	case "watchUnsub":
+		return emptyRes, nil
+	case "eval":
 		if reqBody == "ver:\"3.0\"\nexpr\n\"read(point)\"" { // eval read(point)
 			return clientHTTPMock_readPoint, nil
 		}
 		return emptyRes, errors.New("'eval' argument not supported by mock class")
+	default:
+		return emptyRes, errors.New("haystack op not supported by mock class: " + op)
 	}
-	return emptyRes, errors.New("haystack op not supported by mock class: " + op)
 }
 
 const (
 	clientHTTPMock_about string = "ver:\"3.0\"\n" + // Can't use string literal because of Uri backticks
 		"haystackVersion,projName,serverName,serverBootTime,serverTime,productName,productUri,productVersion,moduleName,moduleVersion,tz,whoami,hostDis,hostModel,hostId\n" +
 		"\"3.0\",\"demo\",\"JaysDesktop\",2021-01-03T00:21:01.588-07:00 Denver,2021-01-03T00:21:43.799-07:00 Denver,\"SkySpark\",`http://skyfoundry.com/skyspark`,\"3.0.26\",\"skyarcd\",\"3.0.26\",\"Denver\",\"test\",\"Linux amd64 5.4.0-58-generic\",\"Linux amd64 5.4.0-58-generic\",NA\n"
-	clientHTTPMock_formats string = `ver:"3.0"
+	clientHTTPMock_filetypes string = `ver:"3.0"
 		name,dis,mime,receive,send
 		"zinc","Zinc","text/plain",M,M
 		"csv","CSV","text/csv",M,M

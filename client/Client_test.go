@@ -153,6 +153,41 @@ func TestClient_HisReadAbsDateTime(t *testing.T) {
 	}
 }
 
+func TestClient_WatchSubCreate(t *testing.T) {
+	client := testClient()
+	actual, err := client.WatchSubCreate(
+		"abc",
+		haystack.NewNumber(1, "min"),
+		[]haystack.Ref{haystack.NewRef("abc-123", "")},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, emptyRes, t)
+}
+
+func TestClient_WatchSubAdd(t *testing.T) {
+	client := testClient()
+	actual, err := client.WatchSubAdd(
+		"abc",
+		haystack.NewNumber(1, "min"),
+		[]haystack.Ref{haystack.NewRef("abc-123", "")},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, emptyRes, t)
+}
+
+func TestClient_WatchUnsub(t *testing.T) {
+	client := testClient()
+	actual, err := client.WatchUnsub("abc", []haystack.Ref{haystack.NewRef("abc-123", "")})
+	if err != nil {
+		t.Error(err)
+	}
+	testClient_ValZinc(actual, emptyRes, t)
+}
+
 func TestClient_Eval(t *testing.T) {
 	client := testClient()
 	actual, err := client.Eval("read(point)")
@@ -202,7 +237,7 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 		// Can't use string literal because of Uri backticks
 		return clientHTTPMock_about, nil
 	} else if op == "close" {
-		return haystack.EmptyGrid().ToZinc(), nil
+		return emptyRes, nil
 	} else if op == "filetypes" {
 		return clientHTTPMock_filetypes, nil
 	} else if op == "ops" {
@@ -225,6 +260,10 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 			return clientHTTPMock_hisReadDateTimes, nil
 		}
 		return emptyRes, errors.New("'hisRead' argument not supported by mock class")
+	} else if op == "watchSub" {
+		return emptyRes, nil
+	} else if op == "watchUnsub" {
+		return emptyRes, nil
 	} else if op == "eval" {
 		if reqBody == "ver:\"3.0\"\nexpr\n\"read(point)\"" { // eval read(point)
 			return clientHTTPMock_readPoint, nil

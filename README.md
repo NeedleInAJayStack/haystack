@@ -44,10 +44,6 @@ This package can be used by importing `gitlab.com/NeedleInAJayStack/haystack` (a
 ## Future Efforts
 These are enhancement ideas, in no particular order.
 
-- Add Client ops:
-    - watchSub
-    - watchUnsub
-    - watchPoll
 - Add Hayson unmarshalling
 - Add a Haystack server implementation
 

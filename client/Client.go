@@ -143,8 +143,85 @@ func (client *Client) Nav(navId haystack.Val) (haystack.Grid, error) {
 	return client.Call("nav", gb.ToGrid())
 }
 
-// PointWriteArray calls the 'pointWrite' op to query the point write priority array for the input id.
-func (client *Client) PointWriteArray(id haystack.Ref) (haystack.Grid, error) {
+// WatchSubCreate calls the 'watchSub' op to create a new subscription. If `lease` is 0 or less, no lease is added
+// to the subscription
+func (client *Client) WatchSubCreate(
+	watchDis string,
+	lease haystack.Number,
+	ids []haystack.Ref,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchDis": haystack.NewStr(watchDis)}
+	if lease.Float() > 0 {
+		meta["lease"] = lease
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	gb.AddColNoMeta("ids")
+	for _, id := range ids {
+		gb.AddRow([]haystack.Val{id})
+	}
+	return client.Call("watchSub", gb.ToGrid())
+}
+
+// WatchSubAdd calls the 'watchSub' op to add to an existing subscription. If `lease` is 0 or less, no lease is added
+// to the subscription.
+func (client *Client) WatchSubAdd(
+	watchId string,
+	lease haystack.Number,
+	ids []haystack.Ref,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+	if lease.Float() > 0 {
+		meta["lease"] = lease
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	gb.AddColNoMeta("ids")
+	for _, id := range ids {
+		gb.AddRow([]haystack.Val{id})
+	}
+	return client.Call("watchSub", gb.ToGrid())
+}
+
+// WatchUnsub calls the 'watchUnsub' op to delete or remove entities from a existing subscription. If `lease` is 0
+// or less, no lease is added to the subscription.
+func (client *Client) WatchUnsub(
+	watchId string,
+	ids []haystack.Ref,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+	if len(ids) <= 0 {
+		meta["close"] = haystack.NewMarker()
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	gb.AddColNoMeta("ids")
+	for _, id := range ids {
+		gb.AddRow([]haystack.Val{id})
+	}
+	return client.Call("watchUnsub", gb.ToGrid())
+}
+
+// WatchPoll calls the 'watchPoll' op to poll values of a subscription.
+func (client *Client) WatchPoll(
+	watchId string,
+	refresh bool,
+) (haystack.Grid, error) {
+	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+	if refresh {
+		meta["refresh"] = haystack.NewMarker()
+	}
+
+	gb := haystack.NewGridBuilder()
+	gb.AddMeta(meta)
+	return client.Call("watchPoll", gb.ToGrid())
+}
+
+// PointWriteStatus calls the 'pointWrite' op to query the point write priority array status for the input id.
+func (client *Client) PointWriteStatus(id haystack.Ref) (haystack.Grid, error) {
 	gb := haystack.NewGridBuilder()
 	gb.AddColNoMeta("id")
 	gb.AddRow([]haystack.Val{id})

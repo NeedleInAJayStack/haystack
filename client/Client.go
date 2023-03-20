@@ -69,6 +69,12 @@ func (client *Client) About() (haystack.Dict, error) {
 	return result.RowAt(0).ToDict(), nil
 }
 
+// Close closes and de-authenticates the client
+func (client *Client) Close() error {
+	_, err := client.Call("close", haystack.EmptyGrid())
+	return err
+}
+
 // Ops calls the 'ops' op.
 func (client *Client) Ops() (haystack.Grid, error) {
 	return client.Call("ops", haystack.EmptyGrid())

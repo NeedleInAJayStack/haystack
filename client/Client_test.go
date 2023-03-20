@@ -41,6 +41,14 @@ func TestClient_About(t *testing.T) {
 	valTest_Equal_Grid(actual, expected, t)
 }
 
+func TestClient_Close(t *testing.T) {
+	client := testClient()
+	err := client.Close()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestClient_Formats(t *testing.T) {
 	client := testClient()
 	actual, err := client.Formats()
@@ -193,8 +201,10 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 	if op == "about" {
 		// Can't use string literal because of Uri backticks
 		return clientHTTPMock_about, nil
-	} else if op == "formats" {
-		return clientHTTPMock_formats, nil
+	} else if op == "close" {
+		return haystack.EmptyGrid().ToZinc(), nil
+	} else if op == "filetypes" {
+		return clientHTTPMock_filetypes, nil
 	} else if op == "ops" {
 		return clientHTTPMock_ops, nil
 	} else if op == "read" {

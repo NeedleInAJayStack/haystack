@@ -233,16 +233,17 @@ func (clientHTTPMock *clientHTTPMock) open(uri string, username string, password
 
 func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op string, reqBody string) (string, error) {
 	// These are taken from a SkySpark 3.0.26 demo project on 2021-01-03
-	if op == "about" {
+	switch op {
+	case "about":
 		// Can't use string literal because of Uri backticks
 		return clientHTTPMock_about, nil
-	} else if op == "close" {
+	case "close":
 		return emptyRes, nil
-	} else if op == "filetypes" {
+	case "filetypes":
 		return clientHTTPMock_filetypes, nil
-	} else if op == "ops" {
+	case "ops":
 		return clientHTTPMock_ops, nil
-	} else if op == "read" {
+	case "read":
 		if reqBody == "ver:\"3.0\"\nfilter, limit\n\"site\", N" { // readAll sites
 			return clientHTTPMock_readSites, nil
 		} else if reqBody == "ver:\"3.0\"\nfilter, limit\n\"point\", 1" { // readLimit point
@@ -251,7 +252,7 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 			return clientHTTPMock_readPoint, nil
 		}
 		return emptyRes, errors.New("'read' argument not supported by mock class")
-	} else if op == "hisRead" {
+	case "hisRead":
 		if reqBody == "ver:\"3.0\"\nid, range\n@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\", \"yesterday\"" { // hisRead relative
 			return clientHTTPMock_hisRead20210103, nil
 		} else if reqBody == "ver:\"3.0\"\nid, range\n@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\", \"2020-10-04,2020-10-05\"" { // hisRead absolute dates
@@ -260,17 +261,18 @@ func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op str
 			return clientHTTPMock_hisReadDateTimes, nil
 		}
 		return emptyRes, errors.New("'hisRead' argument not supported by mock class")
-	} else if op == "watchSub" {
+	case "watchSub":
 		return emptyRes, nil
-	} else if op == "watchUnsub" {
+	case "watchUnsub":
 		return emptyRes, nil
-	} else if op == "eval" {
+	case "eval":
 		if reqBody == "ver:\"3.0\"\nexpr\n\"read(point)\"" { // eval read(point)
 			return clientHTTPMock_readPoint, nil
 		}
 		return emptyRes, errors.New("'eval' argument not supported by mock class")
+	default:
+		return emptyRes, errors.New("haystack op not supported by mock class: " + op)
 	}
-	return emptyRes, errors.New("haystack op not supported by mock class: " + op)
 }
 
 const (

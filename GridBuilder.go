@@ -1,5 +1,7 @@
 package haystack
 
+import "errors"
+
 // GridBuilder is used to easily construct a Grid instance.
 type GridBuilder struct {
 	meta map[string]Val
@@ -74,7 +76,10 @@ func (gb *GridBuilder) AddColDict(name string, meta Dict) {
 
 // AddColMeta adds the metadata to an existing column with the given name.
 func (gb *GridBuilder) AddColMeta(name string, meta map[string]Val) {
-	col := gb.getCol(name)
+	col, err := gb.getCol(name)
+	if err != nil {
+		return // If col doesn't exist, do nothing
+	}
 	col.meta = col.meta.SetAll(meta)
 }
 
@@ -115,7 +120,7 @@ func (gb *GridBuilder) AddRowDicts(rows []Dict) {
 	}
 }
 
-func (gb *GridBuilder) getCol(colName string) Col {
+func (gb *GridBuilder) getCol(colName string) (Col, error) {
 	var matchCol Col
 	match := false
 	for _, col := range gb.cols {
@@ -124,8 +129,8 @@ func (gb *GridBuilder) getCol(colName string) Col {
 			match = true
 		}
 	}
-	if !match {
-		return matchCol
+	if match {
+		return matchCol, nil
 	}
-	panic("Col with name not found: " + colName)
+	return newCol(0, "", EmptyDict()), errors.New("col with name not found: " + colName)
 }

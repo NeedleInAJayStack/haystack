@@ -166,7 +166,10 @@ func testTokenizerRead(t *testing.T, str string) ([]Token, []haystack.Val) {
 	var vals []haystack.Val
 
 	for {
-		nextToken := tokenizer.Next()
+		nextToken, err := tokenizer.Next()
+		if err != nil {
+			t.Error(err)
+		}
 		if nextToken != tokenizer.token {
 			t.Error("The same object doesn't equal itself")
 		}

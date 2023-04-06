@@ -20,6 +20,8 @@ const (
 	NUMBER
 	// STR indicates a Str literal
 	STR
+	// SYMBOL indicates a Symbol literal
+	SYMBOL
 	// REF indicates a Ref literal
 	REF
 	// URI indicates a Uri literal
@@ -91,6 +93,7 @@ var tokens = [...]string{
 	ID:       "id",
 	NUMBER:   "Number",
 	STR:      "Str",
+	SYMBOL:   "Symbol",
 	REF:      "Ref",
 	URI:      "Uri",
 	DATE:     "Date",

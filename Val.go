@@ -46,6 +46,8 @@ func ValFromJSON(jsonObj interface{}) (Val, error) {
 			return uriFromJSON(typedObj)
 		} else if strings.HasPrefix(typedObj, "x:") {
 			return xStrFromJSON(typedObj)
+		} else if strings.HasPrefix(typedObj, "y:") {
+			return symbolFromJSON(typedObj)
 		} else {
 			return strFromJSON(typedObj)
 		}

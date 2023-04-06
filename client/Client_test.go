@@ -300,21 +300,24 @@ const (
 		"zinc","Zinc","text/zinc",M,M
 		`
 	clientHTTPMock_ops string = `ver:"3.0"
-		name,summary
-		"about","Summary info for server"
-		"commit","Commit diffs to proj database"
-		"eval","Evaluate an Axon expression"
-		"formats","Data formats supported by server"
-		"hisRead","Read time series data to historian"
-		"hisWrite","Write time series data to historian"
-		"invokeAction","Watch subscription"
-		"nav","Learn navigation"
-		"ops","Operations supported by server"
-		"pointWrite","Read/write point write array"
-		"read","Read records by id or filter"
-		"watchPoll","Watch poll cov or refresh"
-		"watchSub","Watch subscription"
-		"watchUnsub","Watch unsubscription"
+		def, doc, is, lib, noSideEffects, typeName
+		^op:invokeAction, "Invoke a user action on a target entity.\nSee docHaystack::Ops#invokeAction chapter.", [^op], ^lib:phIoT, N, N
+		^op:hisWrite, "Write historized time series data from a his-point.\nSee docHaystack::Ops#hisWrite chapter.", [^op], ^lib:phIoT, N, "hx::HxHisWriteOp"
+		^op:watchUnsub, "Unsubscribe to entity data.\nSee docHaystack::Ops#watchUnsub chapter.", [^op], ^lib:ph, N, "hx::HxWatchUnsubOp"
+		^op:read, "Query the a set of entity records by id or by filter.\nSee docHaystack::Ops#read chapter.", [^op], ^lib:ph, M, "hx::HxReadOp"
+		^op:ops, "Query the op defs in the current namespace.\nSee docHaystack::Ops#ops chapter.", [^op], ^lib:ph, M, "hx::HxOpsOp"
+		^op:close, "Close the current session and cancel the auth bearer token.\nSee docHaystack::Ops#close chapter.", [^op], ^lib:ph, N, "hx::HxCloseOp"
+		^op:defs, "Query the definitions in the current namespace.\nSee docHaystack::Ops#defs chapter.", [^op], ^lib:ph, M, "hx::HxDefsOp"
+		^op:hisRead, "Read historized time series data from a his-point.\nSee docHaystack::Ops#hisRead chapter.", [^op], ^lib:phIoT, M, "hx::HxHisReadOp"
+		^op:watchSub, "Subscribe to entity data.\nSee docHaystack::Ops#watchSub chapter.", [^op], ^lib:ph, N, "hx::HxWatchSubOp"
+		^op:pointWrite, "Read or command a writable-point.\nSee docHaystack::Ops#pointWrite chapter.", [^op], ^lib:phIoT, N, "hx::HxPointWriteOp"
+		^op:eval, "Evaluate an Axon expression", [^op], ^lib:hx, N, "hx::HxEvalOp"
+		^op:libs, "Query the lib defs in the current namespace.\nSee docHaystack::Ops#libs chapter.", [^op], ^lib:ph, M, "hx::HxLibsOp"
+		^op:watchPoll, "Poll a watch subscription.\nSee docHaystack::Ops#watchPoll chapter.", [^op], ^lib:ph, N, "hx::HxWatchPollOp"
+		^op:filetypes, "Query the filetype defs in the current namespace.\nSee docHaystack::Ops#filetypes chapter.", [^op], ^lib:ph, M, "hx::HxFiletypesOp"
+		^op:commit, "Commit one or more diffs to the Folio database", [^op], ^lib:hx, N, "hx::HxCommitOp"
+		^op:about, "Query basic information about the server.\nSee docHaystack::Ops#about chapter.", [^op], ^lib:ph, M, "hx::HxAboutOp"
+		^op:nav, "Query the navigation tree for discovery.\nSee docHaystack::Ops#nav chapter.", [^op], ^lib:ph, M, "hx::HxNavOp"
 		`
 	clientHTTPMock_readSites string = `ver:"3.0"
 		id,area,dis,geoAddr,geoCity,geoCoord,geoCountry,geoPostalCode,geoState,geoStreet,hq,metro,occupiedEnd,occupiedStart,primaryFunction,regionRef,site,store,storeNum,tz,weatherStationRef,yearBuilt,mod

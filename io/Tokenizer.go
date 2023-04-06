@@ -89,6 +89,8 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 		newToken, err = tokenizer.str()
 	} else if tokenizer.cur == '@' {
 		newToken, err = tokenizer.ref()
+	} else if tokenizer.cur == '^' {
+		newToken, err = tokenizer.symbol()
 	} else if unicode.IsDigit(tokenizer.cur) {
 		newToken, err = tokenizer.digits()
 	} else if tokenizer.cur == '`' {
@@ -96,7 +98,7 @@ func (tokenizer *Tokenizer) Next() (Token, error) {
 	} else if tokenizer.cur == '-' && unicode.IsDigit(tokenizer.peek) {
 		newToken, err = tokenizer.digits()
 	} else {
-		newToken, err = tokenizer.symbol()
+		newToken, err = tokenizer.operator()
 	}
 	if err != nil {
 		return newToken, err
@@ -159,6 +161,25 @@ func (tokenizer *Tokenizer) str() (Token, error) {
 	}
 	tokenizer.val = haystack.NewStr(buf.String())
 	return STR, nil
+}
+
+func (tokenizer *Tokenizer) symbol() (Token, error) {
+	err := tokenizer.consumeRune('^')
+	if err != nil {
+		return DEF, err
+	}
+
+	buf := strings.Builder{}
+	for {
+		if haystack.IsIdChar(tokenizer.cur) {
+			buf.WriteRune(tokenizer.cur)
+			tokenizer.consume()
+		} else {
+			break
+		}
+	}
+	tokenizer.val = haystack.NewSymbol(buf.String())
+	return SYMBOL, nil
 }
 
 func (tokenizer *Tokenizer) uri() (Token, error) {
@@ -409,7 +430,7 @@ func (tokenizer *Tokenizer) number(str string, unitIndex int) (Token, error) {
 	}
 }
 
-func (tokenizer *Tokenizer) symbol() (Token, error) {
+func (tokenizer *Tokenizer) operator() (Token, error) {
 	c := tokenizer.cur
 	tokenizer.consume()
 	if c == ',' {
@@ -474,7 +495,7 @@ func (tokenizer *Tokenizer) symbol() (Token, error) {
 	} else if c == runeEOF {
 		return EOF, nil
 	}
-	return DEF, errors.New("Unexpected symbol: '" + string(c) + "'")
+	return DEF, errors.New("Unexpected operator: '" + string(c) + "'")
 }
 
 // Comments

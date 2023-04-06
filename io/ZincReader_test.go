@@ -532,6 +532,35 @@ func TestZincReader_nested(t *testing.T) {
 	testZincReaderGrid(t, input, expected)
 }
 
+func TestZincReader_symbols(t *testing.T) {
+	input := "ver:\"3.0\"\n" +
+		"a,b,c\n" +
+		"^foo,^a-b,^a:b\n" +
+		"\n"
+	gb := haystack.NewGridBuilder()
+	gb.AddCol(
+		"a",
+		map[string]haystack.Val{},
+	)
+	gb.AddCol(
+		"b",
+		map[string]haystack.Val{},
+	)
+	gb.AddCol(
+		"c",
+		map[string]haystack.Val{},
+	)
+	gb.AddRow(
+		[]haystack.Val{
+			haystack.NewSymbol("foo"),
+			haystack.NewSymbol("a-b"),
+			haystack.NewSymbol("a:b"),
+		},
+	)
+	expected := gb.ToGrid()
+	testZincReaderGrid(t, input, expected)
+}
+
 // UTILITIES
 
 // Verifies that the tokenized result has the expected token type and value.

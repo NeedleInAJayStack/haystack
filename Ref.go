@@ -90,3 +90,14 @@ func (ref Ref) MarshalHayson() ([]byte, error) {
 	buf.WriteString("}")
 	return []byte(buf.String()), nil
 }
+
+func IsIdChar(char rune) bool {
+	return ('a' <= char && char <= 'z') ||
+		('A' <= char && char <= 'Z') ||
+		('0' <= char && char <= '9') ||
+		char == '_' ||
+		char == ':' ||
+		char == '-' ||
+		char == '.' ||
+		char == '~'
+}

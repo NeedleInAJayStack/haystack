@@ -3,6 +3,8 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTime_equals(t *testing.T) {
@@ -61,10 +63,10 @@ func TestTime_NewTimeFromIso_manyMs(t *testing.T) {
 }
 
 func TestTime_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewTime(23, 7, 10, 0), "23:07:10", t)
-	valTest_ToZinc(NewTime(23, 7, 10, 2), "23:07:10.002", t)
-	valTest_ToZinc(NewTime(23, 7, 10, 56), "23:07:10.056", t)
-	valTest_ToZinc(NewTime(23, 7, 10, 957), "23:07:10.957", t)
+	assert.Equal(t, NewTime(23, 7, 10, 0).ToZinc(), "23:07:10")
+	assert.Equal(t, NewTime(23, 7, 10, 2).ToZinc(), "23:07:10.002")
+	assert.Equal(t, NewTime(23, 7, 10, 56).ToZinc(), "23:07:10.056")
+	assert.Equal(t, NewTime(23, 7, 10, 957).ToZinc(), "23:07:10.957")
 }
 
 func TestTime_MarshalJSON(t *testing.T) {
@@ -77,19 +79,19 @@ func TestTime_MarshalJSON(t *testing.T) {
 func TestTime_UnmarshalJSON(t *testing.T) {
 	var noMs Time
 	json.Unmarshal([]byte("\"h:23:07:10\""), &noMs)
-	valTest_ToZinc(noMs, "23:07:10", t)
+	assert.Equal(t, noMs, NewTime(23, 7, 10, 0))
 
 	var oneMs Time
 	json.Unmarshal([]byte("\"h:23:07:10.002\""), &oneMs)
-	valTest_ToZinc(oneMs, "23:07:10.002", t)
+	assert.Equal(t, oneMs, NewTime(23, 7, 10, 2))
 
 	var tenMs Time
 	json.Unmarshal([]byte("\"h:23:07:10.056\""), &tenMs)
-	valTest_ToZinc(tenMs, "23:07:10.056", t)
+	assert.Equal(t, tenMs, NewTime(23, 7, 10, 56))
 
 	var hundredMs Time
 	json.Unmarshal([]byte("\"h:23:07:10.957\""), &hundredMs)
-	valTest_ToZinc(hundredMs, "23:07:10.957", t)
+	assert.Equal(t, hundredMs, NewTime(23, 7, 10, 957))
 }
 
 func TestTime_MarshalHayson(t *testing.T) {

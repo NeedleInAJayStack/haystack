@@ -3,11 +3,13 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBool_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewBool(true), "T", t)
-	valTest_ToZinc(NewBool(false), "F", t)
+	assert.Equal(t, NewBool(true).ToZinc(), "T")
+	assert.Equal(t, NewBool(false).ToZinc(), "F")
 }
 
 func TestBool_MarshalJSON(t *testing.T) {
@@ -18,7 +20,7 @@ func TestBool_MarshalJSON(t *testing.T) {
 func TestBool_UnmarshalJSON(t *testing.T) {
 	var bool Bool
 	json.Unmarshal([]byte("true"), &bool)
-	valTest_ToZinc(bool, "T", t)
+	assert.Equal(t, bool, NewBool(true))
 }
 
 func TestBool_MarshalHayson(t *testing.T) {

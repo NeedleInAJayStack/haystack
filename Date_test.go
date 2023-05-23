@@ -3,6 +3,8 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDate_equals(t *testing.T) {
@@ -37,7 +39,7 @@ func TestDate_NewDateFromIso(t *testing.T) {
 }
 
 func TestDate_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewDate(2020, 8, 17), "2020-08-17", t)
+	assert.Equal(t, NewDate(2020, 8, 17).ToZinc(), "2020-08-17")
 }
 
 func TestDate_MarshalJSON(t *testing.T) {
@@ -47,7 +49,7 @@ func TestDate_MarshalJSON(t *testing.T) {
 func TestDate_UnmarshalJSON(t *testing.T) {
 	var date Date
 	json.Unmarshal([]byte("\"d:2020-08-17\""), &date)
-	valTest_ToZinc(date, "2020-08-17", t)
+	assert.Equal(t, date, NewDate(2020, 8, 17))
 }
 
 func TestDate_MarshalHayson(t *testing.T) {

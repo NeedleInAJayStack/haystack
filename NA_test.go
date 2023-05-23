@@ -3,10 +3,12 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNA_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewNA(), "NA", t)
+	assert.Equal(t, NewNA().ToZinc(), "NA")
 }
 
 func TestNA_MarshalJSON(t *testing.T) {
@@ -16,7 +18,7 @@ func TestNA_MarshalJSON(t *testing.T) {
 func TestNA_UnmarshalJSON(t *testing.T) {
 	var na NA
 	json.Unmarshal([]byte("\"z:\""), &na)
-	valTest_ToZinc(na, "NA", t)
+	assert.Equal(t, na, NewNA())
 }
 
 func TestNA_MarshalHayson(t *testing.T) {

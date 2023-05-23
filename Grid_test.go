@@ -3,6 +3,8 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGrid_ColCount(t *testing.T) {
@@ -51,14 +53,14 @@ func TestGrid_ToZinc(t *testing.T) {
 		"siteName dis:\"Sites\", val dis:\"Value\"\n" +
 		"\"Site 1\", 356.214kW\n" +
 		"\"Site 2\", 463.028kW"
-	valTest_ToZinc_Grid(grid, zinc, t)
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_ToZinc_empty(t *testing.T) {
 	grid := EmptyGrid()
 	zinc := "ver:\"3.0\"\n" +
 		"empty\n"
-	valTest_ToZinc_Grid(grid, zinc, t)
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_ToZinc_nested(t *testing.T) {
@@ -78,7 +80,7 @@ func TestGrid_ToZinc_nested(t *testing.T) {
 		"  3, 4\n" +
 		"  >>\n" +
 		"\"scalar\", \"simple string\""
-	valTest_ToZinc_Grid(grid, zinc, t)
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_MarshalJSON(t *testing.T) {
@@ -118,7 +120,7 @@ func TestGrid_UnmarshalJSON(t *testing.T) {
 
 	var grid Grid
 	json.Unmarshal([]byte(jsonLiteral), &grid)
-	valTest_ToZinc(grid, zinc, t)
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_MarshalJSON_empty(t *testing.T) {

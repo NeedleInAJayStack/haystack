@@ -6,6 +6,7 @@ import (
 
 	"github.com/NeedleInAJayStack/haystack"
 	"github.com/NeedleInAJayStack/haystack/io"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClient_Open(t *testing.T) {
@@ -41,7 +42,7 @@ func TestClient_About(t *testing.T) {
 	}
 	expected := expectedGrid.(haystack.Grid).RowAt(0).ToDict()
 
-	valTest_Equal_Grid(actual, expected, t)
+	assert.Equal(t, actual, expected)
 }
 
 func TestClient_Close(t *testing.T) {
@@ -207,7 +208,7 @@ func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) 
 	if err != nil {
 		t.Error(err)
 	}
-	valTest_Equal_Grid(actual, expected, t)
+	assert.Equal(t, actual, expected, "\nACTUAL:\n"+actual.ToZinc()+"\n\nEXPECT:\n"+expected.ToZinc())
 }
 
 func testClient() *Client {
@@ -216,15 +217,6 @@ func testClient() *Client {
 		uri:        "http://localhost:8080/api/demo",
 		username:   "test",
 		password:   "test",
-	}
-}
-
-func valTest_Equal_Grid(actual haystack.Val, expected haystack.Val, t *testing.T) {
-	// Compare based on zinc representation
-	actualZinc := actual.ToZinc()
-	expectedZinc := expected.ToZinc()
-	if actualZinc != expectedZinc {
-		t.Error("\nACTUAL:\n" + actualZinc + "\n\nEXPECT:\n" + expectedZinc)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/NeedleInAJayStack/haystack"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTokenizer_empty(t *testing.T) {
@@ -135,26 +136,18 @@ func testTokenizerSingle(t *testing.T, str string, expectedToken Token, expected
 func testTokenizerMulti(t *testing.T, str string, expectedTokens []Token, expectedVals []haystack.Val) {
 	tokens, vals := testTokenizerRead(t, str)
 
-	if len(tokens) != len(expectedTokens) {
-		t.Error(str + " - Actual and expected token list lengths don't match")
-	}
+	assert.Equal(t, len(tokens), len(expectedTokens), "Actual and expected token list lengths don't match")
 	for index, token := range tokens {
-		if token != expectedTokens[index] {
-			t.Error(str + " - Tokens don't match:\n" +
-				"\tACTUAL:   " + token.String() + "\n" +
-				"\tEXPECTED: " + expectedTokens[index].String())
-		}
+		assert.Equal(t, token, expectedTokens[index], "Tokens don't match\n"+
+			"\tACTUAL:   "+token.String()+"\n"+
+			"\tEXPECTED: "+expectedTokens[index].String())
 	}
 
-	if len(vals) != len(expectedVals) {
-		t.Error(str + " - Actual and expected value list lengths don't match")
-	}
+	assert.Equal(t, len(vals), len(expectedVals), "Actual and expected value list lengths don't match")
 	for index, val := range vals {
-		if val.ToZinc() != expectedVals[index].ToZinc() {
-			t.Error(str + " - Val doesn't match expected\n" +
-				"\tACTUAL:   " + val.ToZinc() + "\n" +
-				"\tEXPECTED: " + expectedVals[index].ToZinc())
-		}
+		assert.Equal(t, val, expectedVals[index], "Val doesn't match expected\n"+
+			"\tACTUAL:   "+val.ToZinc()+"\n"+
+			"\tEXPECTED: "+expectedVals[index].ToZinc())
 	}
 }
 
@@ -170,9 +163,7 @@ func testTokenizerRead(t *testing.T, str string) ([]Token, []haystack.Val) {
 		if err != nil {
 			t.Error(err)
 		}
-		if nextToken != tokenizer.token {
-			t.Error("The same object doesn't equal itself")
-		}
+		assert.Equal(t, nextToken, tokenizer.token, "The same object doesn't equal itself")
 		if nextToken == EOF {
 			break
 		} else {

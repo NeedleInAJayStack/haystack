@@ -3,6 +3,8 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCoord_NewCoord(t *testing.T) {
@@ -24,7 +26,7 @@ func TestCoord_NewCoord(t *testing.T) {
 }
 
 func TestCoord_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewCoord(41.534, 111.478), "C(41.534,111.478)", t)
+	assert.Equal(t, NewCoord(41.534, 111.478).ToZinc(), "C(41.534,111.478)")
 }
 
 func TestCoord_MarshalJSON(t *testing.T) {
@@ -34,7 +36,7 @@ func TestCoord_MarshalJSON(t *testing.T) {
 func TestCoord_UnmarshalJSON(t *testing.T) {
 	var coord Coord
 	json.Unmarshal([]byte("\"c:41.534,111.478\""), &coord)
-	valTest_ToZinc(coord, "C(41.534,111.478)", t)
+	assert.Equal(t, coord, NewCoord(41.534, 111.478))
 }
 
 func TestCoord_MarshalHayson(t *testing.T) {

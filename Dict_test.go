@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDict_Get(t *testing.T) {
@@ -86,18 +88,11 @@ func TestDict_SetAll(t *testing.T) {
 		"geoCity":  NewStr("Salt Lake City"),
 	})
 
-	if newDict.Get("geoState").ToZinc() != NewStr("UT").ToZinc() {
-		t.Error("Dict.SetAll didn't set all values correctly")
-	}
-
-	if newDict.Get("geoCity").ToZinc() != NewStr("Salt Lake City").ToZinc() {
-		t.Error("Dict.SetAll didn't set all values correctly")
-	}
+	assert.Equal(t, newDict.Get("geoState"), NewStr("UT"), "Dict.SetAll didn't set all values correctly")
+	assert.Equal(t, newDict.Get("geoCity"), NewStr("Salt Lake City"), "Dict.SetAll didn't set all values correctly")
 
 	// Ensure original wasn't changed
-	if dict.Get("geoState").ToZinc() != NewNull().ToZinc() {
-		t.Error("Dict.SetAll changed the state of the original Dict")
-	}
+	assert.Equal(t, dict.Get("geoState"), NewNull(), "Dict.SetAll changed the state of the original Dict")
 }
 
 func TestDict_Size(t *testing.T) {
@@ -108,9 +103,7 @@ func TestDict_Size(t *testing.T) {
 			"area": NewNumber(35000.0, "ft²"),
 		},
 	)
-	if dict.Size() != 3 {
-		t.Error("Dict.Size returned an incorrect value")
-	}
+	assert.Equal(t, dict.Size(), 3, "Dict.Size returned an incorrect value")
 }
 
 func TestDict_IsEmpty(t *testing.T) {
@@ -121,15 +114,12 @@ func TestDict_IsEmpty(t *testing.T) {
 			"area": NewNumber(35000.0, "ft²"),
 		},
 	)
-	if dict.IsEmpty() != false {
-		t.Error("Dict.IsEmpty returned true on a non-empty grid")
-	}
+	assert.False(t, dict.IsEmpty(), "Dict.IsEmpty returned true on a non-empty grid")
+
 	emptyDict := NewDict(
 		map[string]Val{},
 	)
-	if emptyDict.IsEmpty() != true {
-		t.Error("Dict.IsEmpty returned false on an empty grid")
-	}
+	assert.True(t, emptyDict.IsEmpty(), "Dict.IsEmpty returned false on an empty grid")
 }
 
 func TestDict_ToZinc(t *testing.T) {
@@ -140,7 +130,7 @@ func TestDict_ToZinc(t *testing.T) {
 			"area": NewNumber(35000.0, "ft²"),
 		},
 	)
-	valTest_ToZinc(dict, "{area:35000ft² dis:\"Building\" site}", t)
+	assert.Equal(t, dict.ToZinc(), "{area:35000ft² dis:\"Building\" site}")
 }
 
 func TestDict_MarshalJSON(t *testing.T) {
@@ -157,7 +147,7 @@ func TestDict_MarshalJSON(t *testing.T) {
 func TestDict_UnmarshalJSON(t *testing.T) {
 	var dict Dict
 	json.Unmarshal([]byte("{\"area\":\"n:35000 ft²\",\"dis\":\"Building\",\"site\":\"m:\"}"), &dict)
-	valTest_ToZinc(dict, "{area:35000ft² dis:\"Building\" site}", t)
+	assert.Equal(t, dict.ToZinc(), "{area:35000ft² dis:\"Building\" site}")
 }
 
 func TestDict_MarshalHayson(t *testing.T) {

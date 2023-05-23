@@ -3,25 +3,28 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestXStr_ToZinc(t *testing.T) {
-	xStr := NewXStr("Str", "hello world")
-	valTest_ToZinc(xStr, "Str(\"hello world\")", t)
+	assert.Equal(t, NewXStr("Str", "hello world").ToZinc(), "Str(\"hello world\")")
 }
 
 func TestXStr_MarhsalJSON(t *testing.T) {
-	xStr := NewXStr("Str", "hello world")
-	valTest_MarshalJSON(xStr, "\"x:Str:hello world\"", t)
+	valTest_MarshalJSON(NewXStr("Str", "hello world"), "\"x:Str:hello world\"", t)
 }
 
 func TestXStr_UnmarshalJSON(t *testing.T) {
 	var val XStr
 	json.Unmarshal([]byte("\"x:Str:hello world\""), &val)
-	valTest_ToZinc(val, "Str(\"hello world\")", t)
+	assert.Equal(t, val, NewXStr("Str", "hello world"))
 }
 
 func TestXStr_MarhsalHAYSON(t *testing.T) {
-	xStr := NewXStr("Str", "hello world")
-	valTest_MarshalHayson(xStr, "{\"_kind\":\"xstr\",\"type\":\"Str\",\"val\":\"hello world\"}", t)
+	valTest_MarshalHayson(
+		NewXStr("Str", "hello world"),
+		"{\"_kind\":\"xstr\",\"type\":\"Str\",\"val\":\"hello world\"}",
+		t,
+	)
 }

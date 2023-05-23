@@ -3,6 +3,8 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestList_Get(t *testing.T) {
@@ -13,9 +15,7 @@ func TestList_Get(t *testing.T) {
 			NewRef("null", ""),
 		},
 	)
-	if list.Get(2).ToZinc() != NewRef("null", "").ToZinc() {
-		t.Error("List.Get returned an incorrect value")
-	}
+	assert.Equal(t, list.Get(2), NewRef("null", ""))
 }
 
 func TestList_Size(t *testing.T) {
@@ -26,9 +26,7 @@ func TestList_Size(t *testing.T) {
 			NewRef("null", ""),
 		},
 	)
-	if list.Size() != 3 {
-		t.Error("List.Size returned an incorrect value")
-	}
+	assert.Equal(t, list.Size(), 3)
 }
 
 func TestList_ToZinc(t *testing.T) {
@@ -39,7 +37,7 @@ func TestList_ToZinc(t *testing.T) {
 			NewRef("null", ""),
 		},
 	)
-	valTest_ToZinc(list, "[5.5, 23:07:10, @null]", t)
+	assert.Equal(t, list.ToZinc(), "[5.5, 23:07:10, @null]")
 }
 
 func TestList_MarshalJSON(t *testing.T) {
@@ -56,7 +54,7 @@ func TestList_MarshalJSON(t *testing.T) {
 func TestList_UnmarshalJSON(t *testing.T) {
 	var list List
 	json.Unmarshal([]byte("[\"n:5.5\",\"h:23:07:10\",\"r:null\"]"), &list)
-	valTest_ToZinc(list, "[5.5, 23:07:10, @null]", t)
+	assert.Equal(t, list.ToZinc(), "[5.5, 23:07:10, @null]")
 }
 
 func TestList_MarshalHayson(t *testing.T) {

@@ -3,10 +3,12 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMarker_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewMarker(), "M", t)
+	assert.Equal(t, NewMarker().ToZinc(), "M")
 }
 
 func TestMarker_MarshalJSON(t *testing.T) {
@@ -16,7 +18,7 @@ func TestMarker_MarshalJSON(t *testing.T) {
 func TestMarker_UnmarshalJSON(t *testing.T) {
 	var marker Marker
 	json.Unmarshal([]byte("\"m:\""), &marker)
-	valTest_ToZinc(marker, "M", t)
+	assert.Equal(t, marker, NewMarker())
 }
 
 func TestMarker_MarshalHayson(t *testing.T) {
@@ -24,7 +26,7 @@ func TestMarker_MarshalHayson(t *testing.T) {
 }
 
 func TestRemove_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewRemove(), "R", t)
+	assert.Equal(t, NewRemove().ToZinc(), "R")
 }
 
 func TestRemove_MarshalJSON(t *testing.T) {
@@ -34,7 +36,7 @@ func TestRemove_MarshalJSON(t *testing.T) {
 func TestRemove_UnmarshalJSON(t *testing.T) {
 	var remove Remove
 	json.Unmarshal([]byte("\"-:\""), &remove)
-	valTest_ToZinc(remove, "R", t)
+	assert.Equal(t, remove, NewRemove())
 }
 
 func TestRemove_MarshalHayson(t *testing.T) {

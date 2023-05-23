@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNumber_ToZinc(t *testing.T) {
-	valTest_ToZinc(NewNumber(100.457, ""), "100.457", t)
-	valTest_ToZinc(NewNumber(100.457, "kWh"), "100.457kWh", t)
-	valTest_ToZinc(NewNumber(math.Inf(1), ""), "INF", t)
-	valTest_ToZinc(NewNumber(math.Inf(-1), ""), "-INF", t)
-	valTest_ToZinc(NewNumber(math.NaN(), ""), "NaN", t)
+	assert.Equal(t, NewNumber(100.457, "").ToZinc(), "100.457")
+	assert.Equal(t, NewNumber(100.457, "kWh").ToZinc(), "100.457kWh")
+	assert.Equal(t, NewNumber(math.Inf(1), "").ToZinc(), "INF")
+	assert.Equal(t, NewNumber(math.Inf(-1), "").ToZinc(), "-INF")
+	assert.Equal(t, NewNumber(math.NaN(), "").ToZinc(), "NaN")
 }
 
 func TestNumber_MarshalJSON(t *testing.T) {
@@ -25,23 +27,23 @@ func TestNumber_MarshalJSON(t *testing.T) {
 func TestNumber_UnmarshalJSON(t *testing.T) {
 	var number Number
 	json.Unmarshal([]byte("\"n:100.457\""), &number)
-	valTest_ToZinc(number, "100.457", t)
+	assert.Equal(t, number, NewNumber(100.457, ""))
 
 	var numberUnit Number
 	json.Unmarshal([]byte("\"n:100.457 kWh\""), &numberUnit)
-	valTest_ToZinc(numberUnit, "100.457kWh", t)
+	assert.Equal(t, numberUnit, NewNumber(100.457, "kWh"))
 
 	var inf Number
 	json.Unmarshal([]byte("\"n:INF\""), &inf)
-	valTest_ToZinc(inf, "INF", t)
+	assert.Equal(t, inf, NewNumber(math.Inf(1), ""))
 
 	var negInf Number
 	json.Unmarshal([]byte("\"n:-INF\""), &negInf)
-	valTest_ToZinc(negInf, "-INF", t)
+	assert.Equal(t, negInf, NewNumber(math.Inf(-1), ""))
 
 	var nan Number
 	json.Unmarshal([]byte("\"n:NaN\""), &nan)
-	valTest_ToZinc(nan, "NaN", t)
+	assert.Equal(t, nan.ToZinc(), "NaN")
 }
 
 func TestNumber_MarshalHayson(t *testing.T) {

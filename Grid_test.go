@@ -3,6 +3,8 @@ package haystack
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGrid_ColCount(t *testing.T) {
@@ -47,38 +49,39 @@ func TestGrid_RowAt(t *testing.T) {
 
 func TestGrid_ToZinc(t *testing.T) {
 	grid := newGridSimple()
-	zinc := "ver:\"3.0\" dis:\"Site Energy Summary\"\n" +
-		"siteName dis:\"Sites\", val dis:\"Value\"\n" +
-		"\"Site 1\", 356.214kW\n" +
-		"\"Site 2\", 463.028kW"
-	valTest_ToZinc_Grid(grid, zinc, t)
+	zinc := `ver:"3.0" dis:"Site Energy Summary"
+siteName dis:"Sites", val dis:"Value"
+"Site 1", 356.214kW
+"Site 2", 463.028kW`
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_ToZinc_empty(t *testing.T) {
 	grid := EmptyGrid()
-	zinc := "ver:\"3.0\"\n" +
-		"empty\n"
-	valTest_ToZinc_Grid(grid, zinc, t)
+	zinc := `ver:"3.0"
+empty
+`
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_ToZinc_nested(t *testing.T) {
 	grid := newGridNested()
-	zinc := "ver:\"3.0\"\n" +
-		"type, val\n" +
-		"\"list\", [1, 2, 3]\n" +
-		"\"dict\", {dis:\"Dict!\" foo}\n" +
-		"\"grid\", <<\n" +
-		"  ver:\"3.0\"\n" +
-		"  a, b\n" +
-		"  1, <<\n" +
-		"    ver:\"3.0\"\n" +
-		"    c, d\n" +
-		"    5, 6\n" +
-		"    >>\n" +
-		"  3, 4\n" +
-		"  >>\n" +
-		"\"scalar\", \"simple string\""
-	valTest_ToZinc_Grid(grid, zinc, t)
+	zinc := `ver:"3.0"
+type, val
+"list", [1, 2, 3]
+"dict", {dis:"Dict!" foo}
+"grid", <<
+  ver:"3.0"
+  a, b
+  1, <<
+    ver:"3.0"
+    c, d
+    5, 6
+    >>
+  3, 4
+  >>
+"scalar", "simple string"`
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_MarshalJSON(t *testing.T) {
@@ -111,14 +114,14 @@ func TestGrid_UnmarshalJSON(t *testing.T) {
 		"{\"siteName\":\"Site 2\",\"val\":\"n:463.028 kW\"}" +
 		"]" +
 		"}"
-	zinc := "ver:\"3.0\" dis:\"Site Energy Summary\"\n" +
-		"siteName dis:\"Sites\", val dis:\"Value\"\n" +
-		"\"Site 1\", 356.214kW\n" +
-		"\"Site 2\", 463.028kW"
+	zinc := `ver:"3.0" dis:"Site Energy Summary"
+siteName dis:"Sites", val dis:"Value"
+"Site 1", 356.214kW
+"Site 2", 463.028kW`
 
 	var grid Grid
 	json.Unmarshal([]byte(jsonLiteral), &grid)
-	valTest_ToZinc(grid, zinc, t)
+	assert.Equal(t, grid.ToZinc(), zinc)
 }
 
 func TestGrid_MarshalJSON_empty(t *testing.T) {

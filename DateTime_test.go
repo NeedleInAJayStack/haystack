@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDateTime_NewDateTimeRaw(t *testing.T) {
@@ -88,9 +90,9 @@ func TestDateTime_ToZinc(t *testing.T) {
 	losAngelesLoc, _ := time.LoadLocation("America/Los_Angeles")
 	taipeiLoc, _ := time.LoadLocation("Asia/Taipei")
 
-	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)), "2020-08-17T23:07:10Z UTC", t)
-	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)), "2020-08-17T23:07:10-07:00 Los_Angeles", t)
-	valTest_ToZinc(NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)), "2020-08-17T23:07:10+08:00 Taipei", t)
+	assert.Equal(t, NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)).ToZinc(), "2020-08-17T23:07:10Z UTC")
+	assert.Equal(t, NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, losAngelesLoc)).ToZinc(), "2020-08-17T23:07:10-07:00 Los_Angeles")
+	assert.Equal(t, NewDateTimeFromGo(time.Date(2020, time.August, 17, 23, 7, 10, 0, taipeiLoc)).ToZinc(), "2020-08-17T23:07:10+08:00 Taipei")
 }
 
 func TestDateTime_ToAxon(t *testing.T) {
@@ -114,15 +116,15 @@ func TestDateTime_MarshalJSON(t *testing.T) {
 func TestDateTime_UnmarshalJSON(t *testing.T) {
 	var utc DateTime
 	json.Unmarshal([]byte("\"t:2020-08-17T23:07:10Z UTC\""), &utc)
-	valTest_ToZinc(utc, "2020-08-17T23:07:10Z UTC", t)
+	assert.Equal(t, utc.ToZinc(), "2020-08-17T23:07:10Z UTC")
 
 	var la DateTime
 	json.Unmarshal([]byte("\"t:2020-08-17T23:07:10-07:00 Los_Angeles\""), &la)
-	valTest_ToZinc(la, "2020-08-17T23:07:10-07:00 Los_Angeles", t)
+	assert.Equal(t, la.ToZinc(), "2020-08-17T23:07:10-07:00 Los_Angeles")
 
 	var taipei DateTime
 	json.Unmarshal([]byte("\"t:2020-08-17T23:07:10+08:00 Taipei\""), &taipei)
-	valTest_ToZinc(taipei, "2020-08-17T23:07:10+08:00 Taipei", t)
+	assert.Equal(t, taipei.ToZinc(), "2020-08-17T23:07:10+08:00 Taipei")
 }
 
 func TestDateTime_MarshalHayson(t *testing.T) {

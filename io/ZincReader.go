@@ -2,7 +2,6 @@ package io
 
 import (
 	"errors"
-	"math"
 	"strings"
 	"unicode"
 
@@ -87,9 +86,9 @@ func (reader *ZincReader) parseVal() (haystack.Val, error) {
 		} else if id == "R" {
 			return haystack.NewRemove(), nil
 		} else if id == "NaN" {
-			return haystack.NewNumber(math.NaN(), ""), nil
+			return haystack.NaN(), nil
 		} else if id == "INF" {
-			return haystack.NewNumber(math.Inf(1), ""), nil
+			return haystack.Inf(), nil
 		} else {
 			return haystack.NewNull(), errors.New("unexpected identifier: " + id)
 		}
@@ -110,7 +109,7 @@ func (reader *ZincReader) parseVal() (haystack.Val, error) {
 		if idErr != nil {
 			return haystack.NewNull(), idErr
 		}
-		return haystack.NewNumber(math.Inf(-1), ""), nil
+		return haystack.NegInf(), nil
 	}
 
 	// nested collections

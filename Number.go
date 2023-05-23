@@ -20,14 +20,29 @@ func NewNumber(val float64, unit string) Number {
 	return Number{val: val, unit: unit}
 }
 
+// Inf returns a positive infinity number
+func Inf() Number {
+	return NewNumber(math.Inf(1), "")
+}
+
+// NegInf returns a negative infinity number
+func NegInf() Number {
+	return NewNumber(math.Inf(-1), "")
+}
+
+// NaN returns a not-a-number number
+func NaN() Number {
+	return NewNumber(math.NaN(), "")
+}
+
 // newNumberFromStr creates a new number from a string. The string representation must have a space between the number and unit
 func newNumberFromStr(str string) (Number, error) {
 	if str == "INF" {
-		return NewNumber(math.Inf(1), ""), nil
+		return Inf(), nil
 	} else if str == "-INF" {
-		return NewNumber(math.Inf(-1), ""), nil
+		return NegInf(), nil
 	} else if str == "NaN" {
-		return NewNumber(math.NaN(), ""), nil
+		return NaN(), nil
 	} else {
 		numberSplit := strings.Split(str, " ")
 		val, valErr := strconv.ParseFloat(numberSplit[0], 64)

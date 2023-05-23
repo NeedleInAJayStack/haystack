@@ -1,7 +1,6 @@
 package io
 
 import (
-	"math"
 	"testing"
 
 	"github.com/NeedleInAJayStack/haystack"
@@ -193,10 +192,10 @@ func TestZincReader_large(t *testing.T) {
 	)
 	gb.AddRow( // INF, -INF, \"\", NaN
 		[]haystack.Val{
-			haystack.NewNumber(math.Inf(1), ""),
-			haystack.NewNumber(math.Inf(-1), ""),
+			haystack.Inf(),
+			haystack.NegInf(),
 			haystack.NewStr(""),
-			haystack.NewNumber(math.NaN(), ""),
+			haystack.NaN(),
 		},
 	)
 	gb.AddRow( // C(12,-34),C(0.123,-0.789),C(84.5,-77.45),C(-90,180)

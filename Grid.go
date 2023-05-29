@@ -39,21 +39,46 @@ func (grid Grid) Cols() []Col {
 }
 
 // Col returns the column matching the name
-func (grid Grid) Col(name string) Col {
+func (grid Grid) Col(name string) *Col {
 	var colMatch Col
 	for i := 0; i < grid.ColCount(); i++ {
 		col := grid.ColAt(i)
 		if grid.cols[i].name == name {
 			colMatch = col
-			return colMatch
+			return &colMatch
 		}
 	}
-	panic("Unknown column: " + name)
+	return nil
 }
 
 // ColAt returns the column at the index
 func (grid Grid) ColAt(index int) Col {
 	return grid.cols[index]
+}
+
+// Meta returns the grid-level metadata
+func (grid Grid) RenameCol(from string, to string) Grid {
+	builder := NewGridBuilder()
+	builder.AddMeta(grid.meta.items)
+	for _, col := range grid.cols {
+		if col.name == from {
+			builder.AddCol(to, col.meta.items)
+		} else {
+			builder.AddCol(col.name, col.meta.items)
+		}
+	}
+	for _, row := range grid.rows {
+		newItems := map[string]Val{}
+		for name, val := range row.items {
+			if name == from {
+				newItems[to] = val
+			} else {
+				newItems[name] = val
+			}
+		}
+		builder.AddRowDict(NewDict(newItems))
+	}
+	return builder.ToGrid()
 }
 
 // RowCount returns the count of rows

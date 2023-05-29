@@ -32,6 +32,23 @@ func TestGrid_ColAt(t *testing.T) {
 	}
 }
 
+func TestGrid_RenameCol(t *testing.T) {
+	grid := newGridSimple()
+	renamedGrid := grid.RenameCol("siteName", "siteName2")
+
+	assert.Equal(t, grid.ColCount(), renamedGrid.ColCount())
+	assert.Equal(t, grid.RowCount(), renamedGrid.RowCount())
+	assert.NotNil(t, grid.Col("siteName"))
+	assert.Nil(t, grid.Col("siteName2"))
+	assert.Nil(t, renamedGrid.Col("siteName"))
+	assert.NotNil(t, renamedGrid.Col("siteName2"))
+
+	for i, row := range grid.Rows() {
+		renamedRow := renamedGrid.RowAt(i)
+		assert.Equal(t, row.Get("siteName"), renamedRow.Get("siteName2"))
+	}
+}
+
 func TestGrid_RowCount(t *testing.T) {
 	grid := newGridSimple()
 	if grid.RowCount() != 2 {

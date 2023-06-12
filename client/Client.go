@@ -446,11 +446,11 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 	}
 	helloAuth := authMsgFromString(respAuthString)
 
-	// TODO Expand support to multiple auth scheme returns
-	// TODO Add support for non-scram auth
 	switch helloAuth.scheme {
 	case "scram":
 		return clientHTTP.authWithScram(uri, username, password, helloAuth.get("handshakeToken"), helloAuth.get("hash"))
+	case "plaintext":
+		return clientHTTP.authWithPlaintext(uri, username, password)
 	default:
 		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
 	}
@@ -512,6 +512,38 @@ func (clientHTTP *clientHTTPImpl) authWithScram(
 	finalAuth := authMsg{
 		scheme: "bearer",
 		attrs: map[string]string{ // Only keep the authToken
+			"authToken": authToken,
+		},
+	}
+	return finalAuth.toString(), nil
+}
+
+func (clientHTTP *clientHTTPImpl) authWithPlaintext(
+	uri string,
+	username string,
+	password string,
+) (string, error) {
+	reqAuth := authMsg{
+		scheme: "plaintext",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(username)),
+			"password": encoding.EncodeToString([]byte(password)),
+		},
+	}
+	req, _ := http.NewRequest("GET", uri+"about", nil)
+	clientHTTP.prepare(req, reqAuth.toString())
+	resp, _ := clientHTTP.httpClient.Do(req)
+
+	if resp.StatusCode != http.StatusOK {
+		return "", NewHTTPError(resp.StatusCode, resp.Status)
+	}
+	respAuthString := resp.Header.Get("Authentication-Info")
+	respAuth := authMsgFromString(respAuthString)
+	authToken := respAuth.get("authToken")
+
+	finalAuth := authMsg{
+		scheme: "bearer",
+		attrs: map[string]string{
 			"authToken": authToken,
 		},
 	}

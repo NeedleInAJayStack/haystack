@@ -446,14 +446,27 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 	}
 	helloAuth := authMsgFromString(respAuthString)
 
+	var authToken string
+	var authErr error
 	switch helloAuth.scheme {
 	case "scram":
-		return clientHTTP.authWithScram(uri, username, password, helloAuth.get("handshakeToken"), helloAuth.get("hash"))
+		authToken, authErr = clientHTTP.authWithScram(uri, username, password, helloAuth.get("handshakeToken"), helloAuth.get("hash"))
 	case "plaintext":
-		return clientHTTP.authWithPlaintext(uri, username, password)
+		authToken, authErr = clientHTTP.authWithPlaintext(uri, username, password)
 	default:
 		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
 	}
+	if authErr != nil {
+		return "", authErr
+	}
+
+	finalAuth := authMsg{
+		scheme: "bearer",
+		attrs: map[string]string{
+			"authToken": authToken,
+		},
+	}
+	return finalAuth.toString(), nil
 }
 
 func (clientHTTP *clientHTTPImpl) authWithScram(
@@ -464,11 +477,12 @@ func (clientHTTP *clientHTTPImpl) authWithScram(
 	hashName string,
 ) (string, error) {
 	var hash func() hash.Hash
-	if hashName == "SHA-256" {
+	switch hashName {
+	case "SHA-256":
 		hash = sha256.New
-	} else if hashName == "SHA-512" {
+	case "SHA-512":
 		hash = sha512.New
-	} else { // Only support SHA-256 and SHA-512
+	default: // Only support SHA-256 and SHA-512
 		return "", NewAuthError("Auth hash not supported: " + hashName)
 	}
 
@@ -508,14 +522,7 @@ func (clientHTTP *clientHTTPImpl) authWithScram(
 	if scram.Err() != nil {
 		return "", scram.Err()
 	}
-
-	finalAuth := authMsg{
-		scheme: "bearer",
-		attrs: map[string]string{ // Only keep the authToken
-			"authToken": authToken,
-		},
-	}
-	return finalAuth.toString(), nil
+	return authToken, nil
 }
 
 func (clientHTTP *clientHTTPImpl) authWithPlaintext(
@@ -539,15 +546,7 @@ func (clientHTTP *clientHTTPImpl) authWithPlaintext(
 	}
 	respAuthString := resp.Header.Get("Authentication-Info")
 	respAuth := authMsgFromString(respAuthString)
-	authToken := respAuth.get("authToken")
-
-	finalAuth := authMsg{
-		scheme: "bearer",
-		attrs: map[string]string{
-			"authToken": authToken,
-		},
-	}
-	return finalAuth.toString(), nil
+	return respAuth.get("authToken"), nil
 }
 
 func (clientHTTP *clientHTTPImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {

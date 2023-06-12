@@ -448,10 +448,10 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 
 	var authToken string
 	var authErr error
-	switch helloAuth.scheme {
-	case "scram":
+	switch strings.ToUpper(helloAuth.scheme) {
+	case "SCRAM":
 		authToken, authErr = clientHTTP.authWithScram(uri, username, password, helloAuth.get("handshakeToken"), helloAuth.get("hash"))
-	case "plaintext":
+	case "PLAINTEXT":
 		authToken, authErr = clientHTTP.authWithPlaintext(uri, username, password)
 	default:
 		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
@@ -477,7 +477,7 @@ func (clientHTTP *clientHTTPImpl) authWithScram(
 	hashName string,
 ) (string, error) {
 	var hash func() hash.Hash
-	switch hashName {
+	switch strings.ToUpper(hashName) {
 	case "SHA-256":
 		hash = sha256.New
 	case "SHA-512":

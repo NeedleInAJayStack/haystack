@@ -448,12 +448,21 @@ func (clientHTTP *clientHTTPImpl) open(uri string, username string, password str
 
 	// TODO Expand support to multiple auth scheme returns
 	// TODO Add support for non-scram auth
-	if helloAuth.scheme != "scram" {
-		return "", errors.New("Auth scheme not supported: " + helloAuth.scheme)
+	switch helloAuth.scheme {
+	case "scram":
+		return clientHTTP.authWithScram(uri, username, password, helloAuth.get("handshakeToken"), helloAuth.get("hash"))
+	default:
+		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
 	}
+}
 
-	handshakeToken := helloAuth.get("handshakeToken")
-	hashName := helloAuth.get("hash")
+func (clientHTTP *clientHTTPImpl) authWithScram(
+	uri string,
+	username string,
+	password string,
+	handshakeToken string,
+	hashName string,
+) (string, error) {
 	var hash func() hash.Hash
 	if hashName == "SHA-256" {
 		hash = sha256.New

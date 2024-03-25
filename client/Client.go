@@ -52,7 +52,7 @@ func NewClient(uri string, username string, password string) *Client {
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	auth, err := client.clientHTTP.getAuthToken(client.uri, client.username, client.password)
+	auth, err := client.clientHTTP.getAuthHeader(client.uri, client.username, client.password)
 	if err != nil {
 		return err
 	}
@@ -414,8 +414,8 @@ func (authMsg *authMsg) toString() string {
 
 // clientHTTP is defined as an interface to allow dependency-injection testing
 type clientHTTP interface {
-	// getAuthToken returns the authorization header to use
-	getAuthToken(uri string, username string, password string) (string, error)
+	// getAuthHeader returns the `Authorization` header to use
+	getAuthHeader(uri string, username string, password string) (string, error)
 	// postString posts the given request body to the given URI and returns the response body
 	postString(uri string, auth string, op string, reqBody string) (string, error)
 }
@@ -425,7 +425,7 @@ type clientHTTPImpl struct {
 	httpClient *http.Client
 }
 
-func (clientHTTP *clientHTTPImpl) getAuthToken(uri string, username string, password string) (string, error) {
+func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, password string) (string, error) {
 	req, _ := http.NewRequest("GET", uri+"about", nil)
 	reqAuth := authMsg{
 		scheme: "hello",

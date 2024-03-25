@@ -52,7 +52,7 @@ func NewClient(uri string, username string, password string) *Client {
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	auth, err := client.clientHTTP.getAuthToken(client.uri, client.username, client.password)
+	auth, err := client.clientHTTP.getAuthHeader(client.uri, client.username, client.password)
 	if err != nil {
 		return err
 	}
@@ -406,16 +406,18 @@ func (authMsg *authMsg) toString() string {
 			builder.WriteString(", ")
 		}
 		builder.WriteString(name)
-		builder.WriteRune('=')
-		builder.WriteString(val)
+		if val != "" {
+			builder.WriteRune('=')
+			builder.WriteString(val)
+		}
 	}
 	return builder.String()
 }
 
 // clientHTTP is defined as an interface to allow dependency-injection testing
 type clientHTTP interface {
-	// getAuthToken returns the authorization header to use
-	getAuthToken(uri string, username string, password string) (string, error)
+	// getAuthHeader returns the `Authorization` header to use
+	getAuthHeader(uri string, username string, password string) (string, error)
 	// postString posts the given request body to the given URI and returns the response body
 	postString(uri string, auth string, op string, reqBody string) (string, error)
 }
@@ -425,7 +427,7 @@ type clientHTTPImpl struct {
 	httpClient *http.Client
 }
 
-func (clientHTTP *clientHTTPImpl) getAuthToken(uri string, username string, password string) (string, error) {
+func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, password string) (string, error) {
 	req, _ := http.NewRequest("GET", uri+"about", nil)
 	reqAuth := authMsg{
 		scheme: "hello",
@@ -439,15 +441,39 @@ func (clientHTTP *clientHTTPImpl) getAuthToken(uri string, username string, pass
 	if respErr != nil {
 		return "", respErr
 	}
+	// If we get 200, authentication is not required
+	if resp.StatusCode == 200 {
+		return "", nil
+	}
+	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
+	respServer := resp.Header.Get("Server")
+	respSetCookie := resp.Header.Get("Set-Cookie")
+	resp.Body.Close()
+	if respWwwAuthenticate == "" {
+		return "", NewAuthError("Missing required header: WWW-Authenticate")
+	}
 	if resp.StatusCode != 401 {
 		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
 	}
-	resp.Body.Close()
-	respAuthString := resp.Header.Get("WWW-Authenticate")
-	if respAuthString == "" {
-		return "", NewAuthError("Missing required header: WWW-Authenticate")
+
+	// First try Haystack standard authentication scheme
+	haystackAuthHeader, haystackErr := clientHTTP.haystackAuth(uri, username, password, respWwwAuthenticate)
+	if haystackErr == nil {
+		return haystackAuthHeader, nil
 	}
-	helloAuth := authMsgFromString(respAuthString)
+
+	// If we can't authenticate with Haystack, try basic auth
+	isBasicAuth := strings.Contains(strings.ToLower(respWwwAuthenticate), "basic")
+	isNiagara := strings.Contains(strings.ToLower(respServer), "niagara") || strings.Contains(strings.ToLower(respSetCookie), "niagara")
+	if isBasicAuth || isNiagara {
+		return clientHTTP.basicAuth(uri, username, password)
+	}
+
+	return haystackAuthHeader, haystackErr
+}
+
+func (clientHTTP *clientHTTPImpl) haystackAuth(uri string, username string, password string, wwwAuthenticate string) (string, error) {
+	helloAuth := authMsgFromString(wwwAuthenticate)
 
 	var authToken string
 	var authErr error
@@ -470,6 +496,26 @@ func (clientHTTP *clientHTTPImpl) getAuthToken(uri string, username string, pass
 		},
 	}
 	return finalAuth.toString(), nil
+}
+
+func (clientHTTP *clientHTTPImpl) basicAuth(uri string, username string, password string) (string, error) {
+	basicAuth := authMsg{
+		scheme: "basic",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(username)),
+			"password": encoding.EncodeToString([]byte(password)),
+		},
+	}
+
+	// Test the basic auth to ensure that it works
+	req, _ := http.NewRequest("GET", uri+"about", nil)
+	clientHTTP.setStandardHeaders(req, basicAuth.toString())
+	resp, _ := clientHTTP.httpClient.Do(req)
+	if resp.StatusCode != http.StatusOK {
+		return "", NewAuthError("Basic auth failed with status: " + resp.Status)
+	}
+
+	return basicAuth.toString(), nil
 }
 
 func (clientHTTP *clientHTTPImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {

@@ -445,8 +445,10 @@ func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, pas
 	if resp.StatusCode == 200 {
 		return "", nil
 	}
-	resp.Body.Close()
 	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
+	respServer := resp.Header.Get("Server")
+	respSetCookie := resp.Header.Get("Set-Cookie")
+	resp.Body.Close()
 	if respWwwAuthenticate == "" {
 		return "", NewAuthError("Missing required header: WWW-Authenticate")
 	}
@@ -454,7 +456,19 @@ func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, pas
 		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
 	}
 
-	return clientHTTP.haystackAuth(uri, username, password, respWwwAuthenticate)
+	haystackAuthHeader, haystackErr := clientHTTP.haystackAuth(uri, username, password, respWwwAuthenticate)
+	if haystackErr == nil {
+		return haystackAuthHeader, nil
+	}
+
+	// If we can't authenticate with Haystack, try basic auth
+	isBasicAuth := strings.Contains(strings.ToLower(respWwwAuthenticate), "basic")
+	isNiagara := strings.Contains(strings.ToLower(respServer), "niagara") || strings.Contains(strings.ToLower(respSetCookie), "niagara")
+	if isBasicAuth || isNiagara {
+		return clientHTTP.basicAuth(uri, username, password)
+	}
+
+	return haystackAuthHeader, haystackErr
 }
 
 func (clientHTTP *clientHTTPImpl) haystackAuth(uri string, username string, password string, wwwAuthenticate string) (string, error) {
@@ -481,6 +495,17 @@ func (clientHTTP *clientHTTPImpl) haystackAuth(uri string, username string, pass
 		},
 	}
 	return finalAuth.toString(), nil
+}
+
+func (clientHTTP *clientHTTPImpl) basicAuth(uri string, username string, password string) (string, error) {
+	basicAuth := authMsg{
+		scheme: "basic",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(username)),
+			"password": encoding.EncodeToString([]byte(password)),
+		},
+	}
+	return basicAuth.toString(), nil
 }
 
 func (clientHTTP *clientHTTPImpl) postString(uri string, auth string, op string, reqBody string) (string, error) {

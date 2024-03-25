@@ -20,8 +20,6 @@ import (
 type Client struct {
 	clientHTTP clientHTTP
 	uri        string
-	username   string
-	password   string
 	auth       string
 }
 
@@ -38,21 +36,23 @@ func NewClient(uri string, username string, password string) *Client {
 		uri = uri + "/"
 	}
 	timeout, _ := time.ParseDuration("1m")
+	client := http.Client{Timeout: timeout}
 
 	return &Client{
 		clientHTTP: &clientHTTPImpl{
-			&http.Client{Timeout: timeout},
+			uri:        uri,
+			username:   username,
+			password:   password,
+			httpClient: &client,
 		},
-		uri:      uri,
-		username: username,
-		password: password,
-		auth:     "",
+		uri:  uri,
+		auth: "",
 	}
 }
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	auth, err := client.clientHTTP.getAuthHeader(client.uri, client.username, client.password)
+	auth, err := client.clientHTTP.getAuthHeader()
 	if err != nil {
 		return err
 	}
@@ -417,22 +417,25 @@ func (authMsg *authMsg) toString() string {
 // clientHTTP is defined as an interface to allow dependency-injection testing
 type clientHTTP interface {
 	// getAuthHeader returns the `Authorization` header to use
-	getAuthHeader(uri string, username string, password string) (string, error)
+	getAuthHeader() (string, error)
 	// postString posts the given request body to the given URI and returns the response body
 	postString(uri string, auth string, op string, reqBody string) (string, error)
 }
 
 // clientHTTPImpl is the default implementation of clientHTTP
 type clientHTTPImpl struct {
+	uri        string
+	username   string
+	password   string
 	httpClient *http.Client
 }
 
-func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, password string) (string, error) {
-	req, _ := http.NewRequest("GET", uri+"about", nil)
+func (clientHTTP *clientHTTPImpl) getAuthHeader() (string, error) {
+	req, _ := http.NewRequest("GET", clientHTTP.uri+"about", nil)
 	reqAuth := authMsg{
 		scheme: "hello",
 		attrs: map[string]string{
-			"username": encoding.EncodeToString([]byte(username)),
+			"username": encoding.EncodeToString([]byte(clientHTTP.username)),
 		},
 	}
 	clientHTTP.setStandardHeaders(req, reqAuth.toString())
@@ -455,9 +458,9 @@ func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, pas
 	var authErr error
 	switch strings.ToUpper(helloAuth.scheme) {
 	case "SCRAM":
-		authToken, authErr = clientHTTP.authTokenFromScram(uri, username, password, helloAuth.get("handshakeToken"), helloAuth.get("hash"))
+		authToken, authErr = clientHTTP.authTokenFromScram(helloAuth.get("handshakeToken"), helloAuth.get("hash"))
 	case "PLAINTEXT":
-		authToken, authErr = clientHTTP.authTokenFromPlaintext(uri, username, password)
+		authToken, authErr = clientHTTP.authTokenFromPlaintext()
 	default:
 		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
 	}
@@ -510,12 +513,12 @@ func (clientHTTP *clientHTTPImpl) authTokenFromScram(
 	}
 
 	var in []byte
-	var scram = auth.NewScram(hash, username, password)
+	var scram = auth.NewScram(hash, clientHTTP.username, clientHTTP.password)
 	var authToken string
 	for !scram.Step(in) {
 		out := scram.Out()
 
-		req, _ := http.NewRequest("GET", uri+"about", nil)
+		req, _ := http.NewRequest("GET", clientHTTP.uri+"about", nil)
 		reqAuth := authMsg{
 			scheme: "scram",
 			attrs: map[string]string{
@@ -548,19 +551,15 @@ func (clientHTTP *clientHTTPImpl) authTokenFromScram(
 	return authToken, nil
 }
 
-func (clientHTTP *clientHTTPImpl) authTokenFromPlaintext(
-	uri string,
-	username string,
-	password string,
-) (string, error) {
+func (clientHTTP *clientHTTPImpl) authTokenFromPlaintext() (string, error) {
 	reqAuth := authMsg{
 		scheme: "plaintext",
 		attrs: map[string]string{
-			"username": encoding.EncodeToString([]byte(username)),
-			"password": encoding.EncodeToString([]byte(password)),
+			"username": encoding.EncodeToString([]byte(clientHTTP.username)),
+			"password": encoding.EncodeToString([]byte(clientHTTP.password)),
 		},
 	}
-	req, _ := http.NewRequest("GET", uri+"about", nil)
+	req, _ := http.NewRequest("GET", clientHTTP.uri+"about", nil)
 	clientHTTP.setStandardHeaders(req, reqAuth.toString())
 	resp, _ := clientHTTP.httpClient.Do(req)
 

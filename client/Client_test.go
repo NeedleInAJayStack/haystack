@@ -212,11 +212,10 @@ func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) 
 }
 
 func testClient() *Client {
+	uri := "http://localhost:8080/api/demo"
 	return &Client{
 		clientHTTP: &clientHTTPMock{},
-		uri:        "http://localhost:8080/api/demo",
-		username:   "test",
-		password:   "test",
+		uri:        uri,
 	}
 }
 
@@ -224,7 +223,7 @@ func testClient() *Client {
 type clientHTTPMock struct {
 }
 
-func (clientHTTPMock *clientHTTPMock) getAuthHeader(uri string, username string, password string) (string, error) {
+func (clientHTTPMock *clientHTTPMock) getAuthHeader() (string, error) {
 	// For now, just say we did it
 	return "test", nil
 }

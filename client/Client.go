@@ -441,6 +441,10 @@ func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, pas
 	if respErr != nil {
 		return "", respErr
 	}
+	// If we get 200, authentication is not required
+	if resp.StatusCode == 200 {
+		return "", nil
+	}
 	resp.Body.Close()
 	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
 	if respWwwAuthenticate == "" {

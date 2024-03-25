@@ -499,11 +499,11 @@ func (clientHTTP *clientHTTPImpl) haystackAuth(uri string, username string, pass
 }
 
 func (clientHTTP *clientHTTPImpl) basicAuth(uri string, username string, password string) (string, error) {
+	authValue := username + ":" + password
 	basicAuth := authMsg{
 		scheme: "basic",
 		attrs: map[string]string{
-			"username": encoding.EncodeToString([]byte(username)),
-			"password": encoding.EncodeToString([]byte(password)),
+			authValue: "",
 		},
 	}
 

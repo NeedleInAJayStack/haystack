@@ -406,8 +406,10 @@ func (authMsg *authMsg) toString() string {
 			builder.WriteString(", ")
 		}
 		builder.WriteString(name)
-		builder.WriteRune('=')
-		builder.WriteString(val)
+		if val != "" {
+			builder.WriteRune('=')
+			builder.WriteString(val)
+		}
 	}
 	return builder.String()
 }

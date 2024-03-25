@@ -441,15 +441,20 @@ func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, pas
 	if respErr != nil {
 		return "", respErr
 	}
+	resp.Body.Close()
+	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
+	if respWwwAuthenticate == "" {
+		return "", NewAuthError("Missing required header: WWW-Authenticate")
+	}
 	if resp.StatusCode != 401 {
 		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
 	}
-	resp.Body.Close()
-	respAuthString := resp.Header.Get("WWW-Authenticate")
-	if respAuthString == "" {
-		return "", NewAuthError("Missing required header: WWW-Authenticate")
-	}
-	helloAuth := authMsgFromString(respAuthString)
+
+	return clientHTTP.haystackAuth(uri, username, password, respWwwAuthenticate)
+}
+
+func (clientHTTP *clientHTTPImpl) haystackAuth(uri string, username string, password string, wwwAuthenticate string) (string, error) {
+	helloAuth := authMsgFromString(wwwAuthenticate)
 
 	var authToken string
 	var authErr error

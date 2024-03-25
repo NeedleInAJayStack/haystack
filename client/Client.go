@@ -456,6 +456,7 @@ func (clientHTTP *clientHTTPImpl) getAuthHeader(uri string, username string, pas
 		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
 	}
 
+	// First try Haystack standard authentication scheme
 	haystackAuthHeader, haystackErr := clientHTTP.haystackAuth(uri, username, password, respWwwAuthenticate)
 	if haystackErr == nil {
 		return haystackAuthHeader, nil
@@ -505,6 +506,15 @@ func (clientHTTP *clientHTTPImpl) basicAuth(uri string, username string, passwor
 			"password": encoding.EncodeToString([]byte(password)),
 		},
 	}
+
+	// Test the basic auth to ensure that it works
+	req, _ := http.NewRequest("GET", uri+"about", nil)
+	clientHTTP.setStandardHeaders(req, basicAuth.toString())
+	resp, _ := clientHTTP.httpClient.Do(req)
+	if resp.StatusCode != http.StatusOK {
+		return "", NewAuthError("Basic auth failed with status: " + resp.Status)
+	}
+
 	return basicAuth.toString(), nil
 }
 

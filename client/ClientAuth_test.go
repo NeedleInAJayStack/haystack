@@ -67,3 +67,43 @@ func (clientHTTPBasicAuth *clientHTTPBasicAuth) do(req *http.Request) (*http.Res
 	}
 	return &response, nil
 }
+
+func TestClientAuth_Plaintext(t *testing.T) {
+	client := &Client{
+		clientHTTP: &clientHTTPPlaintextAuth{},
+		uri:        "http://localhost:8080/api/demo/",
+		username:   "test",
+		password:   "test",
+	}
+	openErr := client.Open()
+	if openErr != nil {
+		t.Error(openErr)
+	}
+}
+
+// clientHTTPPlaintextAuth validates the plaintext haystack authentication
+// https://project-haystack.org/doc/docHaystack/Auth#plaintext
+type clientHTTPPlaintextAuth struct{}
+
+func (clientHTTPPlaintextAuth *clientHTTPPlaintextAuth) do(req *http.Request) (*http.Response, error) {
+	response := http.Response{
+		Header: make(http.Header),
+		Body:   http.NoBody,
+	}
+	switch req.Method {
+	case "GET":
+		if req.Header.Get("Authorization") == "Bearer pretend-this-is-a-token" {
+			response.StatusCode = 200
+		} else if req.Header.Get("Authorization") == "PLAINTEXT username=dGVzdA, password=dGVzdA" {
+			response.StatusCode = 200
+			response.Header.Set("Authentication-Info", "authToken=pretend-this-is-a-token")
+		} else {
+			response.StatusCode = 401
+			response.Header.Set("WWW-Authenticate", "PLAINTEXT realm=\"Haystack\"")
+		}
+		return &response, nil
+	}
+	return &response, nil
+}
+
+// TODO: SCRAM

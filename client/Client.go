@@ -1,13 +1,18 @@
 package client
 
 import (
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"errors"
+	"hash"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/NeedleInAJayStack/haystack"
+	"github.com/NeedleInAJayStack/haystack/auth"
 	"github.com/NeedleInAJayStack/haystack/io"
 )
 
@@ -47,7 +52,7 @@ func NewClient(uri string, username string, password string) *Client {
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	auth, err := client.clientHTTP.getAuthHeader(client.uri, client.username, client.password)
+	auth, err := client.getAuthHeader()
 	if err != nil {
 		return err
 	}
@@ -309,7 +314,7 @@ func (client *Client) Eval(expr string) (haystack.Grid, error) {
 func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, error) {
 	req := reqGrid.ToZinc()
 
-	resp, err := client.clientHTTP.postString(client.uri, client.auth, op, req)
+	resp, err := client.postString(client.uri, client.auth, op, req)
 	if err != nil {
 		return haystack.EmptyGrid(), err
 	}
@@ -331,6 +336,189 @@ func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, err
 	}
 }
 
+// getAuthHeader returns the `Authorization` header to use
+func (client *Client) getAuthHeader() (string, error) {
+	req, _ := http.NewRequest("GET", client.uri+"about", nil)
+	reqAuth := authMsg{
+		scheme: "hello",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(client.username)),
+		},
+	}
+	setStandardHeaders(req, reqAuth.toString())
+
+	resp, respErr := client.clientHTTP.do(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	// If we get 200, authentication is not required
+	if resp.StatusCode == 200 {
+		return "", nil
+	}
+	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
+	respServer := resp.Header.Get("Server")
+	respSetCookie := resp.Header.Get("Set-Cookie")
+	resp.Body.Close()
+	if respWwwAuthenticate == "" {
+		return "", NewAuthError("Missing required header: WWW-Authenticate")
+	}
+	if resp.StatusCode != 401 {
+		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
+	}
+
+	// First try Haystack standard authentication scheme
+	haystackAuthHeader, haystackErr := client.haystackAuth(respWwwAuthenticate)
+	if haystackErr == nil {
+		return haystackAuthHeader, nil
+	}
+
+	// If we can't authenticate with Haystack, try basic auth
+	isBasicAuth := strings.Contains(strings.ToLower(respWwwAuthenticate), "basic")
+	isNiagara := strings.Contains(strings.ToLower(respServer), "niagara") || strings.Contains(strings.ToLower(respSetCookie), "niagara")
+	if isBasicAuth || isNiagara {
+		return client.basicAuth()
+	}
+
+	return haystackAuthHeader, haystackErr
+}
+
+func (client *Client) haystackAuth(wwwAuthenticate string) (string, error) {
+	helloAuth := authMsgFromString(wwwAuthenticate)
+
+	var authToken string
+	var authErr error
+	switch strings.ToUpper(helloAuth.scheme) {
+	case "SCRAM":
+		authToken, authErr = client.authTokenFromScram(helloAuth.get("handshakeToken"), helloAuth.get("hash"))
+	case "PLAINTEXT":
+		authToken, authErr = client.authTokenFromPlaintext()
+	default:
+		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
+	}
+	if authErr != nil {
+		return "", authErr
+	}
+
+	finalAuth := authMsg{
+		scheme: "bearer",
+		attrs: map[string]string{
+			"authToken": authToken,
+		},
+	}
+	return finalAuth.toString(), nil
+}
+
+func (client *Client) basicAuth() (string, error) {
+	authValue := client.username + ":" + client.password
+	basicAuth := authMsg{
+		scheme: "basic",
+		attrs: map[string]string{
+			authValue: "",
+		},
+	}
+
+	// Test the basic auth to ensure that it works
+	req, _ := http.NewRequest("GET", client.uri+"about", nil)
+	setStandardHeaders(req, basicAuth.toString())
+	resp, _ := client.clientHTTP.do(req)
+	if resp.StatusCode != http.StatusOK {
+		return "", NewAuthError("Basic auth failed with status: " + resp.Status)
+	}
+
+	return basicAuth.toString(), nil
+}
+
+func (client *Client) authTokenFromScram(
+	handshakeToken string,
+	hashName string,
+) (string, error) {
+	var hash func() hash.Hash
+	switch strings.ToUpper(hashName) {
+	case "SHA-256":
+		hash = sha256.New
+	case "SHA-512":
+		hash = sha512.New
+	default: // Only support SHA-256 and SHA-512
+		return "", NewAuthError("Auth hash not supported: " + hashName)
+	}
+
+	var in []byte
+	var scram = auth.NewScram(hash, client.username, client.password)
+	var authToken string
+	for !scram.Step(in) {
+		out := scram.Out()
+
+		req, _ := http.NewRequest("GET", client.uri+"about", nil)
+		reqAuth := authMsg{
+			scheme: "scram",
+			attrs: map[string]string{
+				"handshakeToken": handshakeToken,
+				"data":           encoding.EncodeToString(out),
+			},
+		}
+		setStandardHeaders(req, reqAuth.toString())
+		resp, _ := client.clientHTTP.do(req)
+
+		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
+			return "", NewHTTPError(resp.StatusCode, resp.Status)
+		}
+		respAuthString := resp.Header.Get("WWW-Authenticate")
+		if respAuthString == "" { // This header switches to Authentication-Info on success
+			respAuthString = resp.Header.Get("Authentication-Info")
+		}
+		respAuth := authMsgFromString(respAuthString)
+
+		handshakeToken = respAuth.get("handshakeToken") // it grows over time
+		dataEnc := respAuth.get("data")
+		authToken = respAuth.get("authToken") // This will only be set on the last message
+		data, _ := encoding.DecodeString(dataEnc)
+
+		in = data
+	}
+	if scram.Err() != nil {
+		return "", scram.Err()
+	}
+	return authToken, nil
+}
+
+func (client *Client) authTokenFromPlaintext() (string, error) {
+	reqAuth := authMsg{
+		scheme: "plaintext",
+		attrs: map[string]string{
+			"username": encoding.EncodeToString([]byte(client.username)),
+			"password": encoding.EncodeToString([]byte(client.password)),
+		},
+	}
+	req, _ := http.NewRequest("GET", client.uri+"about", nil)
+	setStandardHeaders(req, reqAuth.toString())
+	resp, _ := client.clientHTTP.do(req)
+
+	if resp.StatusCode != http.StatusOK {
+		return "", NewHTTPError(resp.StatusCode, resp.Status)
+	}
+	respAuthString := resp.Header.Get("Authentication-Info")
+	respAuth := authMsgFromString(respAuthString)
+	return respAuth.get("authToken"), nil
+}
+
+func (client *Client) postString(uri string, auth string, op string, reqBody string) (string, error) {
+	reqReader := strings.NewReader(reqBody)
+	req, _ := http.NewRequest("POST", uri+op, reqReader)
+	setStandardHeaders(req, auth)
+	req.Header.Add("Connection", "Close")
+	resp, respErr := client.clientHTTP.do(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", NewHTTPError(resp.StatusCode, resp.Status)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	return string(body), err
+}
+
 // filterGrid creates a Grid consisting of a `filter` Str and `limit` Number columns.
 // If a value of 0 or less is passed to limit, no limit is applied.
 func filterGrid(filter string, limit int) haystack.Grid {
@@ -350,3 +538,9 @@ func filterGrid(filter string, limit int) haystack.Grid {
 	return gb.ToGrid()
 }
 
+func setStandardHeaders(req *http.Request, auth string) {
+	req.Header.Add("Authorization", auth)
+	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
+	req.Header.Add("Accept", "text/zinc")
+}

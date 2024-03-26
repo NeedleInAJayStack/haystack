@@ -2,6 +2,9 @@ package client
 
 import (
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/NeedleInAJayStack/haystack"
@@ -214,22 +217,44 @@ func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) 
 func testClient() *Client {
 	return &Client{
 		clientHTTP: &clientHTTPMock{},
-		uri:        "http://localhost:8080/api/demo",
+		uri:        "http://localhost:8080/api/demo/",
 		username:   "test",
 		password:   "test",
 	}
 }
 
 // clientHTTPMock allows us to remove the HTTP dependency within tests
-type clientHTTPMock struct {
+type clientHTTPMock struct{}
+
+func (clientHTTPMock *clientHTTPMock) do(req *http.Request) (*http.Response, error) {
+	response := http.Response{
+		Header: make(http.Header),
+		Body:   http.NoBody,
+	}
+	switch req.Method {
+	case "GET":
+		// GET is only used in authentication. Short-circuit and return a 200
+		response.StatusCode = 200
+		return &response, nil
+	case "POST":
+		response.StatusCode = 200
+		urlSlice := strings.Split(req.URL.Path, "/")
+		op := urlSlice[len(urlSlice)-1]
+		reqBody, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return &response, err
+		}
+		responseBody, err := clientHTTPMock.postResponse(op, string(reqBody))
+		if err != nil {
+			return &response, err
+		}
+		response.Body = ioutil.NopCloser(strings.NewReader(responseBody))
+		return &response, nil
+	}
+	return &response, nil
 }
 
-func (clientHTTPMock *clientHTTPMock) getAuthHeader(uri string, username string, password string) (string, error) {
-	// For now, just say we did it
-	return "test", nil
-}
-
-func (clientHTTPMock *clientHTTPMock) postString(uri string, auth string, op string, reqBody string) (string, error) {
+func (clientHTTPMock *clientHTTPMock) postResponse(op string, reqBody string) (string, error) {
 	// These are taken from a SkySpark 3.0.26 demo project on 2021-01-03
 	switch op {
 	case "about":

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"hash"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -409,23 +410,19 @@ func (client *Client) haystackAuth(wwwAuthenticate string) (string, error) {
 }
 
 func (client *Client) basicAuth() (string, error) {
-	authValue := client.username + ":" + client.password
-	basicAuth := authMsg{
-		scheme: "basic",
-		attrs: map[string]string{
-			authValue: "",
-		},
-	}
+	authValue := base64.StdEncoding.EncodeToString([]byte(client.username + ":" + client.password))
+	basicAuth := "Basic " + authValue
+	log.Println(basicAuth)
 
 	// Test the basic auth to ensure that it works
 	req, _ := http.NewRequest("GET", client.uri+"about", nil)
-	setStandardHeaders(req, basicAuth.toString())
+	setStandardHeaders(req, basicAuth)
 	resp, _ := client.clientHTTP.do(req)
 	if resp.StatusCode != http.StatusOK {
 		return "", NewAuthError("Basic auth failed with status: " + resp.Status)
 	}
 
-	return basicAuth.toString(), nil
+	return basicAuth, nil
 }
 
 func (client *Client) authTokenFromScram(

@@ -1,19 +1,14 @@
 package client
 
 import (
-	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/base64"
 	"errors"
-	"hash"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/NeedleInAJayStack/haystack"
-	"github.com/NeedleInAJayStack/haystack/auth"
 	"github.com/NeedleInAJayStack/haystack/io"
 )
 
@@ -377,7 +372,7 @@ func (client *Client) getAuthHeader() (string, error) {
 	isBasicAuth := strings.Contains(strings.ToLower(respWwwAuthenticate), "basic")
 	isNiagara := strings.Contains(strings.ToLower(respServer), "niagara") || strings.Contains(strings.ToLower(respSetCookie), "niagara")
 	if isBasicAuth || isNiagara {
-		return client.basicAuth()
+		return client.basicAuthenticator().authorizationHeader()
 	}
 
 	return haystackAuthHeader, haystackErr
@@ -386,116 +381,48 @@ func (client *Client) getAuthHeader() (string, error) {
 func (client *Client) haystackAuth(wwwAuthenticate string) (string, error) {
 	helloAuth := authMsgFromString(wwwAuthenticate)
 
-	var authToken string
+	var authHeader string
 	var authErr error
 	switch strings.ToUpper(helloAuth.scheme) {
 	case "SCRAM":
-		authToken, authErr = client.authTokenFromScram(helloAuth.get("handshakeToken"), helloAuth.get("hash"))
+		authHeader, authErr = client.scramAuthenticator(helloAuth).authorizationHeader()
 	case "PLAINTEXT":
-		authToken, authErr = client.authTokenFromPlaintext()
+		authHeader, authErr = client.plaintextAuthenticator().authorizationHeader()
 	default:
 		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
 	}
 	if authErr != nil {
 		return "", authErr
 	}
-
-	finalAuth := authMsg{
-		scheme: "bearer",
-		attrs: map[string]string{
-			"authToken": authToken,
-		},
-	}
-	return finalAuth.toString(), nil
+	return authHeader, nil
 }
 
-func (client *Client) basicAuth() (string, error) {
-	authValue := base64.StdEncoding.EncodeToString([]byte(client.username + ":" + client.password))
-	basicAuth := "Basic " + authValue
-	log.Println(basicAuth)
-
-	// Test the basic auth to ensure that it works
-	req, _ := http.NewRequest("GET", client.uri+"about", nil)
-	setStandardHeaders(req, basicAuth)
-	resp, _ := client.clientHTTP.do(req)
-	if resp.StatusCode != http.StatusOK {
-		return "", NewAuthError("Basic auth failed with status: " + resp.Status)
+func (client *Client) scramAuthenticator(initialMsg authMsg) scramAuthenticator {
+	return scramAuthenticator{
+		clientHTTP: client.clientHTTP,
+		uri:        client.uri,
+		username:   client.username,
+		password:   client.password,
+		initialMsg: initialMsg,
 	}
-
-	return basicAuth, nil
 }
 
-func (client *Client) authTokenFromScram(
-	handshakeToken string,
-	hashName string,
-) (string, error) {
-	var hash func() hash.Hash
-	switch strings.ToUpper(hashName) {
-	case "SHA-256":
-		hash = sha256.New
-	case "SHA-512":
-		hash = sha512.New
-	default: // Only support SHA-256 and SHA-512
-		return "", NewAuthError("Auth hash not supported: " + hashName)
+func (client *Client) plaintextAuthenticator() plaintextAuthenticator {
+	return plaintextAuthenticator{
+		clientHTTP: client.clientHTTP,
+		uri:        client.uri,
+		username:   client.username,
+		password:   client.password,
 	}
-
-	var in []byte
-	var scram = auth.NewScram(hash, client.username, client.password)
-	var authToken string
-	for !scram.Step(in) {
-		out := scram.Out()
-
-		req, _ := http.NewRequest("GET", client.uri+"about", nil)
-		reqAuth := authMsg{
-			scheme: "scram",
-			attrs: map[string]string{
-				"handshakeToken": handshakeToken,
-				"data":           encoding.EncodeToString(out),
-			},
-		}
-		setStandardHeaders(req, reqAuth.toString())
-		resp, _ := client.clientHTTP.do(req)
-
-		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
-			return "", NewHTTPError(resp.StatusCode, resp.Status)
-		}
-		respAuthString := resp.Header.Get("WWW-Authenticate")
-		if respAuthString == "" { // This header switches to Authentication-Info on success
-			respAuthString = resp.Header.Get("Authentication-Info")
-		}
-		respAuth := authMsgFromString(respAuthString)
-
-		handshakeToken = respAuth.get("handshakeToken") // it grows over time
-		dataEnc := respAuth.get("data")
-		authToken = respAuth.get("authToken") // This will only be set on the last message
-		data, _ := encoding.DecodeString(dataEnc)
-
-		in = data
-	}
-	if scram.Err() != nil {
-		return "", scram.Err()
-	}
-	return authToken, nil
 }
 
-func (client *Client) authTokenFromPlaintext() (string, error) {
-	reqAuth := authMsg{
-		scheme: "plaintext",
-		attrs: map[string]string{
-			"username": encoding.EncodeToString([]byte(client.username)),
-			"password": encoding.EncodeToString([]byte(client.password)),
-		},
+func (client *Client) basicAuthenticator() basicAuthenticator {
+	return basicAuthenticator{
+		clientHTTP: client.clientHTTP,
+		uri:        client.uri,
+		username:   client.username,
+		password:   client.password,
 	}
-	req, _ := http.NewRequest("GET", client.uri+"about", nil)
-	setStandardHeaders(req, reqAuth.toString())
-	resp, _ := client.clientHTTP.do(req)
-
-	if resp.StatusCode != http.StatusOK {
-		return "", NewHTTPError(resp.StatusCode, resp.Status)
-	}
-	respAuthString := resp.Header.Get("Authentication-Info")
-	respAuth := authMsgFromString(respAuthString)
-	return respAuth.get("authToken"), nil
 }
 
 func (client *Client) postString(uri string, auth string, op string, reqBody string) (string, error) {

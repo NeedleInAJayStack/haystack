@@ -40,7 +40,7 @@ func (authenticator scramAuthenticator) authorizationHeader() (string, error) {
 	for !scram.Step(in) {
 		out := scram.Out()
 
-		req, _ := http.NewRequest("GET", authenticator.uri+"about", nil)
+		req, _ := http.NewRequest("GET", authenticator.uri, nil)
 		reqAuth := authMsg{
 			scheme: "scram",
 			attrs: map[string]string{
@@ -97,7 +97,7 @@ func (authenticator plaintextAuthenticator) authorizationHeader() (string, error
 			"password": encoding.EncodeToString([]byte(authenticator.password)),
 		},
 	}
-	req, _ := http.NewRequest("GET", authenticator.uri+"about", nil)
+	req, _ := http.NewRequest("GET", authenticator.uri, nil)
 	setStandardHeaders(req, reqAuth.toString())
 	resp, _ := authenticator.clientHTTP.do(req)
 
@@ -131,7 +131,7 @@ func (authenticator basicAuthenticator) authorizationHeader() (string, error) {
 	basicAuth := "Basic " + authValue
 
 	// Test the basic auth to ensure that it works
-	req, _ := http.NewRequest("GET", authenticator.uri+"about", nil)
+	req, _ := http.NewRequest("GET", authenticator.uri, nil)
 	setStandardHeaders(req, basicAuth)
 	resp, _ := authenticator.clientHTTP.do(req)
 	if resp.StatusCode != http.StatusOK {

@@ -334,7 +334,7 @@ func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, err
 
 // getAuthHeader returns the `Authorization` header to use
 func (client *Client) getAuthHeader() (string, error) {
-	req, _ := http.NewRequest("GET", client.uri+"about", nil)
+	req, _ := http.NewRequest("GET", client.authUri(), nil)
 	reqAuth := authMsg{
 		scheme: "hello",
 		attrs: map[string]string{
@@ -411,7 +411,7 @@ func (client *Client) haystackAuth(wwwAuthenticate string) (string, error) {
 func (client *Client) scramAuthenticator(initialMsg authMsg) scramAuthenticator {
 	return scramAuthenticator{
 		clientHTTP: client.clientHTTP,
-		uri:        client.uri,
+		uri:        client.authUri(),
 		username:   client.username,
 		password:   client.password,
 		initialMsg: initialMsg,
@@ -421,7 +421,7 @@ func (client *Client) scramAuthenticator(initialMsg authMsg) scramAuthenticator 
 func (client *Client) plaintextAuthenticator() plaintextAuthenticator {
 	return plaintextAuthenticator{
 		clientHTTP: client.clientHTTP,
-		uri:        client.uri,
+		uri:        client.authUri(),
 		username:   client.username,
 		password:   client.password,
 	}
@@ -430,7 +430,7 @@ func (client *Client) plaintextAuthenticator() plaintextAuthenticator {
 func (client *Client) basicAuthenticator() basicAuthenticator {
 	return basicAuthenticator{
 		clientHTTP: client.clientHTTP,
-		uri:        client.uri,
+		uri:        client.authUri(),
 		username:   client.username,
 		password:   client.password,
 	}
@@ -452,6 +452,11 @@ func (client *Client) postString(uri string, auth string, op string, reqBody str
 	body, err := ioutil.ReadAll(resp.Body)
 
 	return string(body), err
+}
+
+// Returns the URL used to authenticate the client
+func (client *Client) authUri() string {
+	return client.uri + "about"
 }
 
 // filterGrid creates a Grid consisting of a `filter` Str and `limit` Number columns.

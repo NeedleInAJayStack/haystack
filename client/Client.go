@@ -355,27 +355,38 @@ func (client *Client) getAuthHeader() (string, error) {
 	respServer := resp.Header.Get("Server")
 	respSetCookie := resp.Header.Get("Set-Cookie")
 	resp.Body.Close()
-	if respWwwAuthenticate == "" {
-		return "", NewAuthError("Missing required header: WWW-Authenticate")
-	}
 	if resp.StatusCode != 401 {
 		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
 	}
 
+	var authErr error
+
 	// First try Haystack standard authentication scheme
-	haystackAuthHeader, haystackErr := client.haystackAuth(respWwwAuthenticate)
-	if haystackErr == nil {
-		return haystackAuthHeader, nil
+	if respWwwAuthenticate != "" {
+		haystackAuthHeader, haystackErr := client.haystackAuth(respWwwAuthenticate)
+		if haystackErr == nil {
+			return haystackAuthHeader, nil
+		} else {
+			authErr = haystackErr
+		}
 	}
 
 	// If we can't authenticate with Haystack, try basic auth
 	isBasicAuth := strings.Contains(strings.ToLower(respWwwAuthenticate), "basic")
 	isNiagara := strings.Contains(strings.ToLower(respServer), "niagara") || strings.Contains(strings.ToLower(respSetCookie), "niagara")
 	if isBasicAuth || isNiagara {
-		return client.basicAuthenticator().authorizationHeader()
+		basicAuthHeader, basicErr := client.basicAuthenticator().authorizationHeader()
+		if basicErr == nil {
+			return basicAuthHeader, nil
+		} else {
+			authErr = basicErr
+		}
 	}
 
-	return haystackAuthHeader, haystackErr
+	if authErr == nil {
+		authErr = NewAuthError("No suitable auth scheme found")
+	}
+	return "", authErr
 }
 
 func (client *Client) haystackAuth(wwwAuthenticate string) (string, error) {

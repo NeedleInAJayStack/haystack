@@ -15,19 +15,24 @@ import (
 
 // Client models a client connection to a server using the Haystack API.
 type Client struct {
-	clientHTTP clientHTTP
 	method     ClientMethod
 	uri        string
 	username   string
 	password   string
-	auth       string
+	clientHTTP ClientHTTP
+	// Authenticator to use for authentication
+	authenticator Authenticator
+	// Headers managed by the authenticator
+	authHeaders map[string]string
+	// Headers that should be used in all requests. These may override the authentication headers.
+	Headers map[string]string
 }
 
 var encoding = base64.RawURLEncoding
 var userAgent = "Go-haystack-client"
 
 // NewClient creates a new Client object.
-func NewClient(uri string, username string, password string) *Client {
+func NewClient(uri string, username string, password string, authenticator Authenticator) *Client {
 	// check URI
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
 		panic("URI isn't http or https: " + uri)
@@ -37,26 +42,30 @@ func NewClient(uri string, username string, password string) *Client {
 	}
 	timeout, _ := time.ParseDuration("1m")
 
-	return &Client{
-		clientHTTP: &clientHTTPImpl{
-			&http.Client{
-				Timeout: timeout,
-			},
+	clientHTTP := &clientHTTPImpl{
+		&http.Client{
+			Timeout: timeout,
 		},
-		uri:      uri,
-		username: username,
-		password: password,
-		auth:     "",
+	}
+
+	return &Client{
+		clientHTTP:    clientHTTP,
+		uri:           uri,
+		username:      username,
+		password:      password,
+		authenticator: authenticator,
+		authHeaders:   map[string]string{},
+		Headers:       map[string]string{},
 	}
 }
 
 // Open simply opens and authenticates the connection
 func (client *Client) Open() error {
-	auth, err := client.getAuthHeader()
+	authHeaders, err := client.authenticator.Authenticate(client.uri, client.username, client.password, client.clientHTTP)
 	if err != nil {
 		return err
 	}
-	client.auth = auth
+	client.authHeaders = authHeaders
 	return nil
 }
 
@@ -85,6 +94,7 @@ func (client *Client) Close() error {
 	default:
 		_, err = client.post("close", haystack.EmptyGrid())
 	}
+	client.authHeaders = map[string]string{}
 	return err
 }
 
@@ -440,7 +450,11 @@ func (client *Client) post(op string, reqGrid haystack.Grid) (haystack.Grid, err
 
 	reqReader := strings.NewReader(reqBody)
 	req, _ := http.NewRequest("POST", client.uri+op, reqReader)
-	setStandardHeaders(req, client.auth)
+	reqHeaders := client.authHeaders
+	for key, value := range client.Headers {
+		reqHeaders[key] = value
+	}
+	setHeaders(req, reqHeaders)
 	req.Header.Add("Connection", "Close")
 	resp, err := client.clientHTTP.do(req)
 	if err != nil {
@@ -485,7 +499,11 @@ func (client *Client) get(op string, params map[string]haystack.Val) (haystack.G
 	}
 
 	req, _ := http.NewRequest("GET", url, strings.NewReader(""))
-	setStandardHeaders(req, client.auth)
+	reqHeaders := client.authHeaders
+	for key, value := range client.Headers {
+		reqHeaders[key] = value
+	}
+	setHeaders(req, reqHeaders)
 	req.Header.Add("Connection", "Close")
 	resp, err := client.clientHTTP.do(req)
 	if err != nil {
@@ -514,104 +532,6 @@ func (client *Client) get(op string, params map[string]haystack.Val) (haystack.G
 		return val, nil
 	default:
 		return haystack.EmptyGrid(), errors.New("result was not a grid")
-	}
-}
-
-// getAuthHeader returns the `Authorization` header to use
-func (client *Client) getAuthHeader() (string, error) {
-	req, _ := http.NewRequest("GET", client.authUri(), nil)
-	reqAuth := authMsg{
-		scheme: "hello",
-		attrs: map[string]string{
-			"username": encoding.EncodeToString([]byte(client.username)),
-		},
-	}
-	setStandardHeaders(req, reqAuth.toString())
-
-	resp, respErr := client.clientHTTP.do(req)
-	if respErr != nil {
-		return "", respErr
-	}
-	// If we get 200, authentication is not required
-	if resp.StatusCode == 200 {
-		return "", nil
-	}
-	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
-	resp.Body.Close()
-	if resp.StatusCode != 401 {
-		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
-	}
-
-	var authErr error
-
-	// First try Haystack standard authentication scheme
-	if respWwwAuthenticate != "" {
-		haystackAuthHeader, haystackErr := client.haystackAuth(respWwwAuthenticate)
-		if haystackErr == nil {
-			return haystackAuthHeader, nil
-		} else {
-			authErr = haystackErr
-		}
-	}
-
-	// If we can't authenticate with Haystack, try basic auth
-	basicAuthHeader, basicErr := client.basicAuthenticator().authorizationHeader()
-	if basicErr == nil {
-		return basicAuthHeader, nil
-	} else {
-		authErr = basicErr
-	}
-
-	if authErr == nil {
-		authErr = NewAuthError("No suitable auth scheme found")
-	}
-	return "", authErr
-}
-
-func (client *Client) haystackAuth(wwwAuthenticate string) (string, error) {
-	helloAuth := authMsgFromString(wwwAuthenticate)
-
-	var authHeader string
-	var authErr error
-	switch strings.ToUpper(helloAuth.scheme) {
-	case "SCRAM":
-		authHeader, authErr = client.scramAuthenticator(helloAuth).authorizationHeader()
-	case "PLAINTEXT":
-		authHeader, authErr = client.plaintextAuthenticator().authorizationHeader()
-	default:
-		return "", NewAuthError("Auth scheme not supported: " + helloAuth.scheme)
-	}
-	if authErr != nil {
-		return "", authErr
-	}
-	return authHeader, nil
-}
-
-func (client *Client) scramAuthenticator(initialMsg authMsg) scramAuthenticator {
-	return scramAuthenticator{
-		clientHTTP: client.clientHTTP,
-		uri:        client.authUri(),
-		username:   client.username,
-		password:   client.password,
-		initialMsg: initialMsg,
-	}
-}
-
-func (client *Client) plaintextAuthenticator() plaintextAuthenticator {
-	return plaintextAuthenticator{
-		clientHTTP: client.clientHTTP,
-		uri:        client.authUri(),
-		username:   client.username,
-		password:   client.password,
-	}
-}
-
-func (client *Client) basicAuthenticator() basicAuthenticator {
-	return basicAuthenticator{
-		clientHTTP: client.clientHTTP,
-		uri:        client.authUri(),
-		username:   client.username,
-		password:   client.password,
 	}
 }
 
@@ -654,9 +574,12 @@ func filterParams(filter string, limit int) map[string]haystack.Val {
 	}
 }
 
-func setStandardHeaders(req *http.Request, auth string) {
-	req.Header.Add("Authorization", auth)
+func setHeaders(req *http.Request, headers map[string]string) {
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
 	req.Header.Add("Accept", "text/zinc")
+
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
 }

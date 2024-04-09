@@ -4,8 +4,8 @@ import (
 	"net/http"
 )
 
-// clientHTTP is defined as an interface to allow dependency-injection testing
-type clientHTTP interface {
+// ClientHTTP wraps http.client in an interface to allow dependency-injection testing
+type ClientHTTP interface {
 	// Perform an HTTP request and return the response
 	do(req *http.Request) (*http.Response, error)
 }

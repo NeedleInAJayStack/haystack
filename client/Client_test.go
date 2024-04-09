@@ -13,12 +13,14 @@ import (
 )
 
 func TestClientAuth_NoAuth(t *testing.T) {
-	client := &Client{
-		clientHTTP: &clientHTTPNoAuth{},
-		uri:        "http://localhost:8080/api/demo/",
-		username:   "test",
-		password:   "test",
-	}
+	client := NewClient(
+		"http://localhost:8080/api/demo/",
+		"test",
+		"test",
+		NoAuthenticator{},
+	)
+	client.clientHTTP = &clientHTTPNoAuth{}
+
 	openErr := client.Open()
 	if openErr != nil {
 		t.Error(openErr)
@@ -42,12 +44,13 @@ func (clientHTTPNoAuth *clientHTTPNoAuth) do(req *http.Request) (*http.Response,
 }
 
 func TestClientAuth_BasicAuth(t *testing.T) {
-	client := &Client{
-		clientHTTP: &clientHTTPBasicAuth{},
-		uri:        "http://localhost:8080/api/demo/",
-		username:   "test",
-		password:   "test",
-	}
+	client := NewClient(
+		"http://localhost:8080/api/demo/",
+		"test",
+		"test",
+		BasicAuthenticator{},
+	)
+	client.clientHTTP = &clientHTTPBasicAuth{}
 	openErr := client.Open()
 	if openErr != nil {
 		t.Error(openErr)
@@ -76,12 +79,13 @@ func (clientHTTPBasicAuth *clientHTTPBasicAuth) do(req *http.Request) (*http.Res
 }
 
 func TestClientAuth_Plaintext(t *testing.T) {
-	client := &Client{
-		clientHTTP: &clientHTTPPlaintextAuth{},
-		uri:        "http://localhost:8080/api/demo/",
-		username:   "test",
-		password:   "test",
-	}
+	client := NewClient(
+		"http://localhost:8080/api/demo/",
+		"test",
+		"test",
+		HaystackAuthenticator{},
+	)
+	client.clientHTTP = &clientHTTPPlaintextAuth{}
 	openErr := client.Open()
 	if openErr != nil {
 		t.Error(openErr)
@@ -288,12 +292,14 @@ func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) 
 }
 
 func testPostClient() *Client {
-	return &Client{
-		clientHTTP: &clientHTTPMock{},
-		uri:        "http://localhost:8080/api/demo/",
-		username:   "test",
-		password:   "test",
-	}
+	client := NewClient(
+		"http://localhost:8080/api/demo/",
+		"test",
+		"test",
+		NoAuthenticator{},
+	)
+	client.clientHTTP = &clientHTTPMock{}
+	return client
 }
 
 func testGetClient() *Client {

@@ -4,13 +4,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/NeedleInAJayStack/haystack"
-	"github.com/NeedleInAJayStack/haystack/io"
+	haystackIO "github.com/NeedleInAJayStack/haystack/io"
 )
 
 // Client models a client connection to a server using the Haystack API.
@@ -464,12 +464,12 @@ func (client *Client) post(op string, reqGrid haystack.Grid) (haystack.Grid, err
 		return haystack.EmptyGrid(), NewHTTPError(resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return haystack.EmptyGrid(), err
 	}
 
-	var reader io.ZincReader
+	var reader haystackIO.ZincReader
 	reader.InitString(string(respBody))
 	val, err := reader.ReadVal()
 	if err != nil {
@@ -513,12 +513,12 @@ func (client *Client) get(op string, params map[string]haystack.Val) (haystack.G
 		return haystack.EmptyGrid(), NewHTTPError(resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return haystack.EmptyGrid(), err
 	}
 
-	var reader io.ZincReader
+	var reader haystackIO.ZincReader
 	reader.InitString(string(respBody))
 	val, err := reader.ReadVal()
 	if err != nil {

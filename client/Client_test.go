@@ -2,13 +2,13 @@ package client
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/NeedleInAJayStack/haystack"
-	"github.com/NeedleInAJayStack/haystack/io"
+	haystackIO "github.com/NeedleInAJayStack/haystack/io"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -134,7 +134,7 @@ func TestClient_About(t *testing.T) {
 	assert.Nil(t, aboutErr)
 	// About returns a Dict so get the first value of expected manually
 	expectedZinc := clientHTTPMock_about
-	var reader io.ZincReader
+	var reader haystackIO.ZincReader
 	reader.InitString(expectedZinc)
 	expectedGrid, err := reader.ReadVal()
 	assert.Nil(t, err)
@@ -284,7 +284,7 @@ func TestClient_Eval(t *testing.T) {
 }
 
 func testClient_ValZinc(actual haystack.Val, expectedZinc string, t *testing.T) {
-	var reader io.ZincReader
+	var reader haystackIO.ZincReader
 	reader.InitString(expectedZinc)
 	expected, err := reader.ReadVal()
 	assert.Nil(t, err)
@@ -335,7 +335,7 @@ func (clientHTTPMock *clientHTTPMock) do(req *http.Request) (*http.Response, err
 	case "POST":
 		urlSlice := strings.Split(req.URL.Path, "/")
 		op := urlSlice[len(urlSlice)-1]
-		reqBody, readErr := ioutil.ReadAll(req.Body)
+		reqBody, readErr := io.ReadAll(req.Body)
 		if readErr != nil {
 			return &response, readErr
 		}
@@ -345,7 +345,7 @@ func (clientHTTPMock *clientHTTPMock) do(req *http.Request) (*http.Response, err
 		return &response, err
 	}
 	response.StatusCode = 200
-	response.Body = ioutil.NopCloser(strings.NewReader(responseBody))
+	response.Body = io.NopCloser(strings.NewReader(responseBody))
 	return &response, nil
 }
 

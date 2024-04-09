@@ -1,6 +1,4 @@
-- Author: Jay Herron
-- Version: 0.0.1
-- License: Academic Free License version 3.0
+# Go Haystack
 
 This package is a Go implementation of the Haystack API as defined in the
 [Project Haystack Documentation](https://project-haystack.org/doc). It is based on the
@@ -33,6 +31,7 @@ func main() {
 		"http://server/haystack",
 		"username",
 		"password",
+		HaystackAuthenticator{}
 	)
 	openErr := client.Open()
 	if openErr != nil {

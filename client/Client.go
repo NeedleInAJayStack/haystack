@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -34,10 +35,14 @@ func NewClient(uri string, username string, password string) *Client {
 		uri = uri + "/"
 	}
 	timeout, _ := time.ParseDuration("1m")
+	jar, _ := cookiejar.New(nil) // Required to persist client cookies
 
 	return &Client{
 		clientHTTP: &clientHTTPImpl{
-			&http.Client{Timeout: timeout},
+			&http.Client{
+				Timeout: timeout,
+				Jar:     jar,
+			},
 		},
 		uri:      uri,
 		username: username,

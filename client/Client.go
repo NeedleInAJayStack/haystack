@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -34,10 +35,14 @@ func NewClient(uri string, username string, password string) *Client {
 		uri = uri + "/"
 	}
 	timeout, _ := time.ParseDuration("1m")
+	jar, _ := cookiejar.New(nil) // Required to persist client cookies
 
 	return &Client{
 		clientHTTP: &clientHTTPImpl{
-			&http.Client{Timeout: timeout},
+			&http.Client{
+				Timeout: timeout,
+				Jar:     jar,
+			},
 		},
 		uri:      uri,
 		username: username,
@@ -352,8 +357,6 @@ func (client *Client) getAuthHeader() (string, error) {
 		return "", nil
 	}
 	respWwwAuthenticate := resp.Header.Get("WWW-Authenticate")
-	respServer := resp.Header.Get("Server")
-	respSetCookie := resp.Header.Get("Set-Cookie")
 	resp.Body.Close()
 	if resp.StatusCode != 401 {
 		return "", NewHTTPError(resp.StatusCode, "`about` endpoint with HELLO scheme returned a non 401 status: "+resp.Status)
@@ -372,15 +375,11 @@ func (client *Client) getAuthHeader() (string, error) {
 	}
 
 	// If we can't authenticate with Haystack, try basic auth
-	isBasicAuth := strings.Contains(strings.ToLower(respWwwAuthenticate), "basic")
-	isNiagara := strings.Contains(strings.ToLower(respServer), "niagara") || strings.Contains(strings.ToLower(respSetCookie), "niagara")
-	if isBasicAuth || isNiagara {
-		basicAuthHeader, basicErr := client.basicAuthenticator().authorizationHeader()
-		if basicErr == nil {
-			return basicAuthHeader, nil
-		} else {
-			authErr = basicErr
-		}
+	basicAuthHeader, basicErr := client.basicAuthenticator().authorizationHeader()
+	if basicErr == nil {
+		return basicAuthHeader, nil
+	} else {
+		authErr = basicErr
 	}
 
 	if authErr == nil {

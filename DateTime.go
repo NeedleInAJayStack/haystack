@@ -52,7 +52,7 @@ func NewDateTimeRaw(year int, month int, day int, hour int, min int, sec int, ms
 // NewDateTimeFromString creates a DateTime object from a string in the format: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func NewDateTimeFromString(str string) (DateTime, error) {
 	split := strings.Split(str, " ")
-	goTime, err := time.Parse(time.RFC3339, split[0])
+	goTime, err := time.Parse(time.RFC3339Nano, split[0])
 	if len(split) > 1 {
 		shortName := split[1]
 		longName := tzShortNameMap[shortName]
@@ -182,7 +182,7 @@ func (dateTime DateTime) MarshalHayson() ([]byte, error) {
 }
 
 func (dateTime DateTime) encodeTo(buf *strings.Builder, includeTz bool) {
-	buf.WriteString(dateTime.time.Format("2006-01-02T15:04:05Z07:00"))
+	buf.WriteString(dateTime.time.Format(time.RFC3339Nano))
 	if includeTz {
 		buf.WriteRune(' ')
 		buf.WriteString(dateTime.Tz())

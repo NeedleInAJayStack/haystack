@@ -79,10 +79,10 @@ func TestTokenizer_testDateTime(t *testing.T) {
 	testTokenizerSingle(t, "2010-12-18T14:11:30.924Z UTC", DATETIME,
 		haystack.NewDateTimeFromGo(time.Date(2010, 12, 18, 14, 11, 30, 924e6, time.UTC)), true,
 	)
-	// TODO: extract tzOffset from timezone name (go has no tz lookup)
-	// testTokenizerSingle(t, "2010-12-18T14:11:30.924Z London", DATETIME,
-	// 	haystack.NewDateTimeRaw(2010, 12, 18, 14, 11, 30, 924, 0, "London"),
-	// )
+	londonLocation, _ := time.LoadLocation("Europe/London")
+	testTokenizerSingle(t, "2010-12-18T14:11:30.924Z London", DATETIME,
+		haystack.NewDateTimeFromGo(time.Date(2010, 12, 18, 14, 11, 30, 924e6, londonLocation)), true,
+	)
 	gmtPlus5Location, _ := time.LoadLocation("Etc/GMT+5")
 	testTokenizerSingle(t, "2010-03-01T23:55:00.013-05:00 GMT+5", DATETIME,
 		haystack.NewDateTimeFromGo(time.Date(2010, 3, 1, 23, 55, 00, 13e6, gmtPlus5Location)), true,

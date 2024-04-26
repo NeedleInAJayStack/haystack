@@ -85,21 +85,16 @@ func dateTimeDef() DateTime {
 
 // Date returns the date of the object.
 func (dateTime DateTime) Date() Date {
-	return NewDate(
-		dateTime.time.Year(),
-		int(dateTime.time.Month()),
-		dateTime.time.Day(),
-	)
+	// We format it because time.Day doesn't show timezone adjustments
+	date, _ := NewDateFromIso(dateTime.time.Format("2006-01-02"))
+	return date
 }
 
 // Time returns the date of the object.
 func (dateTime DateTime) Time() Time {
-	return NewTime(
-		dateTime.time.Hour(),
-		dateTime.time.Minute(),
-		dateTime.time.Second(),
-		dateTime.time.Nanosecond()/1000,
-	)
+	// We format it because time.Hour doesn't show timezone adjustments
+	time, _ := NewTimeFromIso(dateTime.time.Format("15:04:05.999999999"))
+	return time
 }
 
 // Tz returns the timezone of the object.

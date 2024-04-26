@@ -113,6 +113,17 @@ func TestDateTime_ToGo(t *testing.T) {
 	}
 }
 
+func TestDateTime_ToTz(t *testing.T) {
+	utc := DateTime{time: time.Date(2020, time.August, 17, 23, 7, 10, 0, time.UTC)}
+	losAngeles, err := utc.ToTz("Los_Angeles")
+	assert.Nil(t, err)
+	assert.Equal(t, "2020-08-17T16:07:10-07:00 Los_Angeles", losAngeles.ToZinc())
+
+	taipei, err := losAngeles.ToTz("Taipei")
+	assert.Nil(t, err)
+	assert.Equal(t, "2020-08-18T07:07:10+08:00 Taipei", taipei.ToZinc())
+}
+
 func valTest_ToAxon(val DateTime, expected string, t *testing.T) {
 	actual := val.ToAxon()
 	if actual != expected {

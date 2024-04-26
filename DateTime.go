@@ -109,6 +109,16 @@ func (dateTime DateTime) Tz() string {
 	return split[len(split)-1]
 }
 
+// ToTz returns a new DateTime adjusted to the requested timezone. The timezone must be in shortened name format
+func (dateTime DateTime) ToTz(shortName string) (DateTime, error) {
+	longName := tzShortNameMap[shortName]
+	newLocation, err := time.LoadLocation(longName)
+	if err != nil {
+		return DateTime{}, err
+	}
+	return DateTime{time: dateTime.time.In(newLocation)}, nil
+}
+
 // ToZinc represents the object as: "YYYY-MM-DD'T'hh:mm:ss.FFFz zzzz"
 func (dateTime DateTime) ToZinc() string {
 	buf := strings.Builder{}

@@ -9,81 +9,33 @@ import (
 )
 
 func TestDateTime_NewDateTimeRaw(t *testing.T) {
-	utc := NewDateTimeRaw(2020, 8, 17, 23, 07, 10, 0, 0, "UTC")
-	if utc.date.year != 2020 {
-		t.Error(utc.date.year)
-	}
-	if utc.date.month != 8 {
-		t.Error(utc.date.month)
-	}
-	if utc.date.day != 17 {
-		t.Error(utc.date.day)
-	}
-	if utc.time.hour != 23 {
-		t.Error(utc.time.hour)
-	}
-	if utc.time.min != 7 {
-		t.Error(utc.time.min)
-	}
-	if utc.time.sec != 10 {
-		t.Error(utc.time.sec)
-	}
-	if utc.time.ms != 0 {
-		t.Error(utc.time.ms)
-	}
-	if utc.tzOffset != 0 {
-		t.Error(utc.tzOffset)
-	}
-	if utc.tz != "UTC" {
-		t.Error(utc.tz)
-	}
+	utc, err := NewDateTimeRaw(2020, 8, 17, 23, 07, 10, 0, "UTC")
+	assert.Nil(t, err)
+	assert.Equal(t, 2020, utc.time.Year())
+	assert.Equal(t, time.August, utc.time.Month())
+	assert.Equal(t, 17, utc.time.Day())
+	assert.Equal(t, 7, utc.time.Minute())
+	assert.Equal(t, 10, utc.time.Second())
+	assert.Equal(t, 0, utc.time.Nanosecond())
+	assert.Equal(t, "UTC", utc.time.Location().String())
 }
 
 func TestDateTime_NewDateTimeFromString(t *testing.T) {
-	utc, _ := NewDateTimeFromString("2020-08-17T23:07:10Z UTC")
-	if utc.date.year != 2020 {
-		t.Error(utc.date.year)
-	}
-	if utc.date.month != 8 {
-		t.Error(utc.date.month)
-	}
-	if utc.date.day != 17 {
-		t.Error(utc.date.day)
-	}
-	if utc.time.hour != 23 {
-		t.Error(utc.time.hour)
-	}
-	if utc.time.min != 7 {
-		t.Error(utc.time.min)
-	}
-	if utc.time.sec != 10 {
-		t.Error(utc.time.sec)
-	}
-	if utc.time.ms != 0 {
-		t.Error(utc.time.ms)
-	}
-	if utc.tzOffset != 0 {
-		t.Error(utc.tzOffset)
-	}
-	if utc.tz != "UTC" {
-		t.Error(utc.tz)
-	}
+	utc, err := NewDateTimeFromString("2020-08-17T23:07:10Z UTC")
+	assert.Nil(t, err)
+	assert.Equal(t, 2020, utc.time.Year())
+	assert.Equal(t, time.August, utc.time.Month())
+	assert.Equal(t, 17, utc.time.Day())
+	assert.Equal(t, 7, utc.time.Minute())
+	assert.Equal(t, 10, utc.time.Second())
+	assert.Equal(t, 0, utc.time.Nanosecond())
+	assert.Equal(t, "UTC", utc.Tz())
 
 	la, _ := NewDateTimeFromString("2020-08-17T23:07:10-07:00 Los_Angeles")
-	if la.tzOffset != -25200 {
-		t.Error(la.tzOffset)
-	}
-	if la.tz != "Los_Angeles" {
-		t.Error(la.tz)
-	}
+	assert.Equal(t, "Los_Angeles", la.Tz())
 
 	taipei, _ := NewDateTimeFromString("2020-08-17T23:07:10+08:00 Taipei")
-	if taipei.tzOffset != 28800 {
-		t.Error(la.tzOffset)
-	}
-	if taipei.tz != "Taipei" {
-		t.Error(la.tz)
-	}
+	assert.Equal(t, "Taipei", taipei.Tz())
 }
 
 func TestDateTime_ToZinc(t *testing.T) {

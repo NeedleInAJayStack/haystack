@@ -137,28 +137,12 @@ func (time Time) MarshalHayson() ([]byte, error) {
 }
 
 func (time Time) toIso() string {
-	result := ""
-	if time.hour < 10 {
-		result = result + "0"
-	}
-	result = result + fmt.Sprintf("%d", time.hour) + ":"
-	if time.min < 10 {
-		result = result + "0"
-	}
-	result = result + fmt.Sprintf("%d", time.min) + ":"
-	if time.sec < 10 {
-		result = result + "0"
-	}
-	result = result + fmt.Sprintf("%d", time.sec)
+	result := fmt.Sprintf("%0*d", 2, time.hour) + ":" +
+		fmt.Sprintf("%0*d", 2, time.min) + ":" +
+		fmt.Sprintf("%0*d", 2, time.sec)
 	if time.ms != 0 {
-		result = result + "."
-		if time.ms < 10 {
-			result = result + "0"
-		}
-		if time.ms < 100 {
-			result = result + "0"
-		}
-		result = result + fmt.Sprintf("%d", time.ms)
+		result = result + "." +
+			fmt.Sprintf("%0*d", 3, time.ms)
 	}
 	return result
 }

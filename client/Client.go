@@ -479,5 +479,4 @@ func setStandardHeaders(req *http.Request, auth string) {
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
 	req.Header.Add("Accept", "text/zinc")
-	req.Header.Add("Attest-Key", "abcdefg")
 }

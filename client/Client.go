@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -35,13 +34,11 @@ func NewClient(uri string, username string, password string) *Client {
 		uri = uri + "/"
 	}
 	timeout, _ := time.ParseDuration("1m")
-	jar, _ := cookiejar.New(nil) // Required to persist client cookies
 
 	return &Client{
 		clientHTTP: &clientHTTPImpl{
 			&http.Client{
 				Timeout: timeout,
-				Jar:     jar,
 			},
 		},
 		uri:      uri,
@@ -482,4 +479,5 @@ func setStandardHeaders(req *http.Request, auth string) {
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("Content-Type", "text/zinc; charset=utf-8")
 	req.Header.Add("Accept", "text/zinc")
+	req.Header.Add("Attest-Key", "abcdefg")
 }

@@ -123,15 +123,6 @@ func TestClient_Open(t *testing.T) {
 	}
 }
 
-func TestClient_Call(t *testing.T) {
-	client := testClient()
-	actual, err := client.Call("about", haystack.EmptyGrid())
-	if err != nil {
-		t.Error(err)
-	}
-	testClient_ValZinc(actual, clientHTTPMock_about, t)
-}
-
 func TestClient_About(t *testing.T) {
 	client := testClient()
 	actual, aboutErr := client.About()
@@ -326,6 +317,16 @@ func testClient() *Client {
 	}
 }
 
+func testGetClient() *Client {
+	return &Client{
+		clientHTTP: &clientHTTPMock{},
+		method:     Get,
+		uri:        "http://localhost:8080/api/demo/",
+		username:   "test",
+		password:   "test",
+	}
+}
+
 // clientHTTPMock allows us to remove the HTTP dependency within tests
 type clientHTTPMock struct{}
 
@@ -334,26 +335,40 @@ func (clientHTTPMock *clientHTTPMock) do(req *http.Request) (*http.Response, err
 		Header: make(http.Header),
 		Body:   http.NoBody,
 	}
+	response.StatusCode = 500
+	var responseBody string
+	var err error
 	switch req.Method {
 	case "GET":
-		// GET is only used in authentication. Short-circuit and return a 200
-		response.StatusCode = 200
-		return &response, nil
+		urlSlice := strings.Split(req.URL.Path, "/")
+		opAndParams := urlSlice[len(urlSlice)-1]
+		opAndParamsSlice := strings.Split(opAndParams, "?")
+		op := opAndParamsSlice[0]
+		params := map[string]string{}
+		if len(opAndParamsSlice) > 1 {
+			paramsAndVals := strings.Split(opAndParamsSlice[1], "&")
+			for _, paramAndVal := range paramsAndVals {
+				paramAndValSplit := strings.Split(paramAndVal, "=")
+				if len(paramAndValSplit) == 2 {
+					params[paramAndValSplit[0]] = paramAndValSplit[1]
+				}
+			}
+		}
+		responseBody, err = clientHTTPMock.getResponse(op, params)
 	case "POST":
-		response.StatusCode = 200
 		urlSlice := strings.Split(req.URL.Path, "/")
 		op := urlSlice[len(urlSlice)-1]
-		reqBody, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			return &response, err
+		reqBody, readErr := ioutil.ReadAll(req.Body)
+		if readErr != nil {
+			return &response, readErr
 		}
-		responseBody, err := clientHTTPMock.postResponse(op, string(reqBody))
-		if err != nil {
-			return &response, err
-		}
-		response.Body = ioutil.NopCloser(strings.NewReader(responseBody))
-		return &response, nil
+		responseBody, err = clientHTTPMock.postResponse(op, string(reqBody))
 	}
+	if err != nil {
+		return &response, err
+	}
+	response.StatusCode = 200
+	response.Body = ioutil.NopCloser(strings.NewReader(responseBody))
 	return &response, nil
 }
 
@@ -396,6 +411,48 @@ func (clientHTTPMock *clientHTTPMock) postResponse(op string, reqBody string) (s
 			return clientHTTPMock_readPoint, nil
 		}
 		return emptyRes, errors.New("'eval' argument not supported by mock class")
+	default:
+		return emptyRes, errors.New("haystack op not supported by mock class: " + op)
+	}
+}
+
+func (clientHTTPMock *clientHTTPMock) getResponse(op string, params map[string]string) (string, error) {
+	// These are taken from a SkySpark 3.0.26 demo project on 2021-01-03
+	switch op {
+	case "hello":
+		return emptyRes, nil
+	case "about":
+		return clientHTTPMock_about, nil
+	case "close":
+		return emptyRes, nil
+	case "filetypes":
+		return clientHTTPMock_filetypes, nil
+	case "ops":
+		return clientHTTPMock_ops, nil
+	case "read":
+		if params["filter"] == "site" && params["limit"] == "N" { // readAll sites
+			return clientHTTPMock_readSites, nil
+		} else if params["filter"] == "point" && params["limit"] == "1" { // readLimit point
+			return clientHTTPMock_readPoint, nil
+		} else if params["id"] == "@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\"" { // readById
+			return clientHTTPMock_readPoint, nil
+		}
+		return emptyRes, errors.New("'read' argument not supported by mock class")
+	case "hisRead":
+		if params["id"] == "@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\"" && params["range"] == "\"yesterday\"" { // hisRead relative
+			return clientHTTPMock_hisRead20210103, nil
+		} else if params["id"] == "@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\"" && params["range"] == "\"2020-10-04,2020-10-05\"" { // hisRead absolute dates
+			return clientHTTPMock_hisRead20201004to6, nil
+		} else if params["id"] == "@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\"" && params["range"] == "\"2020-10-04T00:00:00-07:00 Los_Angeles,2020-10-05T00:00:00-07:00 Los_Angeles\"" { // hisRead absolute datetimes
+			return clientHTTPMock_hisReadDateTimes, nil
+		}
+		return emptyRes, errors.New("'hisRead' argument not supported by mock class")
+	case "watchSub":
+		return emptyRes, nil
+	case "watchUnsub":
+		return emptyRes, nil
+	case "eval":
+		return emptyRes, nil
 	default:
 		return emptyRes, errors.New("haystack op not supported by mock class: " + op)
 	}

@@ -148,72 +148,102 @@ func TestClient_Filetypes(t *testing.T) {
 	actual, err := testPostClient().Filetypes()
 	assert.Nil(t, err)
 	testClient_ValZinc(actual, clientHTTPMock_filetypes, t)
+
+	get, err := testGetClient().Filetypes()
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_filetypes, t)
 }
 
 func TestClient_Ops(t *testing.T) {
 	actual, err := testPostClient().Ops()
 	assert.Nil(t, err)
 	testClient_ValZinc(actual, clientHTTPMock_ops, t)
+
+	get, err := testGetClient().Ops()
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_ops, t)
 }
 
 func TestClient_Read(t *testing.T) {
 	actual, err := testPostClient().Read("site")
 	assert.Nil(t, err)
 	testClient_ValZinc(actual, clientHTTPMock_readSites, t)
+
+	get, err := testGetClient().Read("site")
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_readSites, t)
 }
 
 func TestClient_ReadLimit(t *testing.T) {
 	actual, err := testPostClient().ReadLimit("point", 1)
 	assert.Nil(t, err)
 	testClient_ValZinc(actual, clientHTTPMock_readPoint, t)
+
+	get, err := testGetClient().ReadLimit("point", 1)
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_readPoint, t)
 }
 
 func TestClient_ReadByIds(t *testing.T) {
-	client := testPostClient()
-	points, pointsErr := client.ReadLimit("point", 1)
+	points, pointsErr := testPostClient().ReadLimit("point", 1)
 	assert.Nil(t, pointsErr)
-		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
+	pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		actual, err := client.ReadByIds([]haystack.Ref{pointRef})
+	actual, err := testPostClient().ReadByIds([]haystack.Ref{pointRef})
 	assert.Nil(t, err)
-		testClient_ValZinc(actual, clientHTTPMock_readPoint, t)
+	testClient_ValZinc(actual, clientHTTPMock_readPoint, t)
+
+	get, err := testGetClient().ReadByIds([]haystack.Ref{pointRef})
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_readPoint, t)
 }
 
 func TestClient_HisRead(t *testing.T) {
-	client := testPostClient()
-	points, pointsErr := client.ReadLimit("point", 1)
+	points, pointsErr := testPostClient().ReadLimit("point", 1)
 	assert.Nil(t, pointsErr)
-		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
+	pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		actual, err := client.HisRead(pointRef, "yesterday")
+	actual, err := testPostClient().HisRead(pointRef, "yesterday")
 	assert.Nil(t, err)
-		testClient_ValZinc(actual, clientHTTPMock_hisRead20210103, t)
+	testClient_ValZinc(actual, clientHTTPMock_hisRead20210103, t)
+
+	get, err := testGetClient().HisRead(pointRef, "yesterday")
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_hisRead20210103, t)
 }
 
 func TestClient_HisReadAbsDate(t *testing.T) {
-	client := testPostClient()
-	points, pointsErr := client.ReadLimit("point", 1)
+	points, pointsErr := testPostClient().ReadLimit("point", 1)
 	assert.Nil(t, pointsErr)
-		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
+	pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		fromDate := haystack.NewDate(2020, 10, 4)
-		toDate := haystack.NewDate(2020, 10, 5)
-		actual, err := client.HisReadAbsDate(pointRef, fromDate, toDate)
+	fromDate := haystack.NewDate(2020, 10, 4)
+	toDate := haystack.NewDate(2020, 10, 5)
+
+	actual, err := testPostClient().HisReadAbsDate(pointRef, fromDate, toDate)
 	assert.Nil(t, err)
-		testClient_ValZinc(actual, clientHTTPMock_hisRead20201004to6, t)
+	testClient_ValZinc(actual, clientHTTPMock_hisRead20201004to6, t)
+
+	get, err := testGetClient().HisReadAbsDate(pointRef, fromDate, toDate)
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_hisRead20201004to6, t)
 }
 
 func TestClient_HisReadAbsDateTime(t *testing.T) {
-	client := testPostClient()
-	points, pointsErr := client.ReadLimit("point", 1)
+	points, pointsErr := testPostClient().ReadLimit("point", 1)
 	assert.Nil(t, pointsErr)
-		pointRef := points.RowAt(0).Get("id").(haystack.Ref)
+	pointRef := points.RowAt(0).Get("id").(haystack.Ref)
 
-		fromTs, _ := haystack.NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
-		toTs, _ := haystack.NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
-		actual, err := client.HisReadAbsDateTime(pointRef, fromTs, toTs)
+	fromTs, _ := haystack.NewDateTimeFromString("2020-10-04T00:00:00-07:00 Los_Angeles")
+	toTs, _ := haystack.NewDateTimeFromString("2020-10-05T00:00:00-07:00 Los_Angeles")
+
+	actual, err := testPostClient().HisReadAbsDateTime(pointRef, fromTs, toTs)
 	assert.Nil(t, err)
-		testClient_ValZinc(actual, clientHTTPMock_hisReadDateTimes, t)
+	testClient_ValZinc(actual, clientHTTPMock_hisReadDateTimes, t)
+
+	get, err := testGetClient().HisReadAbsDateTime(pointRef, fromTs, toTs)
+	assert.Nil(t, err)
+	testClient_ValZinc(get, clientHTTPMock_hisReadDateTimes, t)
 }
 
 func TestClient_WatchSubCreate(t *testing.T) {
@@ -289,18 +319,10 @@ func (clientHTTPMock *clientHTTPMock) do(req *http.Request) (*http.Response, err
 	switch req.Method {
 	case "GET":
 		urlSlice := strings.Split(req.URL.Path, "/")
-		opAndParams := urlSlice[len(urlSlice)-1]
-		opAndParamsSlice := strings.Split(opAndParams, "?")
-		op := opAndParamsSlice[0]
+		op := urlSlice[len(urlSlice)-1]
 		params := map[string]string{}
-		if len(opAndParamsSlice) > 1 {
-			paramsAndVals := strings.Split(opAndParamsSlice[1], "&")
-			for _, paramAndVal := range paramsAndVals {
-				paramAndValSplit := strings.Split(paramAndVal, "=")
-				if len(paramAndValSplit) == 2 {
-					params[paramAndValSplit[0]] = paramAndValSplit[1]
-				}
-			}
+		for name, values := range req.URL.Query() {
+			params[name] = values[0]
 		}
 		responseBody, err = clientHTTPMock.getResponse(op, params)
 	case "POST":
@@ -378,9 +400,9 @@ func (clientHTTPMock *clientHTTPMock) getResponse(op string, params map[string]s
 	case "ops":
 		return clientHTTPMock_ops, nil
 	case "read":
-		if params["filter"] == "site" && params["limit"] == "N" { // readAll sites
+		if params["filter"] == "\"site\"" && params["limit"] == "N" { // readAll sites
 			return clientHTTPMock_readSites, nil
-		} else if params["filter"] == "point" && params["limit"] == "1" { // readLimit point
+		} else if params["filter"] == "\"point\"" && params["limit"] == "1" { // readLimit point
 			return clientHTTPMock_readPoint, nil
 		} else if params["id"] == "@p:demo:r:2725da26-1dda68ee \"Gaithersburg RTU-1 Fan\"" { // readById
 			return clientHTTPMock_readPoint, nil

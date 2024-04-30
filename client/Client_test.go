@@ -99,9 +99,10 @@ func (clientHTTPPlaintextAuth *clientHTTPPlaintextAuth) do(req *http.Request) (*
 	}
 	switch req.Method {
 	case "GET":
-		if req.Header.Get("Authorization") == "Bearer pretend-this-is-a-token" {
+		authMsg := authMsgFromString(req.Header.Get("Authorization"))
+		if authMsg.scheme == "Bearer" {
 			response.StatusCode = 200
-		} else if req.Header.Get("Authorization") == "PLAINTEXT username=dGVzdA, password=dGVzdA" {
+		} else if authMsg.scheme == "PLAINTEXT" && authMsg.attrs["username"] == "dGVzdA" && authMsg.attrs["password"] == "dGVzdA" {
 			response.StatusCode = 200
 			response.Header.Set("Authentication-Info", "authToken=pretend-this-is-a-token")
 		} else {

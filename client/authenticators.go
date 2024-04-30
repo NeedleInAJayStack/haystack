@@ -50,6 +50,7 @@ func (authenticator scramAuthenticator) authorizationHeader() (string, error) {
 		}
 		setStandardHeaders(req, reqAuth.toString())
 		resp, _ := authenticator.clientHTTP.do(req)
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusOK { // We expect unauthorized until complete.
 			return "", NewHTTPError(resp.StatusCode, resp.Status)
@@ -100,6 +101,7 @@ func (authenticator plaintextAuthenticator) authorizationHeader() (string, error
 	req, _ := http.NewRequest("GET", authenticator.uri, nil)
 	setStandardHeaders(req, reqAuth.toString())
 	resp, _ := authenticator.clientHTTP.do(req)
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", NewHTTPError(resp.StatusCode, resp.Status)
@@ -134,6 +136,8 @@ func (authenticator basicAuthenticator) authorizationHeader() (string, error) {
 	req, _ := http.NewRequest("GET", authenticator.uri, nil)
 	setStandardHeaders(req, basicAuth)
 	resp, _ := authenticator.clientHTTP.do(req)
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return "", NewAuthError("Basic auth failed with status: " + resp.Status)
 	}

@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 // Client models a client connection to a server using the Haystack API.
 type Client struct {
 	clientHTTP clientHTTP
+	method     ClientMethod
 	uri        string
 	username   string
 	password   string
@@ -60,7 +62,14 @@ func (client *Client) Open() error {
 
 // About calls the 'about' op.
 func (client *Client) About() (haystack.Dict, error) {
-	result, err := client.Call("about", haystack.EmptyGrid())
+	var result haystack.Grid
+	var err error
+	switch client.method {
+	case Get:
+		result, err = client.get("about", map[string]haystack.Val{})
+	default:
+		result, err = client.post("about", haystack.EmptyGrid())
+	}
 	if err != nil {
 		return haystack.Dict{}, err
 	}
@@ -69,48 +78,94 @@ func (client *Client) About() (haystack.Dict, error) {
 
 // Close closes and de-authenticates the client
 func (client *Client) Close() error {
-	_, err := client.Call("close", haystack.EmptyGrid())
+	var err error
+	switch client.method {
+	case Get:
+		return errors.New("'close' op does not support GET method")
+	default:
+		_, err = client.post("close", haystack.EmptyGrid())
+	}
 	return err
 }
 
 // Defs calls the 'defs' op.
 func (client *Client) Defs() (haystack.Grid, error) {
-	return client.Call("defs", haystack.EmptyGrid())
+	switch client.method {
+	case Get:
+		return client.get("about", map[string]haystack.Val{})
+	default:
+		return client.post("about", haystack.EmptyGrid())
+	}
 }
 
 // DefsWithFilter calls the 'defs' op with a filter grid.
 func (client *Client) DefsWithFilter(filter string, limit int) (haystack.Grid, error) {
-	return client.Call("defs", filterGrid(filter, limit))
+	switch client.method {
+	case Get:
+		return client.get("defs", filterParams(filter, limit))
+	default:
+		return client.post("defs", filterGrid(filter, limit))
+	}
 }
 
 // Libs calls the 'libs' op.
 func (client *Client) Libs() (haystack.Grid, error) {
-	return client.Call("libs", haystack.EmptyGrid())
+	switch client.method {
+	case Get:
+		return client.get("libs", map[string]haystack.Val{})
+	default:
+		return client.post("libs", haystack.EmptyGrid())
+	}
 }
 
 // LibsWithFilter calls the 'libs' op with a filter grid.
 func (client *Client) LibsWithFilter(filter string, limit int) (haystack.Grid, error) {
-	return client.Call("libs", filterGrid(filter, limit))
+	switch client.method {
+	case Get:
+		return client.get("libs", filterParams(filter, limit))
+	default:
+		return client.post("libs", filterGrid(filter, limit))
+	}
 }
 
 // Ops calls the 'ops' op.
 func (client *Client) Ops() (haystack.Grid, error) {
-	return client.Call("ops", haystack.EmptyGrid())
+	switch client.method {
+	case Get:
+		return client.get("ops", map[string]haystack.Val{})
+	default:
+		return client.post("ops", haystack.EmptyGrid())
+	}
 }
 
 // OpsWithFilter calls the 'ops' op with a filter grid.
 func (client *Client) OpsWithFilter(filter string, limit int) (haystack.Grid, error) {
-	return client.Call("ops", filterGrid(filter, limit))
+	switch client.method {
+	case Get:
+		return client.get("ops", filterParams(filter, limit))
+	default:
+		return client.post("ops", filterGrid(filter, limit))
+	}
 }
 
 // Filetypes calls the 'filetypes' op.
 func (client *Client) Filetypes() (haystack.Grid, error) {
-	return client.Call("filetypes", haystack.EmptyGrid())
+	switch client.method {
+	case Get:
+		return client.get("filetypes", map[string]haystack.Val{})
+	default:
+		return client.post("filetypes", haystack.EmptyGrid())
+	}
 }
 
 // FiletypesWithFilter calls the 'filetypes' op with a filter grid.
 func (client *Client) FiletypesWithFilter(filter string, limit int) (haystack.Grid, error) {
-	return client.Call("filetypes", filterGrid(filter, limit))
+	switch client.method {
+	case Get:
+		return client.get("filetypes", filterParams(filter, limit))
+	default:
+		return client.post("filetypes", filterGrid(filter, limit))
+	}
 }
 
 // Read calls the 'read' op with a filter and no result limit.
@@ -120,25 +175,46 @@ func (client *Client) Read(filter string) (haystack.Grid, error) {
 
 // ReadLimit calls the 'read' op with a filter and a result limit.
 func (client *Client) ReadLimit(filter string, limit int) (haystack.Grid, error) {
-	return client.Call("read", filterGrid(filter, limit))
+	switch client.method {
+	case Get:
+		return client.get("read", filterParams(filter, limit))
+	default:
+		return client.post("read", filterGrid(filter, limit))
+	}
 }
 
 // ReadByIds calls the 'read' op with the input ids.
 func (client *Client) ReadByIds(ids []haystack.Ref) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("id")
-	for _, id := range ids {
-		gb.AddRow([]haystack.Val{id})
+	switch client.method {
+	case Get:
+		if len(ids) > 1 {
+			return haystack.EmptyGrid(), errors.New("'read' op only supports single-ref requests on GET method")
+		}
+		if len(ids) == 0 {
+			return haystack.EmptyGrid(), nil
+		}
+		return client.get("read", map[string]haystack.Val{"id": ids[0]})
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddColNoMeta("id")
+		for _, id := range ids {
+			gb.AddRow([]haystack.Val{id})
+		}
+		return client.post("read", gb.ToGrid())
 	}
-	return client.Call("read", gb.ToGrid())
 }
 
 // Nav calls the 'nav' op to navigate a project for learning and discovery
 func (client *Client) Nav(navId haystack.Val) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("navId")
-	gb.AddRow([]haystack.Val{navId})
-	return client.Call("nav", gb.ToGrid())
+	switch client.method {
+	case Get:
+		return client.get("nav", map[string]haystack.Val{"navId": navId})
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddColNoMeta("navId")
+		gb.AddRow([]haystack.Val{navId})
+		return client.post("nav", gb.ToGrid())
+	}
 }
 
 // WatchSubCreate calls the 'watchSub' op to create a new subscription. If `lease` is 0 or less, no lease is added
@@ -148,18 +224,23 @@ func (client *Client) WatchSubCreate(
 	lease haystack.Number,
 	ids []haystack.Ref,
 ) (haystack.Grid, error) {
-	meta := map[string]haystack.Val{"watchDis": haystack.NewStr(watchDis)}
-	if lease.Float() > 0 {
-		meta["lease"] = lease
-	}
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'watchSub' op does not support GET method")
+	default:
+		meta := map[string]haystack.Val{"watchDis": haystack.NewStr(watchDis)}
+		if lease.Float() > 0 {
+			meta["lease"] = lease
+		}
 
-	gb := haystack.NewGridBuilder()
-	gb.AddMeta(meta)
-	gb.AddColNoMeta("ids")
-	for _, id := range ids {
-		gb.AddRow([]haystack.Val{id})
+		gb := haystack.NewGridBuilder()
+		gb.AddMeta(meta)
+		gb.AddColNoMeta("ids")
+		for _, id := range ids {
+			gb.AddRow([]haystack.Val{id})
+		}
+		return client.post("watchSub", gb.ToGrid())
 	}
-	return client.Call("watchSub", gb.ToGrid())
 }
 
 // WatchSubAdd calls the 'watchSub' op to add to an existing subscription. If `lease` is 0 or less, no lease is added
@@ -169,18 +250,23 @@ func (client *Client) WatchSubAdd(
 	lease haystack.Number,
 	ids []haystack.Ref,
 ) (haystack.Grid, error) {
-	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
-	if lease.Float() > 0 {
-		meta["lease"] = lease
-	}
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'watchSub' op does not support GET method")
+	default:
+		meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+		if lease.Float() > 0 {
+			meta["lease"] = lease
+		}
 
-	gb := haystack.NewGridBuilder()
-	gb.AddMeta(meta)
-	gb.AddColNoMeta("ids")
-	for _, id := range ids {
-		gb.AddRow([]haystack.Val{id})
+		gb := haystack.NewGridBuilder()
+		gb.AddMeta(meta)
+		gb.AddColNoMeta("ids")
+		for _, id := range ids {
+			gb.AddRow([]haystack.Val{id})
+		}
+		return client.post("watchSub", gb.ToGrid())
 	}
-	return client.Call("watchSub", gb.ToGrid())
 }
 
 // WatchUnsub calls the 'watchUnsub' op to delete or remove entities from a existing subscription. If `lease` is 0
@@ -189,18 +275,23 @@ func (client *Client) WatchUnsub(
 	watchId string,
 	ids []haystack.Ref,
 ) (haystack.Grid, error) {
-	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
-	if len(ids) <= 0 {
-		meta["close"] = haystack.NewMarker()
-	}
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'watchUnsub' op does not support GET method")
+	default:
+		meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+		if len(ids) <= 0 {
+			meta["close"] = haystack.NewMarker()
+		}
 
-	gb := haystack.NewGridBuilder()
-	gb.AddMeta(meta)
-	gb.AddColNoMeta("ids")
-	for _, id := range ids {
-		gb.AddRow([]haystack.Val{id})
+		gb := haystack.NewGridBuilder()
+		gb.AddMeta(meta)
+		gb.AddColNoMeta("ids")
+		for _, id := range ids {
+			gb.AddRow([]haystack.Val{id})
+		}
+		return client.post("watchUnsub", gb.ToGrid())
 	}
-	return client.Call("watchUnsub", gb.ToGrid())
 }
 
 // WatchPoll calls the 'watchPoll' op to poll values of a subscription.
@@ -208,22 +299,32 @@ func (client *Client) WatchPoll(
 	watchId string,
 	refresh bool,
 ) (haystack.Grid, error) {
-	meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
-	if refresh {
-		meta["refresh"] = haystack.NewMarker()
-	}
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'watchPoll' op does not support GET method")
+	default:
+		meta := map[string]haystack.Val{"watchId": haystack.NewStr(watchId)}
+		if refresh {
+			meta["refresh"] = haystack.NewMarker()
+		}
 
-	gb := haystack.NewGridBuilder()
-	gb.AddMeta(meta)
-	return client.Call("watchPoll", gb.ToGrid())
+		gb := haystack.NewGridBuilder()
+		gb.AddMeta(meta)
+		return client.post("watchPoll", gb.ToGrid())
+	}
 }
 
 // PointWriteStatus calls the 'pointWrite' op to query the point write priority array status for the input id.
 func (client *Client) PointWriteStatus(id haystack.Ref) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("id")
-	gb.AddRow([]haystack.Val{id})
-	return client.Call("pointWrite", gb.ToGrid())
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'pointWrite' op does not support GET method")
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddColNoMeta("id")
+		gb.AddRow([]haystack.Val{id})
+		return client.post("pointWrite", gb.ToGrid())
+	}
 }
 
 // PointWrite calls the 'pointWrite' op to write the val to the given point.
@@ -234,20 +335,25 @@ func (client *Client) PointWrite(
 	who string,
 	duration haystack.Number,
 ) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("id")
-	gb.AddColNoMeta("level")
-	gb.AddColNoMeta("val")
-	gb.AddColNoMeta("who")
-	gb.AddColNoMeta("duration")
-	gb.AddRow([]haystack.Val{
-		id,
-		haystack.NewNumber(float64(level), ""),
-		val,
-		haystack.NewStr(who),
-		duration,
-	})
-	return client.Call("pointWrite", gb.ToGrid())
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'pointWrite' op does not support GET method")
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddColNoMeta("id")
+		gb.AddColNoMeta("level")
+		gb.AddColNoMeta("val")
+		gb.AddColNoMeta("who")
+		gb.AddColNoMeta("duration")
+		gb.AddRow([]haystack.Val{
+			id,
+			haystack.NewNumber(float64(level), ""),
+			val,
+			haystack.NewStr(who),
+			duration,
+		})
+		return client.post("pointWrite", gb.ToGrid())
+	}
 }
 
 // HisReadAbsDate calls the 'hisRead' op with an input absolute Date range.
@@ -264,61 +370,138 @@ func (client *Client) HisReadAbsDateTime(id haystack.Ref, from haystack.DateTime
 
 // HisRead calls the 'hisRead' op with the given range string. See Haystack API docs for accepted rangeString values.
 func (client *Client) HisRead(id haystack.Ref, rangeString string) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("id")
-	gb.AddColNoMeta("range")
-	gb.AddRow([]haystack.Val{
-		id,
-		haystack.NewStr(rangeString),
-	})
-	return client.Call("hisRead", gb.ToGrid())
+	switch client.method {
+	case Get:
+		return client.get("hisRead", map[string]haystack.Val{"id": id, "range": haystack.NewStr(rangeString)})
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddColNoMeta("id")
+		gb.AddColNoMeta("range")
+		gb.AddRow([]haystack.Val{
+			id,
+			haystack.NewStr(rangeString),
+		})
+		return client.post("hisRead", gb.ToGrid())
+	}
 }
 
 // HisWrite calls the 'hisWrite' op with the given id and Dicts of history items. Only the "ts" and "val" fields from
 // the history items are included.
 func (client *Client) HisWrite(id haystack.Ref, hisItems []haystack.Dict) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddMetaVal("id", id)
-	gb.AddColNoMeta("ts")
-	gb.AddColNoMeta("val")
-	gb.AddRowDicts(hisItems)
-	return client.Call("hisWrite", gb.ToGrid())
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'hisWrite' op does not support GET method")
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddMetaVal("id", id)
+		gb.AddColNoMeta("ts")
+		gb.AddColNoMeta("val")
+		gb.AddRowDicts(hisItems)
+		return client.post("hisWrite", gb.ToGrid())
+	}
 }
 
 // InvokeAction calls the 'invokeAction' op with the given id, action name, and arguments.
 func (client *Client) InvokeAction(id haystack.Ref, action string, args map[string]haystack.Val) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddMetaVal("id", id)
-	gb.AddMetaVal("action", haystack.NewStr(action))
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'invokeAction' op does not support GET method")
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddMetaVal("id", id)
+		gb.AddMetaVal("action", haystack.NewStr(action))
 
-	rowVals := []haystack.Val{}
-	for name, val := range args {
-		gb.AddColNoMeta(name)
-		rowVals = append(rowVals, val)
+		rowVals := []haystack.Val{}
+		for name, val := range args {
+			gb.AddColNoMeta(name)
+			rowVals = append(rowVals, val)
+		}
+		gb.AddRow(rowVals)
+		return client.post("invokeAction", gb.ToGrid())
 	}
-	gb.AddRow(rowVals)
-	return client.Call("invokeAction", gb.ToGrid())
 }
 
 // Eval calls the 'eval' op to evaluate a vendor specific expression.
 func (client *Client) Eval(expr string) (haystack.Grid, error) {
-	gb := haystack.NewGridBuilder()
-	gb.AddColNoMeta("expr")
-	gb.AddRow([]haystack.Val{haystack.NewStr(expr)})
-	return client.Call("eval", gb.ToGrid())
+	switch client.method {
+	case Get:
+		return haystack.EmptyGrid(), errors.New("'eval' op does not support GET method")
+	default:
+		gb := haystack.NewGridBuilder()
+		gb.AddColNoMeta("expr")
+		gb.AddRow([]haystack.Val{haystack.NewStr(expr)})
+		return client.post("eval", gb.ToGrid())
+	}
 }
 
-// Call executes the given operation. The request grid is posted to the client URI and the response is parsed as a grid.
-func (client *Client) Call(op string, reqGrid haystack.Grid) (haystack.Grid, error) {
-	req := reqGrid.ToZinc()
+// post executes the given operation. The request grid is posted to the client URI and the response is parsed as a grid.
+func (client *Client) post(op string, reqGrid haystack.Grid) (haystack.Grid, error) {
+	reqBody := reqGrid.ToZinc()
 
-	resp, err := client.postString(client.uri, client.auth, op, req)
+	reqReader := strings.NewReader(reqBody)
+	req, _ := http.NewRequest("POST", client.uri+op, reqReader)
+	setStandardHeaders(req, client.auth)
+	req.Header.Add("Connection", "Close")
+	resp, err := client.clientHTTP.do(req)
+	if err != nil {
+		return haystack.EmptyGrid(), err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return haystack.EmptyGrid(), NewHTTPError(resp.StatusCode, resp.Status)
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return haystack.EmptyGrid(), err
 	}
 
 	var reader io.ZincReader
-	reader.InitString(resp)
+	reader.InitString(string(respBody))
+	val, err := reader.ReadVal()
+	if err != nil {
+		return haystack.EmptyGrid(), err
+	}
+	switch val := val.(type) {
+	case haystack.Grid:
+		if val.Meta().Get("err") != haystack.NewNull() {
+			return haystack.EmptyGrid(), NewCallError(val)
+		}
+		return val, nil
+	default:
+		return haystack.EmptyGrid(), errors.New("result was not a grid")
+	}
+}
+
+// post executes the given operation. The request grid is posted to the client URI and the response is parsed as a grid.
+func (client *Client) get(op string, params map[string]haystack.Val) (haystack.Grid, error) {
+	url := client.uri + op
+	paramList := []string{}
+	for name, val := range params {
+		paramList = append(paramList, fmt.Sprintf("%v=%v", name, val.ToZinc()))
+	}
+	paramString := strings.Join(paramList, "&")
+	if len(paramList) > 0 {
+		url = url + "?" + paramString
+	}
+
+	req, _ := http.NewRequest("GET", url, strings.NewReader(""))
+	setStandardHeaders(req, client.auth)
+	req.Header.Add("Connection", "Close")
+	resp, err := client.clientHTTP.do(req)
+	if err != nil {
+		return haystack.EmptyGrid(), err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return haystack.EmptyGrid(), NewHTTPError(resp.StatusCode, resp.Status)
+	}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return haystack.EmptyGrid(), err
+	}
+
+	var reader io.ZincReader
+	reader.InitString(string(respBody))
 	val, err := reader.ReadVal()
 	if err != nil {
 		return haystack.EmptyGrid(), err
@@ -432,24 +615,6 @@ func (client *Client) basicAuthenticator() basicAuthenticator {
 	}
 }
 
-func (client *Client) postString(uri string, auth string, op string, reqBody string) (string, error) {
-	reqReader := strings.NewReader(reqBody)
-	req, _ := http.NewRequest("POST", uri+op, reqReader)
-	setStandardHeaders(req, auth)
-	req.Header.Add("Connection", "Close")
-	resp, respErr := client.clientHTTP.do(req)
-	if respErr != nil {
-		return "", respErr
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", NewHTTPError(resp.StatusCode, resp.Status)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
-	return string(body), err
-}
-
 // Returns the URL used to authenticate the client
 func (client *Client) authUri() string {
 	return client.uri + "about"
@@ -472,6 +637,21 @@ func filterGrid(filter string, limit int) haystack.Grid {
 		limitVal,
 	})
 	return gb.ToGrid()
+}
+
+// filterGrid creates a Grid consisting of a `filter` Str and `limit` Number columns.
+// If a value of 0 or less is passed to limit, no limit is applied.
+func filterParams(filter string, limit int) map[string]haystack.Val {
+	var limitVal haystack.Val
+	if limit <= 0 {
+		limitVal = haystack.NewNull()
+	} else {
+		limitVal = haystack.NewNumber(float64(limit), "")
+	}
+	return map[string]haystack.Val{
+		"filter": haystack.NewStr(filter),
+		"limit":  limitVal,
+	}
 }
 
 func setStandardHeaders(req *http.Request, auth string) {

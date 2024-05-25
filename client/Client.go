@@ -30,7 +30,8 @@ var userAgent = "Go-haystack-client"
 func NewClient(uri string, username string, password string) *Client {
 	// check URI
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
-		panic("URI isn't http or https: " + uri)
+		// URI isn't http or https
+		return nil
 	}
 	if !strings.HasSuffix(uri, "/") {
 		uri = uri + "/"

@@ -26,8 +26,17 @@ type Client struct {
 var encoding = base64.RawURLEncoding
 var userAgent = "Go-haystack-client"
 
-// NewClient creates a new Client object.
 func NewClient(uri string, username string, password string) *Client {
+	timeout, _ := time.ParseDuration("1m")
+	return NewClientFromHTTP(uri, username, password, &http.Client{Timeout: timeout})
+}
+
+// NewClient creates a new Client object.
+// If a nil `httpClient` is passed, the DefaultClient is used.
+func NewClientFromHTTP(uri string, username string, password string, httpClient *http.Client) *Client {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
 	// check URI
 	if !strings.HasPrefix(uri, "http://") && !strings.HasPrefix(uri, "https://") {
 		panic("URI isn't http or https: " + uri)
@@ -35,18 +44,13 @@ func NewClient(uri string, username string, password string) *Client {
 	if !strings.HasSuffix(uri, "/") {
 		uri = uri + "/"
 	}
-	timeout, _ := time.ParseDuration("1m")
 
 	return &Client{
-		clientHTTP: &clientHTTPImpl{
-			&http.Client{
-				Timeout: timeout,
-			},
-		},
-		uri:      uri,
-		username: username,
-		password: password,
-		auth:     "",
+		clientHTTP: &clientHTTPImpl{httpClient},
+		uri:        uri,
+		username:   username,
+		password:   password,
+		auth:       "",
 	}
 }
 

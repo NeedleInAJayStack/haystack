@@ -1,9 +1,13 @@
 package client
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -114,7 +118,188 @@ func (clientHTTPPlaintextAuth *clientHTTPPlaintextAuth) do(req *http.Request) (*
 	return &response, nil
 }
 
-// TODO: SCRAM
+func TestClientAuth_SCRAM(t *testing.T) {
+	mock := &clientHTTPScramAuth{}
+	client := &Client{
+		clientHTTP: mock,
+		uri:        "http://localhost:8080/api/demo/",
+		username:   "test",
+		password:   "test",
+	}
+
+	openErr := client.Open()
+	assert.Nil(t, openErr)
+	assert.Equal(t, "BEARER authToken=pretend-this-is-a-token", client.auth)
+}
+
+// clientHTTPScramAuth validates the SCRAM haystack authentication.
+// https://project-haystack.org/doc/docHaystack/Auth#scram
+type clientHTTPScramAuth struct {
+	clientNonce string
+}
+
+func (clientHTTPScramAuth *clientHTTPScramAuth) do(req *http.Request) (*http.Response, error) {
+	response := http.Response{
+		Header: make(http.Header),
+		Body:   http.NoBody,
+	}
+
+	switch req.Method {
+	case "GET":
+		authMsg := authMsgFromString(req.Header.Get("Authorization"))
+		switch authMsg.scheme {
+		case "HELLO":
+			if authMsg.attrs["username"] != "dGVzdA" {
+				return nil, errors.New("unexpected hello username")
+			}
+			response.StatusCode = http.StatusUnauthorized
+			response.Header.Set("WWW-Authenticate", "SCRAM hash=SHA-256, handshakeToken=step-1")
+			return &response, nil
+		case "SCRAM":
+			handshakeToken := authMsg.attrs["handshakeToken"]
+			data, err := encoding.DecodeString(authMsg.attrs["data"])
+			if err != nil {
+				return nil, err
+			}
+
+			switch handshakeToken {
+			case "step-1":
+				clientFirst := string(data)
+				if !strings.HasPrefix(clientFirst, "n,,n=test,r=") {
+					return nil, errors.New("unexpected SCRAM client first message")
+				}
+				clientNonce := strings.TrimPrefix(clientFirst, "n,,n=test,r=")
+				clientHTTPScramAuth.clientNonce = clientNonce
+				serverFirst := testScramServerFirstMessage(clientNonce)
+
+				response.StatusCode = http.StatusUnauthorized
+				response.Header.Set("WWW-Authenticate", authMsgToString("SCRAM", map[string]string{
+					"handshakeToken": "step-2",
+					"data":           encoding.EncodeToString([]byte(serverFirst)),
+				}))
+				return &response, nil
+			case "step-2":
+				clientFinal := string(data)
+				if err := testScramValidateClientFinal(clientHTTPScramAuth.clientNonce, clientFinal); err != nil {
+					return nil, err
+				}
+
+				response.StatusCode = http.StatusOK
+				response.Header.Set("Authentication-Info", authMsgToString("", map[string]string{
+					"handshakeToken": "step-3",
+					"authToken":      "pretend-this-is-a-token",
+					"data":           encoding.EncodeToString([]byte("v=" + testScramServerSignature(clientHTTPScramAuth.clientNonce))),
+				}))
+				return &response, nil
+			default:
+				return nil, errors.New("unexpected SCRAM handshake token")
+			}
+		case "BEARER":
+			if authMsg.attrs["authToken"] != "pretend-this-is-a-token" {
+				return nil, errors.New("unexpected bearer auth token")
+			}
+			response.StatusCode = http.StatusOK
+			return &response, nil
+		}
+	}
+
+	return &response, nil
+}
+
+func authMsgToString(scheme string, attrs map[string]string) string {
+	return (&authMsg{scheme: scheme, attrs: attrs}).toString()
+}
+
+func testScramServerFirstMessage(clientNonce string) string {
+	return "r=" + clientNonce + testScramServerNonceSuffix + ",s=" + testScramSaltB64 + ",i=" + strconv.Itoa(testScramIterations)
+}
+
+func testScramValidateClientFinal(clientNonce string, clientFinal string) error {
+	parts := strings.Split(clientFinal, ",")
+	if len(parts) != 3 {
+		return errors.New("unexpected SCRAM client final message")
+	}
+	if parts[0] != "c=biws" {
+		return errors.New("unexpected SCRAM channel binding")
+	}
+	if parts[1] != "r="+testScramCombinedNonce(clientNonce) {
+		return errors.New("unexpected SCRAM combined nonce")
+	}
+	if parts[2] != "p="+testScramClientProof(clientNonce) {
+		return errors.New("unexpected SCRAM client proof")
+	}
+	return nil
+}
+
+const (
+	testScramServerNonceSuffix = "servernonce"
+	testScramSalt             = "salt-for-tests"
+	testScramSaltB64          = "c2FsdC1mb3ItdGVzdHM="
+	testScramIterations       = 4096
+	testScramPassword         = "test"
+	testScramUsername         = "test"
+)
+
+func testScramCombinedNonce(clientNonce string) string {
+	return clientNonce + testScramServerNonceSuffix
+}
+
+func testScramClientFirstBare(clientNonce string) string {
+	return "n=" + testScramUsername + ",r=" + clientNonce
+}
+
+func testScramClientProof(clientNonce string) string {
+	clientFinalWithoutProof := "c=biws,r=" + testScramCombinedNonce(clientNonce)
+	authMessage := testScramClientFirstBare(clientNonce) + "," + testScramServerFirstMessage(clientNonce) + "," + clientFinalWithoutProof
+	saltedPassword := testScramSaltPassword([]byte(testScramSalt), testScramIterations, testScramPassword)
+
+	clientKey := testScramHMAC(saltedPassword, []byte("Client Key"))
+	storedKey := testScramSHA256(clientKey)
+	clientSignature := testScramHMAC(storedKey, []byte(authMessage))
+	clientProof := make([]byte, len(clientKey))
+	for i := range clientKey {
+		clientProof[i] = clientKey[i] ^ clientSignature[i]
+	}
+	return base64.StdEncoding.EncodeToString(clientProof)
+}
+
+func testScramServerSignature(clientNonce string) string {
+	clientFinalWithoutProof := "c=biws,r=" + testScramCombinedNonce(clientNonce)
+	authMessage := testScramClientFirstBare(clientNonce) + "," + testScramServerFirstMessage(clientNonce) + "," + clientFinalWithoutProof
+	saltedPassword := testScramSaltPassword([]byte(testScramSalt), testScramIterations, testScramPassword)
+	serverKey := testScramHMAC(saltedPassword, []byte("Server Key"))
+	serverSignature := testScramHMAC(serverKey, []byte(authMessage))
+	return base64.StdEncoding.EncodeToString(serverSignature)
+}
+
+func testScramSaltPassword(salt []byte, iterCount int, password string) []byte {
+	mac := hmac.New(sha256.New, []byte(password))
+	mac.Write(salt)
+	mac.Write([]byte{0, 0, 0, 1})
+	ui := mac.Sum(nil)
+	hi := make([]byte, len(ui))
+	copy(hi, ui)
+	for i := 1; i < iterCount; i++ {
+		mac.Reset()
+		mac.Write(ui)
+		mac.Sum(ui[:0])
+		for j, b := range ui {
+			hi[j] ^= b
+		}
+	}
+	return hi
+}
+
+func testScramHMAC(key, data []byte) []byte {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	return mac.Sum(nil)
+}
+
+func testScramSHA256(data []byte) []byte {
+	hash := sha256.Sum256(data)
+	return hash[:]
+}
 
 func TestClient_Open(t *testing.T) {
 	client := testPostClient()

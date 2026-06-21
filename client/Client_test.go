@@ -1,12 +1,14 @@
 package client
 
 import (
+	"crypto/sha256"
 	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/NeedleInAJayStack/haystack/auth"
 	"github.com/NeedleInAJayStack/haystack"
 	"github.com/NeedleInAJayStack/haystack/io"
 	"github.com/stretchr/testify/assert"
@@ -114,7 +116,104 @@ func (clientHTTPPlaintextAuth *clientHTTPPlaintextAuth) do(req *http.Request) (*
 	return &response, nil
 }
 
-// TODO: SCRAM
+func TestClientAuth_SCRAM(t *testing.T) {
+	mock := &clientHTTPScramAuth{}
+	client := &Client{
+		clientHTTP: mock,
+		uri:        "http://localhost:8080/api/demo/",
+		username:   "test",
+		password:   "test",
+	}
+
+	openErr := client.Open()
+	assert.Nil(t, openErr)
+	assert.Equal(t, "BEARER authToken=pretend-this-is-a-token", client.auth)
+}
+
+// clientHTTPScramAuth validates the SCRAM haystack authentication.
+// https://project-haystack.org/doc/docHaystack/Auth#scram
+type clientHTTPScramAuth struct {
+	server *auth.ScramServer
+}
+
+func (clientHTTPScramAuth *clientHTTPScramAuth) do(req *http.Request) (*http.Response, error) {
+	response := http.Response{
+		Header: make(http.Header),
+		Body:   http.NoBody,
+	}
+
+	switch req.Method {
+	case "GET":
+		reqAuth := authMsgFromString(req.Header.Get("Authorization"))
+		switch reqAuth.scheme {
+		case "HELLO":
+			if reqAuth.attrs["username"] != "dGVzdA" {
+				return nil, errors.New("unexpected hello username")
+			}
+			clientHTTPScramAuth.server = auth.NewScramServer(sha256.New, "test", "test")
+			clientHTTPScramAuth.server.SetNonce([]byte("servernonce"))
+			clientHTTPScramAuth.server.SetSalt([]byte("salt-for-tests"))
+			clientHTTPScramAuth.server.SetIterations(4096)
+			response.StatusCode = http.StatusUnauthorized
+			response.Header.Set("WWW-Authenticate", "SCRAM hash=SHA-256, handshakeToken=step-1")
+			return &response, nil
+		case "SCRAM":
+			if clientHTTPScramAuth.server == nil {
+				return nil, errors.New("SCRAM server not initialized")
+			}
+			handshakeToken := reqAuth.attrs["handshakeToken"]
+			data, err := encoding.DecodeString(reqAuth.attrs["data"])
+			if err != nil {
+				return nil, err
+			}
+
+			switch handshakeToken {
+			case "step-1":
+				done := clientHTTPScramAuth.server.Step(data)
+				if done {
+					return nil, errors.New("unexpected SCRAM server completion")
+				}
+				if err := clientHTTPScramAuth.server.Err(); err != nil {
+					return nil, err
+				}
+
+				response.StatusCode = http.StatusUnauthorized
+				response.Header.Set("WWW-Authenticate", (&authMsg{scheme: "SCRAM", attrs: map[string]string{
+					"handshakeToken": "step-2",
+					"data":           encoding.EncodeToString(clientHTTPScramAuth.server.Out()),
+				}}).toString())
+				return &response, nil
+			case "step-2":
+				done := clientHTTPScramAuth.server.Step(data)
+				if !done {
+					return nil, errors.New("expected SCRAM server completion")
+				}
+				if err := clientHTTPScramAuth.server.Err(); err != nil {
+					return nil, err
+				}
+
+				response.StatusCode = http.StatusOK
+				response.Header.Set("Authentication-Info", (&authMsg{attrs: map[string]string{
+					"handshakeToken": "step-3",
+					"authToken":      "pretend-this-is-a-token",
+					"data":           encoding.EncodeToString(clientHTTPScramAuth.server.Out()),
+				}}).toString())
+				return &response, nil
+			default:
+				return nil, errors.New("unexpected SCRAM handshake token")
+			}
+		case "BEARER":
+			if reqAuth.attrs["authToken"] != "pretend-this-is-a-token" {
+				return nil, errors.New("unexpected bearer auth token")
+			}
+			response.StatusCode = http.StatusOK
+			return &response, nil
+		}
+	}
+
+	return &response, nil
+}
+
 
 func TestClient_Open(t *testing.T) {
 	client := testPostClient()

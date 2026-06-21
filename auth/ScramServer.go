@@ -2,8 +2,6 @@ package auth
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/rand"
 	"fmt"
 	"hash"
 	"strconv"
@@ -161,15 +159,15 @@ func (s *ScramServer) step2(in []byte) error {
 		return fmt.Errorf("client sent an unexpected SCRAM combined nonce: got %q, want %q", combinedNonce, expectedNonce)
 	}
 
-	s.saltPassword(s.salt, s.iterCount)
+	s.saltedPass = scramSaltPassword(s.newHash, s.pass, s.salt, s.iterCount)
 	s.authMsg.WriteString(",c=biws,r=")
 	s.authMsg.Write(combinedNonce)
-	if !bytes.Equal(fields[2][2:], s.clientProof()) {
+	if !bytes.Equal(fields[2][2:], scramClientProof(s.newHash, s.saltedPass, s.authMsg.Bytes())) {
 		return fmt.Errorf("client sent an invalid SCRAM proof: %q", fields[2][2:])
 	}
 
 	s.out.WriteString("v=")
-	s.out.Write(s.serverSignature())
+	s.out.Write(scramServerSignature(s.newHash, s.saltedPass, s.authMsg.Bytes()))
 	return nil
 }
 
@@ -186,74 +184,4 @@ func (s *ScramServer) serverFirstMessage() []byte {
 	serverFirst.WriteString(",i=")
 	serverFirst.WriteString(strconv.Itoa(s.iterCount))
 	return serverFirst.Bytes()
-}
-
-func (s *ScramServer) saltPassword(salt []byte, iterCount int) {
-	mac := hmac.New(s.newHash, []byte(s.pass))
-	mac.Write(salt)
-	mac.Write([]byte{0, 0, 0, 1})
-	ui := mac.Sum(nil)
-	hi := make([]byte, len(ui))
-	copy(hi, ui)
-	for i := 1; i < iterCount; i++ {
-		mac.Reset()
-		mac.Write(ui)
-		mac.Sum(ui[:0])
-		for j, b := range ui {
-			hi[j] ^= b
-		}
-	}
-	s.saltedPass = hi
-}
-
-func (s *ScramServer) clientProof() []byte {
-	mac := hmac.New(s.newHash, s.saltedPass)
-	mac.Write([]byte("Client Key"))
-	clientKey := mac.Sum(nil)
-	hash := s.newHash()
-	hash.Write(clientKey)
-	storedKey := hash.Sum(nil)
-	mac = hmac.New(s.newHash, storedKey)
-	mac.Write(s.authMsg.Bytes())
-	clientProof := mac.Sum(nil)
-	for i, b := range clientKey {
-		clientProof[i] ^= b
-	}
-	clientProof64 := make([]byte, b64Std.EncodedLen(len(clientProof)))
-	b64Std.Encode(clientProof64, clientProof)
-	return clientProof64
-}
-
-func (s *ScramServer) serverSignature() []byte {
-	mac := hmac.New(s.newHash, s.saltedPass)
-	mac.Write([]byte("Server Key"))
-	serverKey := mac.Sum(nil)
-
-	mac = hmac.New(s.newHash, serverKey)
-	mac.Write(s.authMsg.Bytes())
-	serverSignature := mac.Sum(nil)
-
-	encoded := make([]byte, b64Std.EncodedLen(len(serverSignature)))
-	b64Std.Encode(encoded, serverSignature)
-	return encoded
-}
-
-func scramGenerateNonce() ([]byte, error) {
-	const nonceLen = 16
-	buf := make([]byte, nonceLen+b64Uri.EncodedLen(nonceLen))
-	if _, err := rand.Read(buf[:nonceLen]); err != nil {
-		return nil, fmt.Errorf("cannot read random SCRAM nonce from operating system: %v", err)
-	}
-	nonce := buf[nonceLen:]
-	b64Uri.Encode(nonce, buf[:nonceLen])
-	return nonce, nil
-}
-
-func scramGenerateSalt() ([]byte, error) {
-	const saltLen = 16
-	salt := make([]byte, saltLen)
-	if _, err := rand.Read(salt); err != nil {
-		return nil, fmt.Errorf("cannot read random SCRAM salt from operating system: %v", err)
-	}
-	return salt, nil
 }

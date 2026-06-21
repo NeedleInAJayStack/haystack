@@ -26,9 +26,6 @@ package auth
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"hash"
 	"strconv"
@@ -63,10 +60,6 @@ type Scram struct {
 	saltedPass  []byte
 	authMsg     bytes.Buffer
 }
-
-// Need both because Haystack seems to switch between them for different parts.
-var b64Std = base64.StdEncoding
-var b64Uri = base64.RawURLEncoding // No padding
 
 // NewScram returns a new SCRAM-* client with the provided hash algorithm.
 //
@@ -128,13 +121,11 @@ func (c *Scram) Step(in []byte) bool {
 
 func (c *Scram) step1(in []byte) error {
 	if len(c.clientNonce) == 0 {
-		const nonceLen = 16
-		buf := make([]byte, nonceLen+b64Uri.EncodedLen(nonceLen))
-		if _, err := rand.Read(buf[:nonceLen]); err != nil {
-			return fmt.Errorf("cannot read random SCRAM-SHA-256 nonce from operating system: %v", err)
+		nonce, err := scramGenerateNonce()
+		if err != nil {
+			return err
 		}
-		c.clientNonce = buf[nonceLen:]
-		b64Uri.Encode(c.clientNonce, buf[:nonceLen])
+		c.clientNonce = nonce
 	}
 	c.authMsg.WriteString("n=")
 	escaper.WriteString(&c.authMsg, c.user)
@@ -179,7 +170,7 @@ func (c *Scram) step2(in []byte) error {
 	if err != nil {
 		return fmt.Errorf("server sent an invalid SCRAM-SHA-256 iteration count: %q", fields[2])
 	}
-	c.saltPassword(salt, iterCount)
+	c.saltedPass = scramSaltPassword(c.newHash, c.pass, salt, iterCount)
 
 	c.authMsg.WriteString(",c=biws,r=")
 	c.authMsg.Write(c.serverNonce)
@@ -187,7 +178,7 @@ func (c *Scram) step2(in []byte) error {
 	c.out.WriteString("c=biws,r=")
 	c.out.Write(c.serverNonce)
 	c.out.WriteString(",p=")
-	c.out.Write(c.clientProof())
+	c.out.Write(scramClientProof(c.newHash, c.saltedPass, c.authMsg.Bytes()))
 	return nil
 }
 
@@ -203,58 +194,8 @@ func (c *Scram) step3(in []byte) error {
 	} else if !isv {
 		return fmt.Errorf("unsupported SCRAM-SHA-256 final message from server: %q", in)
 	}
-	if !bytes.Equal(c.serverSignature(), fields[0][2:]) {
+	if !bytes.Equal(scramServerSignature(c.newHash, c.saltedPass, c.authMsg.Bytes()), fields[0][2:]) {
 		return fmt.Errorf("cannot authenticate SCRAM-SHA-256 server signature: %q", fields[0][2:])
 	}
 	return nil
-}
-
-func (c *Scram) saltPassword(salt []byte, iterCount int) {
-	mac := hmac.New(c.newHash, []byte(c.pass))
-	mac.Write(salt)
-	mac.Write([]byte{0, 0, 0, 1})
-	ui := mac.Sum(nil)
-	hi := make([]byte, len(ui))
-	copy(hi, ui)
-	for i := 1; i < iterCount; i++ {
-		mac.Reset()
-		mac.Write(ui)
-		mac.Sum(ui[:0])
-		for j, b := range ui {
-			hi[j] ^= b
-		}
-	}
-	c.saltedPass = hi
-}
-
-func (c *Scram) clientProof() []byte {
-	mac := hmac.New(c.newHash, c.saltedPass)
-	mac.Write([]byte("Client Key"))
-	clientKey := mac.Sum(nil)
-	hash := c.newHash()
-	hash.Write(clientKey)
-	storedKey := hash.Sum(nil)
-	mac = hmac.New(c.newHash, storedKey)
-	mac.Write(c.authMsg.Bytes())
-	clientProof := mac.Sum(nil)
-	for i, b := range clientKey {
-		clientProof[i] ^= b
-	}
-	clientProof64 := make([]byte, b64Std.EncodedLen(len(clientProof)))
-	b64Std.Encode(clientProof64, clientProof)
-	return clientProof64
-}
-
-func (c *Scram) serverSignature() []byte {
-	mac := hmac.New(c.newHash, c.saltedPass)
-	mac.Write([]byte("Server Key"))
-	serverKey := mac.Sum(nil)
-
-	mac = hmac.New(c.newHash, serverKey)
-	mac.Write(c.authMsg.Bytes())
-	serverSignature := mac.Sum(nil)
-
-	encoded := make([]byte, b64Std.EncodedLen(len(serverSignature)))
-	b64Std.Encode(encoded, serverSignature)
-	return encoded
 }
